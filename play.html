@@ -1826,7 +1826,8 @@ const SEC_GATE = { hangar: 2, zoom: 2, crit: 3, comet: 3, echo: 5, chain: 6, sho
   hunters: 10, huSpeed: 10, huTime: 11, huBounty: 12,
   stations: 20, stSpeed: 20, stRadius: 22 };
 // The demo: Chain Lightning opens once you have your second sector (so the demo has a cursor effect to try), its upgrades
-// are priced so it can be maxed within the demo's two sectors, and there are at most 10 sweepers (with no steep last levels).
+// are priced so it can be maxed within the demo's two sectors, and there are at most 10 sweepers and 8 Telescope levels
+// (with no steep last levels).
 // (DEMO_CHAIN: the first price and growth of Lightning Chance and Lightning Bolts in the demo; the full game is unchanged)
 const DEMO_CHAIN = { first: 3000, growth: 1.75 };
 if (DEMO) {
@@ -1834,6 +1835,7 @@ if (DEMO) {
   for (const d of DEFS) {
     if (d.id === 'chainCh' || d.id === 'chainN') { d.first = DEMO_CHAIN.first; d.growth = DEMO_CHAIN.growth; d.lateZ = 0; }
     if (d.id === 'sweepers') { d.max = 10; d.lateZ = 0; }
+    if (d.id === 'zoom') { d.max = 8; d.lateZ = 0; }   // Telescope: 8 levels in the demo (28 in the full game)
     if (d.id === 'comet') d.demoHide = true;   // (not shown in the demo at all)
   }
   // Chain Lightning (with its own upgrades) sits right after Telescope, above Supernova, which says "In the full game"
@@ -3736,7 +3738,7 @@ const ACH = [
 ];
 // the demo: only these can be earned in it (the others need more than two sectors, or a finished galaxy); the rest show as
 // "In the full game" and are never given. (The Steam demo's achievement list for Steamworks is made from this set too.)
-const DEMO_ACH = new Set(['coop', 'tut', 'stars1k', 'stars1m', 'sec2', 'dust1m', 'lv100', 'help1', 'disc1', 'comets', 'cache1', 'legend', 'chain']);   // ('chain': the demo has Chain Lightning)
+const DEMO_ACH = new Set(['coop', 'tut', 'stars1k', 'stars1m', 'sec2', 'dust1m', 'lv100', 'help1', 'disc1', 'comets', 'cache1', 'legend', 'chain', 'maxed']);   // ('chain': the demo has Chain Lightning; 'maxed': Telescope, sweepers and Chain Lightning can be maxed in it)
 const achIn = a => !DEMO || DEMO_ACH.has(a.id);
 const achN = () => ACH.filter(a => ach.got[a.id]).length;
 const achQ = [];   // earned ones waiting for their card
