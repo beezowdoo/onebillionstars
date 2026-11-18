@@ -929,7 +929,8 @@
     <ul>
       <li><b>Sectors can’t be bought.</b> The next one opens only when every star in your sectors is collected.</li>
       <li><b>No helpers.</b> The Fleet Hangar never appears, so every star is collected by you.</li>
-      <li><b>Half-strength boosts.</b> Stellar Caches and discoveries give 50% less than in Linear.</li>    </ul>
+      <li><b>Half-strength boosts.</b> Stellar Caches and discoveries give 50% less than in Linear.</li>
+      <li><b>No skin effects.</b> Cursor skins keep their look, but the Legendary and Mythic effects are off.</li>    </ul>
     <button id="chalGo">Let’s go</button>
   </div>
 </div>
@@ -1824,6 +1825,22 @@ const SEC_GATE = { hangar: 2, zoom: 2, crit: 3, comet: 3, echo: 5, chain: 6, sho
   drones: 5, dSpeed: 5, dRadius: 6, dAtk: 6, dCrit: 8,
   hunters: 10, huSpeed: 10, huTime: 11, huBounty: 12,
   stations: 20, stSpeed: 20, stRadius: 22 };
+// The demo: Chain Lightning opens once you have your second sector (so the demo has a cursor effect to try), its upgrades
+// are priced so it can be maxed within the demo's two sectors, and there are at most 10 sweepers (with no steep last levels).
+// (DEMO_CHAIN: the first price and growth of Lightning Chance and Lightning Bolts in the demo; the full game is unchanged)
+const DEMO_CHAIN = { first: 3000, growth: 1.75 };
+if (DEMO) {
+  SEC_GATE.chain = 2;
+  for (const d of DEFS) {
+    if (d.id === 'chainCh' || d.id === 'chainN') { d.first = DEMO_CHAIN.first; d.growth = DEMO_CHAIN.growth; d.lateZ = 0; }
+    if (d.id === 'sweepers') { d.max = 10; d.lateZ = 0; }
+    if (d.id === 'comet') d.demoHide = true;   // (not shown in the demo at all)
+  }
+  // Chain Lightning (with its own upgrades) sits right after Telescope, above Supernova, which says "In the full game"
+  const ch = DEFS.filter(d => d.id === 'chain' || d.sub === 'chain');
+  for (const d of ch) DEFS.splice(DEFS.indexOf(d), 1);
+  DEFS.splice(DEFS.findIndex(d => d.id === 'crit'), 0, ...ch);
+}
 // an effect's own upgrades sit in the cursor tab right under it, appear once it is bought, and share its sector gate
 for (const d of DEFS) if (d.sub) { d.tab = 'cursor'; d.group = d.sub + '+'; d.req = d.sub; }
 for (const d of DEFS) d.sec = SEC_GATE[d.id] || SEC_GATE[d.sub] || 1;   // (an effect's own upgrade can have a later gate of its own)
@@ -1832,7 +1849,7 @@ const gated = d => LIN() && nUnlocked < d.sec && !up[d.id];
 // the first upgrade of a helper group names the upgrade that unlocks it (req)
 for (const d of DEFS) d.req0 = d.req;
 // (Challenge has no helpers at all: no Fleet upgrades, and no Fleet Hangar ever appears)
-const inMode = d => (!d.only || (d.only === 'open') === !LIN()) && !(CHAL() && d.tab === 'drones');
+const inMode = d => (!d.only || (d.only === 'open') === !LIN()) && !(CHAL() && d.tab === 'drones') && !d.demoHide;   // (demoHide: left out of the demo)
 function linkDefs() {
   const lastOf = {};
   for (const d of DEFS) { if (!inMode(d)) continue; d.req = d.req0 === undefined ? (lastOf[d.group] ? lastOf[d.group].id : null) : d.req0; if (!d.side) lastOf[d.group] = d; }   // (a side upgrade isn't needed for the next one)
@@ -3719,7 +3736,7 @@ const ACH = [
 ];
 // the demo: only these can be earned in it (the others need more than two sectors, or a finished galaxy); the rest show as
 // "In the full game" and are never given. (The Steam demo's achievement list for Steamworks is made from this set too.)
-const DEMO_ACH = new Set(['coop', 'tut', 'stars1k', 'stars1m', 'sec2', 'dust1m', 'lv100', 'help1', 'disc1', 'comets', 'cache1', 'legend']);
+const DEMO_ACH = new Set(['coop', 'tut', 'stars1k', 'stars1m', 'sec2', 'dust1m', 'lv100', 'help1', 'disc1', 'comets', 'cache1', 'legend', 'chain']);   // ('chain': the demo has Chain Lightning)
 const achIn = a => !DEMO || DEMO_ACH.has(a.id);
 const achN = () => ACH.filter(a => ach.got[a.id]).length;
 const achQ = [];   // earned ones waiting for their card
@@ -4076,7 +4093,7 @@ let skinRaf = 0;
 function skinRender() {
   if (!$('skinBox').classList.contains('show')) return;
   const n = SKINS.filter(skinOpen).length, cur = curSkin();
-  $('skinSum').textContent = n + ' of ' + SKINS.length + ' unlocked. Skins are unlocked by achievements, the harder ones giving the fancier skins. The Legendary and Mythic ones also have a cursor effect of their own while you wear them. Your skin is kept on this computer and shows in every galaxy.';
+  $('skinSum').textContent = n + ' of ' + SKINS.length + ' unlocked. Skins are unlocked by achievements, the harder ones giving the fancier skins. The Legendary and Mythic ones also have a cursor effect of their own while you wear them (not in the Challenge). Your skin is kept on this computer and shows in every galaxy.';
   $('skinList').innerHTML = SKINS.map(s => {
     const open = skinOpen(s), a = s.ach && ACH.find(q => q.id === s.ach), tr = SKIN_TIER[s.tier];
     let info;
@@ -4123,14 +4140,14 @@ let flareN = 0, fallT = 2, loopT = 2;
 const flares = [], loops = [];
 const lemXY = (l, s) => { const d = 1 + Math.sin(s) ** 2; return [l.x + l.A * Math.cos(s) / d, l.y + l.A * Math.sin(s) * Math.cos(s) / d]; };   // a point on the ∞
 function skinFxAttack(ax, ay) {   // after each cursor attack that hit something
-  if (curSkin().id !== 'supernova' || ++flareN < FLARE_EVERY) return;
+  if (CHAL() || curSkin().id !== 'supernova' || ++flareN < FLARE_EVERY) return;   // (the Challenge: skins keep their look, but their effects are off)
   flareN = 0;
   flares.push({ x: ax, y: ay, r0: curRadius, R: curRadius * FLARE_X, t: 0 });
   ringFx(ax, ay, curRadius * zoom, curRadius * FLARE_X * zoom, '200,225,255', FLARE_T); ringFx(ax, ay, curRadius * zoom * 0.8, curRadius * FLARE_X * 0.8 * zoom, '230,180,255', FLARE_T * 1.2);
-  sfx('shock');
+  sfx('shock'); fxShare(['f', ax | 0, ay | 0, curRadius | 0]);
 }
 function skinFxStep(dt) {
-  const id = curSkin().id, on = started && inside && !dragging && !boxing, ax = camX + (mx - W / 2) / zoom, ay = camY + (my - H / 2) / zoom;
+  const id = curSkin().id, on = started && inside && !dragging && !boxing && !CHAL(), ax = camX + (mx - W / 2) / zoom, ay = camY + (my - H / 2) / zoom;
   gainTag = MT_SKIN;
   for (let j = flares.length - 1; j >= 0; j--) {   // a flare grows outward, collecting as it goes (in step with its rings)
     const f = flares[j]; f.t = Math.min(1, f.t + dt / FLARE_T);
@@ -4144,22 +4161,24 @@ function skinFxStep(dt) {
       const off = (k - (FALL_N - 1) / 2) * curRadius * 1.1 + (Math.random() - 0.5) * curRadius * 0.6, a2 = a + (Math.random() - 0.5) * 0.12;
       shots.push({ x: ax - ca * len / 2 - sa * off, y: ay - sa * len / 2 + ca * off, a: a2, left: len, went: 0, r: curRadius * 0.28,
         v: Math.max(1800, len / 0.7), fade: 0, tag: MT_SKIN, tail: '255,220,150', core: '255,235,190', long: 14 });
+      const sh = shots[shots.length - 1]; fxShare(['s', sh.x | 0, sh.y | 0, Math.round(sh.a * 1000) / 1000, sh.left | 0, Math.round(sh.r), sh.v | 0, 1]);
     }
     sfx('order');
   }
-  if (id === 'genesis' && on && (bloomT -= dt) <= 0) { bloomT = BLOOM_EVERY; blooms.push({ x: ax, y: ay, R: curRadius * BLOOM_X, w: curRadius * BLOOM_W, a0: Math.random() * TAU, t: 0 }); sfx('vortex'); }
+  if (id === 'genesis' && on && (bloomT -= dt) <= 0) { bloomT = BLOOM_EVERY; blooms.push({ x: ax, y: ay, R: curRadius * BLOOM_X, w: curRadius * BLOOM_W, a0: Math.random() * TAU, t: 0 }); sfx('vortex');
+    const b = blooms[blooms.length - 1]; fxShare(['g', ax | 0, ay | 0, b.R | 0, Math.round(b.w), Math.round(b.a0 * 1000) / 1000]); }
   for (let j = blooms.length - 1; j >= 0; j--) {   // Genesis: two spiral arms grow out and turn twice, collecting along their length
     const b = blooms[j]; b.t += dt / BLOOM_T;
     if (b.t >= 1) { if (b.t >= 1 + 0.3 / BLOOM_T) blooms.splice(j, 1); continue; }
     const ext = b.R * Math.min(1, b.t / 0.6), step = b.w * 0.75;
-    for (let arm = 0; arm < 2; arm++) for (let d = b.w; d <= ext; d += step) { const [px, py] = bloomXY(b, arm, d); collectAt(px, py, b.w, -1); }
+    if (!b.vis) for (let arm = 0; arm < 2; arm++) for (let d = b.w; d <= ext; d += step) { const [px, py] = bloomXY(b, arm, d); collectAt(px, py, b.w, -1); }
   }
-  if (id === 'infinity' && on && (loopT -= dt) <= 0) { loopT = LOOP_EVERY; loops.push({ x: ax, y: ay, A: curRadius * LOOP_X, r: curRadius * LOOP_W, s: 0, fade: 0 }); }
+  if (id === 'infinity' && on && (loopT -= dt) <= 0) { loopT = LOOP_EVERY; loops.push({ x: ax, y: ay, A: curRadius * LOOP_X, r: curRadius * LOOP_W, s: 0, fade: 0 }); fxShare(['o', ax | 0, ay | 0, (curRadius * LOOP_X) | 0, Math.round(curRadius * LOOP_W)]); }
   for (let j = loops.length - 1; j >= 0; j--) {   // Infinite Loop: the light runs once round the ∞ in small hops, so it skips nothing
     const l = loops[j];
     if (l.s >= TAU) { if ((l.fade += dt / 0.5) >= 1) loops.splice(j, 1); continue; }
     const ns = Math.min(TAU, l.s + dt * TAU / LOOP_T), hops = Math.max(1, Math.ceil((ns - l.s) * l.A * 1.3 / (l.r * 0.7)));
-    for (let h = 1; h <= hops; h++) { const [px, py] = lemXY(l, l.s + (ns - l.s) * h / hops); collectAt(px, py, l.r, -1); }
+    if (!l.vis) for (let h = 1; h <= hops; h++) { const [px, py] = lemXY(l, l.s + (ns - l.s) * h / hops); collectAt(px, py, l.r, -1); }
     l.s = ns;
   }
   gainTag = MT_CURSOR;
@@ -5704,10 +5723,18 @@ function render(time) {
     ctx.globalAlpha = 1;
     if (o.cur) {
       const x = (o.pc[0] + (o.cur[0] - o.pc[0]) * p - camX) * zoom + hw, y = (o.pc[1] + (o.cur[1] - o.pc[1]) * p - camY) * zoom + hh;
-      ctx.strokeStyle = ctx.fillStyle = PCOL[o.slot] || PCOL[0]; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(x, y, o.cur[2] * zoom, 0, 6.2832);
-      ctx.globalAlpha = 0.06; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(nameOf(o.slot), x, y - o.cur[2] * zoom - 7); ctx.textAlign = 'start';
+      // their cursor skin (5th number) with its attack pulse; the default skin keeps their player colour, so players
+      // without a skin are still easy to tell apart. Their name is always in their colour above it.
+      const col = PCOL[o.slot] || PCOL[0], R = Math.max(1, o.cur[2] * zoom), sk = SKINS[Math.floor(+o.cur[4])];
+      const pulse = Math.max(0, Math.min(1, +o.cur[5] || 0)), nova = o.cur[6] === 1;
+      if (sk && sk.id !== 'classic') { ctx.save(); ctx.globalAlpha = 0.9; sk.draw(ctx, x, y, R, performance.now() / 1000, nova ? 0 : pulse); ctx.restore(); }
+      else {
+        ctx.strokeStyle = ctx.fillStyle = col; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, 6.2832);
+        ctx.globalAlpha = 0.06 + 0.12 * pulse; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+      }
+      if (nova) skFill(ctx, x, y, R, '255,212,71', 0.04 + 0.55 * pulse);   // a Supernova glows gold, whatever the skin
+      ctx.fillStyle = col; ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(nameOf(o.slot), x, y - R - 7); ctx.textAlign = 'start';
     }
   }
   // locked sectors: dimmed, with a gold outline around the one the Unlock button would open
@@ -5844,6 +5871,10 @@ function render(time) {
       ctx.strokeStyle = `rgba(120,200,255,${0.15 * A})`; ctx.lineWidth = 11; ctx.stroke();
       ctx.strokeStyle = `rgba(120,200,255,${0.5 * A})`; ctx.lineWidth = 5; ctx.stroke();
       ctx.strokeStyle = `rgba(255,255,255,${A})`; ctx.lineWidth = 1.5; ctx.stroke();
+    } else if (f.kind === 'shockR') {   // another player's Shockwave (co-op): like yours, grown from their radius to their reach
+      const e = 1 - (1 - f.t) * (1 - f.t);
+      ctx.strokeStyle = `rgba(160,200,255,${0.8 * (1 - f.t)})`; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc((f.x - camX) * zoom + hw, (f.y - camY) * zoom + hh, (f.r0 + (f.r1 - f.r0) * e) * zoom, 0, 6.2832); ctx.stroke();
     } else if (f.kind === 'ring') {   // soft ring spreading out and fading (rings, sector glows and shooting stars are
       // decorative effects, so they are drawn at the Effects slider's strength)
       const e = 1 - (1 - f.t) * (1 - f.t), x = (f.x - camX) * zoom + hw, y = (f.y - camY) * zoom + hh, R = f.r0 + (f.r1 - f.r0) * e, A = fxA();
@@ -6032,6 +6063,54 @@ function renderMini() {
 // ---------------------------------------------------------------- main loop
 const fx = [];   // short-lived attack visuals (lightning bolts, meteors)
 const bangs = [];   // Big Bangs still spreading out
+// ---- co-op: your cursor effects are shown to the other players too. Only the look travels: the stars an effect collects
+// reach everyone the usual way, so the copy collects nothing (its .vis flag). Each effect is a short list of numbers, sent
+// with the next update (ten a second); the host passes guests' effects on to the other guests.
+//   n Supernova [x,y]   k Shockwave [x,y,r0,r1]   l Chain Lightning [x,y,splash, x1,y1, x2,y2...]   s Plasma Shot / Starfall star
+//   [x,y,angle,reach,r,speed,style]   u Stardust Rush [x,y,r]   v Singularity [x,y,r,life,spin]   m Meteor [x,y,r,order]
+//   b Big Bang [x,y,r0,R]   f Stellar Flare [x,y,r]   o Infinite Loop [x,y,A,r]   g Genesis [x,y,R,w,angle]
+const fxOut = [];
+function fxShare(ev) {
+  if (!net.role || fxOut.length >= 48) return;
+  if (net.role === 'guest' ? !net.ready : !guestCount()) return;
+  fxOut.push(ev);
+}
+const fxNum = (v, lim) => { v = +v; return isFinite(v) ? Math.max(-lim, Math.min(lim, v)) : 0; };
+function fxPlay(ev) {   // another player's effect: the same visual, collecting nothing
+  if (!Array.isArray(ev) || typeof ev[0] !== 'string' || !started) return;
+  const k = ev[0], x = fxNum(ev[1], WORLD), y = fxNum(ev[2], WORLD), R = v => Math.max(1, fxNum(v, 60000));
+  if (k === 'n') burst(x, y, 14, '255,212,71', 130, 0.7, 7);
+  else if (k === 'k') { if (onView(x, y, R(ev[4]) * zoom)) fx.push({ kind: 'shockR', t: 0, dur: 0.35, x, y, r0: R(ev[3]), r1: R(ev[4]) }); }
+  else if (k === 'l') {
+    const splash = R(ev[3]);
+    for (let j = 4; j + 1 < Math.min(ev.length, 4 + 2 * 64); j += 2) {
+      const x1 = fxNum(ev[j], WORLD), y1 = fxNum(ev[j + 1], WORLD);
+      if (onView(x1, y1, 200)) fx.push({ kind: 'bolt', t: 0, dur: 0.4, x0: x, y0: y, x1, y1, j: [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5] });
+      ringFx(x1, y1, 2, splash * zoom, '150,210,255', 0.45); burst(x1, y1, 5, '150,210,255', 90, 0.5, 5);
+    }
+  }
+  else if (k === 's') {
+    if (shots.length > 40) shots.shift();
+    const s = { x, y, a: fxNum(ev[3], 10), left: R(ev[4]), went: 0, r: R(ev[5]), v: R(ev[6]), fade: 0, vis: true };
+    if (ev[7] === 1) Object.assign(s, { tail: '255,220,150', core: '255,235,190', long: 14 });   // (a Starfall star)
+    shots.push(s);
+  }
+  else if (k === 'u') { const r = R(ev[3]); ringFx(x, y, r * zoom, r * zoom * 2.6, '255,212,71', 1.1); burst(x, y, 24, '255,212,71', 150, 1, 8); }
+  else if (k === 'v') {
+    if (vortices.length > 12) return;
+    const r = R(ev[3]); vortices.push({ x, y, r0: r, r, t: 0, life: Math.max(0.5, fxNum(ev[4], 120)), tick: 0.2, vx: 0, vy: 0, hx: 0, hy: 0, spin: fxNum(ev[5], 7), vis: true });
+    ringFx(x, y, r * zoom * 1.2, r * zoom * 0.35, '205,170,255', 0.9);
+  }
+  else if (k === 'm') fx.push({ kind: 'meteor', t: -0.12 * Math.max(0, Math.min(20, fxNum(ev[4], 20))), dur: 1, x, y, r: R(ev[3]), hit: false, vis: true });
+  else if (k === 'b') {
+    if (bangs.length > 6) return;
+    const r0 = R(ev[3]), Rb = R(ev[4]); bangs.push({ x, y, r0, R: Rb, t: 0, vis: true });
+    ringFx(x, y, r0 * zoom, Rb * zoom, '255,225,170', 1.4); ringFx(x, y, r0 * zoom * 0.5, Rb * zoom * 0.7, '200,170,255', 1.8); burst(x, y, 60, '255,225,170', 260, 1.4, 9);
+  }
+  else if (k === 'f') { const r = R(ev[3]); ringFx(x, y, r * zoom, r * FLARE_X * zoom, '200,225,255', FLARE_T); ringFx(x, y, r * zoom * 0.8, r * FLARE_X * 0.8 * zoom, '230,180,255', FLARE_T * 1.2); }
+  else if (k === 'o') { if (loops.length < 8) loops.push({ x, y, A: R(ev[3]), r: R(ev[4]), s: 0, fade: 0, vis: true }); }
+  else if (k === 'g') { if (blooms.length < 8) blooms.push({ x, y, R: R(ev[3]), w: R(ev[4]), a0: fxNum(ev[5], 7), t: 0, vis: true }); }
+}
 
 // ---------------------------------------------------------------- stardust meter
 // Like a damage meter: every bit of stardust you earn is credited to what earned it. The extra from a Supernova crit and
@@ -6412,7 +6491,8 @@ function fireShot(ax, ay) {
     n *= 0.9 + 0.2 * Math.random();
     if (n > bn) { bn = n; bestA = a; }
   }
-  const one = a => { if (shots.length > 24) shots.shift(); shots.push({ x: ax + Math.cos(a) * start, y: ay + Math.sin(a) * start, a, left: reach, went: 0, r: shotSize(up.shotSize), v: Math.max(1500, reach / 0.45), fade: 0 }); };
+  const one = a => { if (shots.length > 24) shots.shift(); const sh = { x: ax + Math.cos(a) * start, y: ay + Math.sin(a) * start, a, left: reach, went: 0, r: shotSize(up.shotSize), v: Math.max(1500, reach / 0.45), fade: 0 }; shots.push(sh);
+    fxShare(['s', sh.x | 0, sh.y | 0, Math.round(a * 1000) / 1000, reach | 0, Math.round(sh.r), sh.v | 0, 0]); };
   one(bestA);
   if (Math.random() < twinP(up.shotTwin)) one(bestA + Math.PI * (0.5 + Math.random()));   // Twin Shot: a second one, off another way
 }
@@ -6422,7 +6502,7 @@ function stepShots(dt) {
     if (s.left <= 0) { if ((s.fade += dt / 0.25) >= 1) shots.splice(j, 1); continue; }
     const d = Math.min(s.left, s.v * dt), hops = Math.max(1, Math.ceil(d / (s.r * 0.8))), ca = Math.cos(s.a), sa = Math.sin(s.a);
     gainTag = s.tag != null ? s.tag : MT_SHOT;   // (Starfall's shooting stars travel the same way)
-    for (let h = 0; h < hops; h++) { s.x += ca * d / hops; s.y += sa * d / hops; collectAt(s.x, s.y, s.r, -1); }   // small hops: nothing on its path is skipped
+    for (let h = 0; h < hops; h++) { s.x += ca * d / hops; s.y += sa * d / hops; if (!s.vis) collectAt(s.x, s.y, s.r, -1); }   // small hops: nothing on its path is skipped (another player's: only the look)
     s.left -= d; s.went += d;
   }
   gainTag = MT_CURSOR;
@@ -6470,11 +6550,11 @@ function chainLightning(ax, ay) {
     ringFx(x, y, 2, splash * zoom, '150,210,255', 0.45);
     burst(x, y, 5, '150,210,255', 90, 0.5, 5);
   }
-  if (pick.length) sfx('zap');
+  if (pick.length) { sfx('zap'); const ev = ['l', ax | 0, ay | 0, splash | 0]; for (const i of pick) ev.push(SX(i) | 0, SY(i) | 0); fxShare(ev); }
 }
 function startRush(x, y) {   // Stardust Rush: everything you collect is worth more for a while
   rushLeft = rushFull = rushTime(up.rushDur); achCount('rush');
-  sfx('rush'); ringFx(x, y, curRadius * zoom, curRadius * zoom * 2.6, '255,212,71', 1.1); burst(x, y, 24, '255,212,71', 150, 1, 8);
+  sfx('rush'); ringFx(x, y, curRadius * zoom, curRadius * zoom * 2.6, '255,212,71', 1.1); burst(x, y, 24, '255,212,71', 150, 1, 8); fxShare(['u', x | 0, y | 0, curRadius | 0]);
   refreshUI();
 }
 let last = performance.now(), curBank = 0, curCd = 0, curFlash = 0, flashCrit = false, shock = null, uiT = 0, miniT = 0, ppsT = 0;
@@ -6513,15 +6593,15 @@ function frame(now) {
       // Capacitor: a stored attack lets the next one follow almost at once
       if (curBank >= 1) { curBank -= 1; curCd = Math.min(curInterval, 0.15); burstNext = true; } else curCd = curInterval;
       curFlash = 1; flashCrit = crit;
-      if (crit) { burst(ax, ay, 14, '255,212,71', 130, 0.7, 7); achCount('nova'); }   // Supernova: golden sparks
+      if (crit) { burst(ax, ay, 14, '255,212,71', 130, 0.7, 7); achCount('nova'); fxShare(['n', ax | 0, ay | 0]); }   // Supernova: golden sparks
       if (crit && Math.random() < critShockP(up.critShock)) {   // Supernova Shockwave: a wide blast, still at Supernova strength
         gainTag = MT_ECHO; collectAt(ax, ay, curRadius * SHOCK * 1.5 * blastMult, -1);
-        shock = { x: ax, y: ay, t: 0 }; sfx('shock');
+        shock = { x: ax, y: ay, t: 0 }; sfx('shock'); fxShare(['k', ax | 0, ay | 0, curRadius | 0, (curRadius * SHOCK * blastMult) | 0]);
       }
       // Shockwave: chance for a second blast that reaches further than the attack itself
       if (up.echo && Math.random() < echoP(up.echoCh) * boost) {
         gainTag = MT_ECHO; collectAt(ax, ay, curRadius * SHOCK * blastMult, -1);
-        shock = { x: ax, y: ay, t: 0 }; sfx('shock');
+        shock = { x: ax, y: ay, t: 0 }; sfx('shock'); fxShare(['k', ax | 0, ay | 0, curRadius | 0, (curRadius * SHOCK * blastMult) | 0]);
       }
       if (up.chain && Math.random() < chainChance(up.chainCh) * boost) { gainTag = MT_CHAIN; chainLightning(ax, ay); achCount('chain'); }
       if (up.shot && Math.random() < shotP(up.shotCh) * boost) fireShot(ax, ay);
@@ -6529,7 +6609,7 @@ function frame(now) {
       if (up.vortex && Math.random() < vortexP(up.vortexRate) * boost) {   // this attack opens a Singularity somewhere else on screen
         const s = vortexSpot(ax, ay);
         if (s) { vortices.push({ x: s.x, y: s.y, r0: curRadius * vortexReach(), r: curRadius * vortexReach(), t: 0, life: vortexTime(up.vortexDur), tick: 0.2, vx: 0, vy: 0, hx: 0, hy: 0, spin: Math.random() * 0.79 }); sfx('vortex'); achCount('vortex');
-          ringFx(s.x, s.y, curRadius * zoom * 2.2, curRadius * zoom * 0.6, '205,170,255', 0.9); }   // a soft ring closing in where it opens
+          ringFx(s.x, s.y, curRadius * zoom * 2.2, curRadius * zoom * 0.6, '205,170,255', 0.9); const v = vortices[vortices.length - 1]; fxShare(['v', v.x | 0, v.y | 0, v.r0 | 0, Math.round(v.life * 10) / 10, Math.round(v.spin * 100) / 100]); }   // a soft ring closing in where it opens
       }
       if (up.meteor && Math.random() < meteorP(up.meteorRate) * boost) {   // Meteor Strike: comes down on the busiest spot near the cursor
         for (let m = 0; m <= up.meteorN; m++) {   // (Meteor Shower: more of them, each on a busy spot of its own, a moment apart)
@@ -6540,7 +6620,7 @@ function frame(now) {
             const n = POP[mask[Math.floor(y / CELL) * GW + Math.floor(x / CELL)]];
             if (n > bestN) { bestN = n; best = { x, y }; }
           }
-          if (best) fx.push({ kind: 'meteor', t: -0.12 * m, dur: 1, x: best.x, y: best.y, r: curRadius * 1.5 * blastMult, hit: false });
+          if (best) { fx.push({ kind: 'meteor', t: -0.12 * m, dur: 1, x: best.x, y: best.y, r: curRadius * 1.5 * blastMult, hit: false }); fxShare(['m', best.x | 0, best.y | 0, (curRadius * 1.5 * blastMult) | 0, m]); }
         }
       }
       if (up.bigbang && Math.random() < bangP(up.bangRate) * boost) {   // Big Bang: a colossal blast spreading out from the cursor
@@ -6548,7 +6628,7 @@ function frame(now) {
         bangs.push({ x: ax, y: ay, r0: curRadius, R, t: 0 });
         sfx('bang'); achCount('bang');
         ringFx(ax, ay, curRadius * zoom, R * zoom, '255,225,170', 1.4); ringFx(ax, ay, curRadius * zoom * 0.5, R * zoom * 0.7, '200,170,255', 1.8);
-        burst(ax, ay, 60, '255,225,170', 260, 1.4, 9);
+        burst(ax, ay, 60, '255,225,170', 260, 1.4, 9); fxShare(['b', ax | 0, ay | 0, curRadius | 0, R | 0]);
       }
       skinFxAttack(ax, ay);   // a Legendary cursor skin's own effect (see 'cursor skins')
     }
@@ -6561,7 +6641,7 @@ function frame(now) {
   // Singularity: the ones in the world keep pulling in what is around them, a few times a second, until they fade
   for (let j = vortices.length - 1; j >= 0; j--) {
     const v = vortices[j]; v.t += fdt; v.r = vortexR(v);
-    if ((v.tick -= fdt) <= 0) { v.tick = 0.35; collectAt(v.x, v.y, v.r, -1); vortexSteer(v); }
+    if ((v.tick -= fdt) <= 0) { v.tick = 0.35; if (!v.vis) collectAt(v.x, v.y, v.r, -1); vortexSteer(v); }
     // it drifts slowly towards the stars it picked, easing in and turning gently (faster as it grows)
     const sp = VORTEX_DRIFT * v.r, ease = Math.min(1, fdt * 0.9);
     v.vx += (v.hx * sp - v.vx) * ease; v.vy += (v.hy * sp - v.vy) * ease;
@@ -6576,13 +6656,13 @@ function frame(now) {
   for (let j = bangs.length - 1; j >= 0; j--) {
     const b = bangs[j]; b.t = Math.min(1, b.t + fdt / 1.4);
     const e = 1 - (1 - b.t) * (1 - b.t), r = b.r0 + (b.R - b.r0) * e;   // (in step with the ring drawn for it)
-    gainTag = MT_BANG; collectAt(b.x, b.y, r, -1); gainTag = MT_CURSOR;
+    if (!b.vis) { gainTag = MT_BANG; collectAt(b.x, b.y, r, -1); gainTag = MT_CURSOR; }
     if (b.t >= 1) bangs.splice(j, 1);
   }
   // attack effects: advance them, and land the meteor's blast when it reaches the ground
   for (let j = fx.length - 1; j >= 0; j--) {
     const f = fx[j]; f.t += fdt / f.dur;
-    if (f.kind === 'meteor' && !f.hit && f.t >= 0.4) { f.hit = true; gainTag = MT_METEOR; collectAt(f.x, f.y, f.r, -1); gainTag = MT_CURSOR; sfx('shock'); burst(f.x, f.y, 30, '255,170,90', 220, 1, 8); }
+    if (f.kind === 'meteor' && !f.hit && f.t >= 0.4) { f.hit = true; if (!f.vis) { gainTag = MT_METEOR; collectAt(f.x, f.y, f.r, -1); gainTag = MT_CURSOR; sfx('shock'); } burst(f.x, f.y, 30, '255,170,90', 220, 1, 8); }
     if (f.t >= 1) fx.splice(j, 1);
   }
   // Capacitor charges while the attack is ready but has nothing to hit
@@ -7043,6 +7123,7 @@ function onNet(m, c) {
         for (const q of net.guests) if (q !== g) q.out.push(id);
       }
       g.other = makeOther(g.other, g.slot, m.cur, new Float32Array(asBuffer(m.ships)));
+      if (Array.isArray(m.fx)) { const l = m.fx.slice(0, 48); for (const ev of l) fxPlay(ev); g.fxFwd = (g.fxFwd || []).concat(l).slice(-48); }   // their effects: shown here, passed on to the others
     } else if (m.t === 'stat' && g.on) g.stat = cleanStat(m.s);
     else if (m.t === 'tbuy' && g.on) doTeamBuy(String(m.id), g.stat ? g.stat.name : g.name);
     else if (m.t === 'gift' && g.on) {   // a guest gives stardust to the host or to another guest
@@ -7109,7 +7190,7 @@ function onNet(m, c) {
     if (!net.ready) { for (let k = 0; k < ids.length; k++) mask[ids[k] >>> 4] &= ~(1 << (ids[k] & 15)); return; }
     for (let k = 0; k < ids.length; k++) if (isAlive(ids[k])) take(ids[k], REMOTE);
     const seen = {};
-    for (const p of m.players || []) { seen[p.slot] = 1; net.others[p.slot] = makeOther(net.others[p.slot], p.slot, p.cur, new Float32Array(asBuffer(p.ships))); }
+    for (const p of m.players || []) { seen[p.slot] = 1; net.others[p.slot] = makeOther(net.others[p.slot], p.slot, p.cur, new Float32Array(asBuffer(p.ships))); if (Array.isArray(p.fx)) for (const ev of p.fx.slice(0, 48)) fxPlay(ev); }
     for (const s in net.others) if (!seen[s]) delete net.others[s];
     if (Object.keys(net.others).length !== net.seenN) { net.seenN = Object.keys(net.others).length; coopUI(); }
   } else if (m.t === 'stats') { net.roster = Array.isArray(m.list) ? m.list : []; net.slot = m.you; if (m.team) setTeam(m.team); }
@@ -7214,23 +7295,26 @@ steadyInterval(() => {
   const ships = new Float32Array(drones.length * 4);
   for (let k = 0; k < drones.length; k++) { const d = drones[k]; ships[k * 4] = d.x; ships[k * 4 + 1] = d.y; ships[k * 4 + 2] = d.kind; ships[k * 4 + 3] = d.ang || 0; }
   // (the 4th number: 1 while this player is typing a chat line, so the others see a "…" bubble over the cursor)
-  const cur = (inside || chatTyping()) && started ? [camX + (mx - W / 2) / zoom, camY + (my - H / 2) / zoom, curRadius, chatTyping() ? 1 : 0] : null;
+  // (5th: your cursor skin, 6th: its attack pulse, 7th: 1 during a Supernova, so the others see your skin and its glow)
+  const cur = (inside || chatTyping()) && started ? [camX + (mx - W / 2) / zoom, camY + (my - H / 2) / zoom, curRadius, chatTyping() ? 1 : 0,
+    Math.max(0, SKINS.indexOf(curSkin())), Math.round(curFlash * 100) / 100, flashCrit && curFlash > 0 ? 1 : 0] : null;
   if (net.role === 'host') {
     if (guestCount()) team.bank += teamEarn * bankRate();   // the bank only fills while someone is playing with you
     teamEarn = 0;
-    const sum = ++syncTick % 30 === 0 ? new Uint32Array(regionAlive).buffer : null;
+    const sum = ++syncTick % 30 === 0 ? new Uint32Array(regionAlive).buffer : null, hostFx = fxOut.splice(0);   // (your effects, for every guest)
     for (const g of net.guests.slice()) {
       if (g.last && performance.now() - g.last > 15000) { try { g.c.close(); } catch (e) {} netClosed(g.c); continue; }
       if (!g.on || !g.c.open) continue;
-      const players = [{ slot: 0, cur, ships: ships.buffer }];
-      for (const q of net.guests) if (q !== g && q.other) players.push({ slot: q.slot, cur: q.other.cur, ships: q.other.ships.buffer });
+      const players = [{ slot: 0, cur, ships: ships.buffer, fx: hostFx.length ? hostFx : undefined }];
+      for (const q of net.guests) if (q !== g && q.other) players.push({ slot: q.slot, cur: q.other.cur, ships: q.other.ships.buffer, fx: q.fxFwd && q.fxFwd.length ? q.fxFwd : undefined });
       g.c.send({ t: 'd', ids: Uint32Array.from(g.out).buffer, players });
       g.out.length = 0;
       if (sum) g.c.send({ t: 'sum', a: sum, won });   // (after the stars above, so nothing of the host's is still on its way)
     }
+    for (const q of net.guests) q.fxFwd = [];   // (each guest's effects went to every other guest once)
   } else if (net.ready && net.conn && net.lastHost && performance.now() - net.lastHost > 15000) { const c = net.conn; try { c.close(); } catch (e) {} netClosed(c);
   } else if (net.ready && net.conn && net.conn.open) {
-    net.conn.send({ t: 'd', ids: Uint32Array.from(net.out).buffer, ships: ships.buffer, cur, earned: teamEarn });
+    net.conn.send({ t: 'd', ids: Uint32Array.from(net.out).buffer, ships: ships.buffer, cur, earned: teamEarn, fx: fxOut.length ? fxOut.splice(0) : undefined });
     teamEarn = 0;
     net.out.length = 0;
   }
