@@ -10,7 +10,12 @@
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #dbe4f0;
     font: 14px/1.35 "Segoe UI", system-ui, sans-serif; user-select: none; }
-  #c { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; display: block; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; display: block; touch-action: none; }
+  /* the controller's pointer (where the collecting circle isn't drawn): a white ring with a dot, above everything */
+  #padPtr { position: fixed; left: 0; top: 0; z-index: 2147483647; display: none; pointer-events: none; }
+  #padPtr::before { content: ''; position: absolute; left: -11px; top: -11px; width: 18px; height: 18px; border: 2px solid #fff; border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, .55), inset 0 0 0 2px rgba(0, 0, 0, .35); transform: scale(var(--ui, 1)); }
+  #padPtr::after { content: ''; position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
   .box { position: fixed; background: rgba(16, 21, 31, .9); border: 1px solid #263246; border-radius: 10px; }
   #hud { left: 12px; top: 12px; padding: 12px 14px; width: 270px; pointer-events: none; }
   #pts { font-size: 28px; font-weight: 700; color: #fff; }
@@ -134,7 +139,10 @@
   #menuBox #mTeam { color: #ff9de0; border-color: rgba(255, 122, 217, .45); }
   #menuBox #mExit { margin-top: 6px; color: #ff9d9d; border-color: rgba(255, 110, 110, .35); }
   #menuBox #mKeys { display: none; }
-  #menuBox.keys #mKeys { display: block; }
+  #menuBox.keys #mKeys { display: flex; flex-direction: column; }
+  #mKeys h2 { order: -2; }
+  #padKeys { margin-top: 10px; }
+  body.padOn #padKeys, body.deck #padKeys { order: -1; margin: 0 0 10px; }   /* playing with a controller (or on a Steam Deck): its buttons first */
   #menuBox.keys #mMain { display: none; }
   #menuBox.keys .card { width: 520px; }
   #menuBox .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; font-size: 13px; color: #b6c3d6; }
@@ -305,6 +313,7 @@
   #mascot { position: fixed; left: 0; top: 0; z-index: 41; display: none; pointer-events: none; }
   body.tut #mascot { display: block; }
   body.cine #mascot { display: none !important; }   /* Pip steps aside while the Fleet Hangar arrives */
+  body.endShow #mascot { display: none !important; }   /* ...and while the end screen is up */
   #mInner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
   #mBot { position: absolute; left: -50px; top: -50px; overflow: visible; animation: mBob 4s ease-in-out infinite alternate; filter: drop-shadow(0 0 6px rgba(90, 168, 255, .25)); }
   @keyframes mBob { from { transform: translateY(1.5px); } to { transform: translateY(-1.5px); } }   /* a slow, tiny hover */
@@ -776,6 +785,14 @@
   #end .unlock { animation-delay: 3.6s; margin-top: 16px; font-size: 15px; color: #ffe9b0; text-shadow: 0 0 14px rgba(0, 0, 0, .9); }
   #end .unlock:empty { display: none; }
   #end .unlock b { color: #fff; }
+  /* the demo's end screen: what the full game has, as a list (the same as the demo window's) */
+  #end .unlock.demo { width: 100%; max-width: 620px; box-sizing: border-box; padding: 14px 18px 8px; border-radius: 14px; text-align: left; color: #c8d3ee; font-size: 14px;
+    background: rgba(12, 16, 30, .46); border: 1px solid rgba(160, 180, 255, .18); }
+  #end .unlock.demo .dhd { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #9fb0d0; margin-bottom: 4px; text-align: center; }
+  #end .unlock.demo ul { margin: 0; padding: 0; list-style: none; }
+  #end .unlock.demo li { position: relative; padding: 8px 0 8px 22px; line-height: 1.45; border-top: 1px solid rgba(160, 180, 255, .12); }
+  #end .unlock.demo li:first-child { border-top: 0; }
+  #end .unlock.demo li::before { content: ''; position: absolute; left: 4px; top: 15px; width: 7px; height: 7px; border-radius: 2px; background: #ffd447; transform: rotate(45deg); }
   #end .btns { animation-delay: 3.8s; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 22px; }
   #end .btns button { min-width: 200px; padding: 13px 22px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; border-radius: 12px;
     color: #1a1206; background: linear-gradient(180deg, #ffe9b0, #ffb86b); border: 0; box-shadow: 0 6px 26px rgba(255, 184, 107, .35); }
@@ -787,6 +804,7 @@
 </style>
 </head>
 <body>
+<div id="padPtr"></div>
 <div id="winbar"><span class="t">One Billion Stars</span><div class="b"><button id="wbMin" title="Minimize">&#8211;</button><button id="wbMax" title="Maximize">&#9744;</button><button id="wbClose" title="Close">&#10005;</button></div></div>
 <canvas id="c"></canvas>
 
@@ -962,14 +980,14 @@
 <div id="end">
   <canvas id="endSky"></canvas>
   <div class="wrap">
-    <div class="kicker">1,000,000,000 of 1,000,000,000</div>
-    <h1>The Galaxy Is Yours</h1>
-    <p class="tag">Every last star, collected.</p>
+    <div class="kicker" id="endKicker">1,000,000,000 of 1,000,000,000</div>
+    <h1 id="endTitle">The Galaxy Is Yours</h1>
+    <p class="tag" id="endTag">Every last star, collected.</p>
     <div class="stats" id="endStats"></div>
     <div class="finds" id="endFinds"></div>
     <div class="caches" id="endCaches"></div>
     <div class="unlock" id="endUnlock"></div>
-    <div class="btns"><button id="endKeep">Keep exploring</button><button id="endNew" class="minor">Back to menu</button></div>
+    <div class="btns"><button id="endStore" style="display:none">See the full game on Steam</button><button id="endKeep">Keep exploring</button><button id="endNew" class="minor">Back to menu</button></div>
     <div class="thanks">Thank you for playing</div>
   </div>
 </div>
@@ -1021,6 +1039,24 @@
         <span><kbd>M</kbd></span><span>Stardust meter: what each effect and helper earns</span>
         <span><kbd>T</kbd> / <kbd>Enter</kbd></span><span>Team window / chat (in co-op)</span>
         <span><kbd>Esc</kbd></span><span>This menu</span>
+      </div>
+      <div class="keys" id="padKeys">
+        <h3>Controller (Steam Deck, gamepad)</h3>
+        <span><kbd>Left stick</kbd></span><span>Move your cursor: it collects in the galaxy and points at buttons everywhere else</span>
+        <span><kbd>A</kbd></span><span>Click (hold and move: draw a box to select helpers)</span>
+        <span><kbd>B</kbd></span><span>Deselect helpers, or go back</span>
+        <span><kbd>D-pad</kbd></span><span>Jump from button to button</span>
+        <span><kbd>Right stick</kbd></span><span>Move the camera, or scroll a list (click it to go faster)</span>
+        <span><kbd>LT</kbd> / <kbd>RT</kbd></span><span>Zoom out / in (the minimap too, when you point at it)</span>
+        <span><kbd>LB</kbd> / <kbd>RB</kbd></span><span>Previous / next tab (in the hangar: helper pages)</span>
+        <span><kbd>X</kbd></span><span>Select all your helpers</span>
+        <span><kbd>Y</kbd></span><span>Hide or show the upgrades</span>
+        <span class="lin nochal"><kbd>View</kbd></span><span class="lin nochal">Jump to the Fleet Hangar</span>
+        <span><kbd>Start</kbd></span><span>This menu</span>
+        <h3>Touch</h3>
+        <span><kbd>Drag one finger</kbd></span><span>Move your cursor and collect</span>
+        <span><kbd>Two fingers</kbd></span><span>Move the camera; pinch to zoom</span>
+        <span><kbd>Tap</kbd></span><span>Click</span>
       </div>
       <p class="lin note">Dark sectors are locked: unlock them with stardust. If you ever run out of stars to collect, the nearest one opens for free.</p>
       <div class="mbtns"><button id="mBack">Back</button></div>
@@ -1825,21 +1861,25 @@ const SEC_GATE = { hangar: 2, zoom: 2, crit: 3, comet: 3, echo: 5, chain: 6, sho
   drones: 5, dSpeed: 5, dRadius: 6, dAtk: 6, dCrit: 8,
   hunters: 10, huSpeed: 10, huTime: 11, huBounty: 12,
   stations: 20, stSpeed: 20, stRadius: 22 };
-// The demo: Chain Lightning opens once you have your second sector (so the demo has a cursor effect to try), its upgrades
-// are priced so it can be maxed within the demo's two sectors, and there are at most 20 sweepers and 8 Telescope levels
-// (with no steep last levels).
-// (DEMO_CHAIN: the first price and growth of Lightning Chance and Lightning Bolts in the demo; the full game is unchanged)
-const DEMO_CHAIN = { first: 3000, growth: 1.75 };
+// The demo: Chain Lightning and Meteor Strike open once you have your second sector (so the demo has cursor effects to
+// try), their upgrades are priced so they can be maxed within the demo's two sectors, and there are at most 20 sweepers
+// and 8 Telescope levels (with no steep last levels). Meteor Shower stays in the full game.
+// (DEMO_CHAIN / DEMO_METEOR: the first price and growth of Lightning Chance and Lightning Bolts / Meteor Chance in the
+// demo; the full game is unchanged)
+const DEMO_CHAIN = { first: 3000, growth: 1.75 }, DEMO_METEOR = { first: 2500, growth: 1.3 };
 if (DEMO) {
-  SEC_GATE.chain = 2;
+  SEC_GATE.chain = 2; SEC_GATE.meteor = 2;
   for (const d of DEFS) {
     if (d.id === 'chainCh' || d.id === 'chainN') { d.first = DEMO_CHAIN.first; d.growth = DEMO_CHAIN.growth; d.lateZ = 0; }
+    if (d.id === 'meteorRate') { d.first = DEMO_METEOR.first; d.growth = DEMO_METEOR.growth; d.lateZ = 0; }
     if (d.id === 'sweepers') { d.max = 20; d.lateZ = 0; }
     if (d.id === 'zoom') { d.max = 8; d.lateZ = 0; }   // Telescope: 8 levels in the demo (28 in the full game)
     if (d.id === 'comet') d.demoHide = true;   // (not shown in the demo at all)
   }
-  // Chain Lightning (with its own upgrades) sits right after Telescope, above Supernova, which says "In the full game"
-  const ch = DEFS.filter(d => d.id === 'chain' || d.sub === 'chain');
+  // Chain Lightning, then Meteor Strike (each with its own upgrades) sit right after Telescope, above Supernova, which
+  // says "In the full game"
+  const ch = DEFS.filter(d => d.id === 'chain' || d.sub === 'chain' || d.id === 'meteor' || d.sub === 'meteor');
+  ch.sort((a, b) => ((a.id === 'meteor' || a.sub === 'meteor') - (b.id === 'meteor' || b.sub === 'meteor')));   // (chain first; stable otherwise)
   for (const d of ch) DEFS.splice(DEFS.indexOf(d), 1);
   DEFS.splice(DEFS.findIndex(d => d.id === 'crit'), 0, ...ch);
 }
@@ -2661,7 +2701,8 @@ function stepDrones(dt) {
 // settings kept on this computer (not in the save): UI scale %, picture brightness %, HDR output on/off
 const pref = { ui: 100, bright: 100, hdr: false };   // (and fxv: visual effects strength, see below)
 try { Object.assign(pref, JSON.parse(localStorage.getItem('obs-settings') || '{}')); } catch (e) {}
-pref.ui = Math.min(200, Math.max(60, +pref.ui || 100)); pref.bright = Math.min(400, Math.max(50, +pref.bright || 100)); pref.hdr = !!pref.hdr;
+pref.ui = Math.min(200, Math.max(60, +pref.ui || (window.steam && window.steam.deck ? 130 : 100)));   // (on a Steam Deck's small screen the interface starts bigger)
+if (window.steam && window.steam.deck) document.body.classList.add('deck');   // (the Controls page then lists the controller first) pref.bright = Math.min(400, Math.max(50, +pref.bright || 100)); pref.hdr = !!pref.hdr;
 // effects: pref.fxv = how strongly they show, 0 (off) to 100% (full); the old setting (fx: 0 off, 1 reduced, 2 full) carries over
 if (pref.fxv === undefined) pref.fxv = [0, 50, 100][+pref.fx] ?? 100;
 pref.fxv = Math.min(100, Math.max(0, Math.round(+pref.fxv) || 0)); delete pref.fx;
@@ -2742,6 +2783,30 @@ cv.addEventListener('wheel', e => {
   zoom = Math.min(2.5, Math.max(minZoom, zoom * Math.exp(-e.deltaY * 0.0015)));
   camX = wx - (mx - W / 2) / zoom; camY = wy - (my - H / 2) / zoom;
 }, { passive: false });
+// touch (a Steam Deck's screen, a tablet): one finger moves the collecting circle, collecting as it goes; two fingers move
+// the camera and pinch to zoom, both at once. A quick tap still clicks (the hangar, sending selected helpers), because
+// the browser turns a tap into a click.
+const touches = new Map(); let pinch = null;
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;
+  touchAt = performance.now(); touches.set(e.pointerId, { x: e.clientX, y: e.clientY }); pinch = null;
+  if (pad.on) padOff();
+  if (touches.size === 1) { mx = e.clientX / VS; my = e.clientY / VS; inside = true; }
+});
+cv.addEventListener('pointermove', e => {
+  const t = e.pointerType === 'touch' && touches.get(e.pointerId);
+  if (!t) return;
+  touchAt = performance.now(); t.x = e.clientX; t.y = e.clientY;
+  if (touches.size === 1) { mx = e.clientX / VS; my = e.clientY / VS; inside = true; return; }
+  const [a, b] = touches.values(), cx = (a.x + b.x) / 2 / VS, cy = (a.y + b.y) / 2 / VS, d = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+  if (pinch) {   // the galaxy point that was under the fingers' midpoint stays under it
+    const wx = camX + (pinch.cx - W / 2) / zoom, wy = camY + (pinch.cy - H / 2) / zoom;
+    zoom = Math.min(2.5, Math.max(minZoom, zoom * d / pinch.d));
+    camX = Math.min(WORLD, Math.max(0, wx - (cx - W / 2) / zoom)); camY = Math.min(WORLD, Math.max(0, wy - (cy - H / 2) / zoom));
+  }
+  pinch = { cx, cy, d };
+});
+for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, e => { if (e.pointerType === 'touch') { touches.delete(e.pointerId); pinch = null; } });
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if ($('hangarBox').classList.contains('show')) {   // inside the hangar: arrows look through the helpers, Esc leaves
@@ -2770,6 +2835,176 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { const k = e.key.toLowerCase(); keys.delete(k); if (k === 'shift' && started) refreshUI(); });
 addEventListener('blur', () => { keys.clear(); if (started) refreshUI(); });
+
+// ---- controller: a gamepad (on a Steam Deck, its own controls) plays the whole game. The left stick moves a pointer over
+// the whole screen: over the galaxy it is your collecting circle, over windows and buttons a small ring, and A clicks there
+// (hold A and move to draw a selection box). It works through the same mouse and keyboard handlers as everything else:
+// the pointer sends the page ordinary mouse events, and B / Start send Esc. The rest: right stick moves the camera (or
+// scrolls the list under the pointer; click it to go faster), the triggers zoom (the minimap too, when pointed at), the
+// D-pad jumps between buttons, X selects every helper, Y hides or shows the upgrades, LB / RB switch tabs (in the hangar:
+// helper pages), View jumps to the Fleet Hangar. Moving the real mouse hands control back to it.
+const pad = { on: false, x: 0, y: 0, prev: [], downEl: null, slider: null, rep: [], cam: false, told: false };
+const padUI = () => pad.on || !!(window.steam && window.steam.deck);   // show controller words instead of mouse ones (Pip, hints)
+const padEl = () => document.elementFromPoint(pad.x, pad.y);
+function padMouse(type, el, button) {
+  if (!el) return;
+  el.dispatchEvent(new MouseEvent(type, { clientX: pad.x, clientY: pad.y, screenX: pad.x, screenY: pad.y, button: button || 0,
+    buttons: type === 'mousedown' || (type === 'mousemove' && pad.downEl) ? 1 : 0, bubbles: true, cancelable: true, view: window }));
+}
+function padKey(key) {   // a key press, to whatever has the keyboard (the page itself when nothing does)
+  const t = document.activeElement && document.activeElement !== document.body ? document.activeElement : document.body;
+  for (const type of ['keydown', 'keyup']) t.dispatchEvent(new KeyboardEvent(type, { key, bubbles: true, cancelable: true }));
+}
+function padScroller(el) {   // the nearest list under the pointer that can scroll
+  for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    const o = getComputedStyle(el).overflowY;
+    if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 2) return el;
+  }
+  return null;
+}
+function padSlide(el) {   // a slider follows the pointer while A is held
+  const r = el.getBoundingClientRect(), lo = +el.min || 0, hi = el.max === '' ? 100 : +el.max, st = +el.step || 1;
+  const v = Math.min(hi, Math.max(lo, lo + Math.round((pad.x - r.left) / Math.max(1, r.width) * (hi - lo) / st) * st));
+  if (+el.value !== v) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }
+}
+// D-pad: jump to the nearest thing to click in that direction (only ones you can see and that nothing covers)
+const PAD_SEL = 'button, a[href], input, textarea, label[for], #mini, .hudEl';
+function padSnap(dx, dy) {
+  for (let tries = 0; tries < 2; tries++) {
+    let best = null, bs = Infinity;
+    for (const el of document.querySelectorAll(PAD_SEL)) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.right < 0 || r.top > innerHeight || r.left > innerWidth) continue;
+      const cx = Math.min(innerWidth - 2, Math.max(2, r.left + r.width / 2)), cy = Math.min(innerHeight - 2, Math.max(2, r.top + r.height / 2));
+      const hit = document.elementFromPoint(cx, cy);
+      if (!hit || !(hit === el || el.contains(hit))) continue;
+      const vx = cx - pad.x, vy = cy - pad.y, along = vx * dx + vy * dy, across = Math.abs(vx * dy - vy * dx);
+      if (along < 6) continue;
+      const s = along + across * 2.5;
+      if (s < bs) { bs = s; best = { x: cx, y: cy }; }
+    }
+    if (best) { pad.x = best.x; pad.y = best.y; return true; }
+    const sc = dy && padScroller(padEl());   // nothing further that way in a list: scroll it, then look again
+    if (!sc) return false;
+    const before = sc.scrollTop; sc.scrollTop += dy * sc.clientHeight * 0.6;
+    if (sc.scrollTop === before) return false;
+  }
+  return false;
+}
+function padOff() { pad.on = false; pad.downEl = pad.slider = null; document.body.classList.remove('padOn'); $('padPtr').style.display = 'none'; }
+addEventListener('mousemove', e => { if (pad.on && e.isTrusted && Math.abs(e.movementX) + Math.abs(e.movementY) > 3) padOff(); }, true);
+function padTick(dt) {
+  const list = navigator.getGamepads ? navigator.getGamepads() : [];
+  let g = null;
+  for (const p of list) if (p && p.connected && p.axes.length >= 4 && p.buttons.length >= 12 && (!g || p.mapping === 'standard')) g = p;
+  if (!g) { pad.prev = []; return; }
+  const dz = v => Math.abs(v) < 0.18 ? 0 : Math.sign(v) * (Math.abs(v) - 0.18) / 0.82;
+  const lx = dz(g.axes[0]), ly = dz(g.axes[1]), rx = dz(g.axes[2]), ry = dz(g.axes[3]);
+  const now = [], prev = pad.prev;
+  for (let i = 0; i < 16; i++) now[i] = !!g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5);
+  pad.prev = now;
+  const hit = i => now[i] && !prev[i], rel = i => !now[i] && prev[i];
+  const lt = g.buttons[6] ? g.buttons[6].value : 0, rt = g.buttons[7] ? g.buttons[7].value : 0;
+  if (!pad.on) {
+    if (!(lx || ly || rx || ry || lt > 0.2 || rt > 0.2 || now.some((b, i) => b && !prev[i]))) return;
+    pad.on = true; document.body.classList.add('padOn');
+    pad.x = inside ? mx * VS : innerWidth / 2; pad.y = inside ? my * VS : innerHeight / 2;
+    if (!pad.told && started) { pad.told = true; toast('Controller: left stick moves, A clicks. All the buttons are under Controls in the menu (Start)', '#8fa3bd'); }
+  }
+  const hangarIn = $('hangarBox').classList.contains('show');
+  let moved = false;
+  // left stick: the pointer (gentle near the middle for fine aiming, fast at the edge)
+  const m = Math.hypot(lx, ly);
+  if (m) {
+    const sp = 1150 * Math.max(0.75, VS) * Math.pow(Math.min(1, m), 1.7) / m * dt;
+    pad.x = Math.min(innerWidth - 1, Math.max(0, pad.x + lx * sp)); pad.y = Math.min(innerHeight - 1, Math.max(0, pad.y + ly * sp)); moved = true;
+  }
+  // D-pad: jump between buttons (held: repeats)
+  [[12, 0, -1], [13, 0, 1], [14, -1, 0], [15, 1, 0]].forEach(([i, dx, dy]) => {
+    if (hit(i)) { pad.rep[i] = 0.4; if (padSnap(dx, dy)) moved = true; }
+    else if (now[i] && (pad.rep[i] -= dt) <= 0) { pad.rep[i] = 0.12; if (padSnap(dx, dy)) moved = true; }
+  });
+  let el = padEl();
+  if (moved) {
+    if (pad.slider) padSlide(pad.slider);
+    padMouse('mousemove', el);
+    if (el !== cv) inside = false;
+  }
+  // A: press, hold and let go like the left mouse button (a slider follows the pointer while it is held)
+  if (hit(0)) {
+    pad.downEl = el;
+    const ae = document.activeElement;
+    if (ae && ae !== el && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur();
+    if (el && el.matches('input[type=range]')) { pad.slider = el; padSlide(el); }
+    else if (el) {
+      el.dispatchEvent(new PointerEvent('pointerdown', { clientX: pad.x, clientY: pad.y, pointerType: 'mouse', isPrimary: true, bubbles: true, cancelable: true }));
+      padMouse('mousedown', el, 0);
+      if (el.matches('input:not([type=range]):not([type=color]), textarea')) { el.focus(); steamKeyboard(el); }
+    }
+  }
+  if (rel(0)) {
+    if (pad.slider) { pad.slider.dispatchEvent(new Event('change', { bubbles: true })); pad.slider = null; }
+    else {
+      const d = pad.downEl; pad.downEl = null;
+      padMouse('mouseup', el || document.body, 0);
+      if (el && d && (d === el || d.contains(el) || el.contains(d))) padMouse('click', d.contains(el) ? el : d, 0);
+    }
+  }
+  // B: deselect your helpers if any are selected, otherwise back (Esc); Start: the menu (Esc)
+  if (hit(1)) {
+    if (started && !hangarIn && drones.some(d => d.sel)) { for (const d of drones) d.sel = false; rightDeselects++; sfx('order'); renderMini(); }
+    else padKey('Escape');
+  }
+  if (hit(9)) padKey('Escape');
+  if (started && !hangarIn) {
+    if (hit(2)) selectKind(-1);                                                            // X: every helper
+    if (hit(3)) setPanelHidden(!document.body.classList.contains('panelHidden'));          // Y: the upgrades
+    if (hit(8)) padKey('h');                                                               // View: the Fleet Hangar
+  }
+  if (hit(4) || hit(5)) {   // LB / RB: the tab to the left / right (in the hangar: the helper pages)
+    const dir = hit(4) ? -1 : 1;
+    if (hangarIn) hgStep(dir);
+    else if (started) {
+      if (document.body.classList.contains('panelHidden')) setPanelHidden(false);
+      const bs = [...document.querySelectorAll('#tabs button[data-tab]')].filter(b => b.offsetParent !== null);
+      const i = bs.findIndex(b => b.dataset.tab === tab);
+      if (bs.length) bs[((i < 0 ? 0 : i + dir) + bs.length) % bs.length].click();
+    }
+  }
+  // triggers: zoom (whatever is under the pointer that zooms: the minimap or the hangar's helpers, otherwise the galaxy)
+  const z = (rt > 0.08 ? rt : 0) - (lt > 0.08 ? lt : 0);
+  if (z) {
+    const to = el && (el === mini || el.closest('#hgTop')) ? el : started && !hangarIn ? cv : null;
+    if (to) to.dispatchEvent(new WheelEvent('wheel', { deltaY: -z * 900 * dt, clientX: pad.x, clientY: pad.y, bubbles: true, cancelable: true }));
+  }
+  // right stick: scroll the list under the pointer, or move the camera (clicking the stick: faster)
+  pad.cam = false;
+  if (rx || ry) {
+    const sc = el && el !== cv && padScroller(el);
+    if (sc) sc.scrollTop += ry * Math.abs(ry) * 1400 * dt;
+    else if (started && !hangarIn) {
+      const sp = 1100 / zoom * dt * (now[11] ? 5 : 1);
+      camX += rx * Math.abs(rx) * sp; camY += ry * Math.abs(ry) * sp; pad.cam = true;
+    }
+  }
+  // the pointer ring: wherever the collecting circle isn't drawn
+  el = padEl();
+  const ring = $('padPtr'), show = !(started && el === cv && inside && !boxing);
+  ring.style.display = show ? 'block' : 'none';
+  if (show) ring.style.transform = `translate(${pad.x.toFixed(1)}px, ${pad.y.toFixed(1)}px)`;
+}
+// Steam Deck / Big Picture: a text box picked with the controller or by touch (or anything on a Deck) opens Steam's
+// on-screen keyboard beside it (the Steam version only: window.steam.keyboard)
+let touchAt = -1e9, kbLast = null, kbAt = 0;
+function steamKeyboard(el) {
+  if (!window.steam || !window.steam.keyboard || !el || !el.matches || !el.matches('input:not([type]), input[type=text], input[type=password], input[type=number], textarea')) return;
+  if (!(pad.on || performance.now() - touchAt < 3000 || window.steam.deck)) return;
+  if (el === kbLast && performance.now() - kbAt < 800) return;   // (asked already: A focuses the box, and the focus event asks too)
+  kbLast = el; kbAt = performance.now();
+  const r = el.getBoundingClientRect(), k = window.devicePixelRatio || 1;
+  window.steam.keyboard(el.tagName === 'TEXTAREA' ? 1 : el.type === 'number' ? 3 : 0, r.left * k, r.top * k, r.width * k, r.height * k);
+}
+addEventListener('focusin', e => steamKeyboard(e.target));
 
 const mini = document.getElementById('mini'), mctx = mini.getContext('2d');
 // minimap: drag = select probes, click = send selected probes (or jump the camera when none are selected)
@@ -3608,9 +3843,9 @@ const fmtTime = s => {
   s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
   return h ? h + 'h ' + String(m).padStart(2, '0') + 'm' : m ? m + 'm ' + String(s % 60).padStart(2, '0') + 's' : s + 's';
 };
-function showEnd() {
+function showEnd(demo) {   // demo: the demo's end, stripped down (see demoEnd)
   if (endOn) return;
-  endOn = true;
+  endOn = true; demo = !!demo && DEMO;
   if (!galaxyImg) {
     galaxyImg = makeGalaxy(1100);
     const rnd = mulberry32(99), sprites = TINTS.map(tn => makeStarSprite(tn, 1, 44));
@@ -3622,7 +3857,7 @@ function showEnd() {
   const stats = [
     ['Time played', playTime, fmtTime],
     ['Stardust earned', totalEarned, v => fmt(Math.floor(v))],
-    ['Sectors cleared', regionsDone, v => Math.round(v) + ' / ' + NREG],
+    ['Sectors cleared', regionsDone, v => Math.round(v) + ' / ' + (demo ? DEMO_SEC : NREG)],
     ['Rare discoveries', rare, v => Math.round(v).toLocaleString('en-US')],
     ['Stars you collected', myStars, v => Math.round(v).toLocaleString('en-US')],
     ['Upgrades bought', levels, v => Math.round(v).toLocaleString('en-US')],
@@ -3636,8 +3871,9 @@ function showEnd() {
     `<div class="find"><canvas width="96" height="96" data-t="${i}"></canvas><b>${mine(i).toLocaleString('en-US')}</b>` +
     `<em>${i === 1 ? 'Comets' : tp.name + (tp.name.endsWith('s') ? '' : 's')}</em><small>of ${typeTotal[i].toLocaleString('en-US')}</small></div>`).join('');
   for (const c of $('endFinds').querySelectorAll('canvas')) rareIcon(c, +c.dataset.t);
+  if (demo) $('endFinds').innerHTML = '';   // (the demo: no counts out of the whole galaxy)
   // the caches: each rarity's count (and what you could expect with your Fortune Finder), and where your luck lands
-  const L = cacheLuck(), eTxt = v => v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString('en-US');
+  const L = demo ? null : cacheLuck(), eTxt = v => v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString('en-US');
   const luckWord = p => p < 10 ? 'Very unlucky' : p < 35 ? 'Unlucky' : p <= 65 ? 'About average' : p <= 90 ? 'Lucky' : 'Very lucky';
   $('endCaches').innerHTML = !L ? '' : `<div class="chd">Stellar Caches · ${L.n.toLocaleString('en-US')} opened</div><div class="tiers">` +
     CTIERS.map((t, k) => `<div class="ctier" style="--rc:${t.col}"><b>0</b><em>${t.name}</em><small>expected ${eTxt(L.e[k])}</small></div>`).join('') +
@@ -3645,9 +3881,16 @@ function showEnd() {
     `<div class="lends"><span>Unlucky</span><span>Luckier than ${L.pct}% of players</span><span>Lucky</span></div></div>`;
   const tierCells = [...$('endCaches').querySelectorAll('.ctier b')], marker = $('endCaches').querySelector('.lbar i');
   // finishing a Linear galaxy (alone or with friends) unlocks the Challenge; the first time, the end screen says so
-  const newlyOpen = LIN() && unlockOpen();
-  achWin(L ? L.pct : 0); lbT = 0; lbSend();   // (the finish goes to the leaderboard at once)
-  $('endUnlock').innerHTML = newlyOpen ? '<b>Infinite galaxies and Challenge unlocked.</b> Start one from New world in the main menu.' : '';
+  const newlyOpen = !demo && LIN() && unlockOpen();
+  if (!demo) { achWin(L ? L.pct : 0); lbT = 0; lbSend(); }   // (the finish goes to the leaderboard at once)
+  $('endUnlock').innerHTML = demo ? '<div class="dhd">In the full game the galaxy keeps going</div><ul>' + demoFeatures().map(t => '<li>' + t + '</li>').join('') + '</ul>'
+    : newlyOpen ? '<b>Infinite galaxies and Challenge unlocked.</b> Start one from New world in the main menu.' : '';
+  $('endUnlock').classList.toggle('demo', demo);
+  $('endKicker').textContent = demo ? 'Demo complete' : '1,000,000,000 of 1,000,000,000';
+  $('endTitle').textContent = demo ? 'Thanks for Playing the Demo' : 'The Galaxy Is Yours';
+  $('endTag').textContent = demo ? 'You cleared both demo sectors.' : 'Every last star, collected.';
+  const store = demo && !!(window.steam && window.steam.store);   // (on Steam, once the full game's app id is set: its store page)
+  $('endStore').style.display = store ? '' : 'none'; $('endKeep').classList.toggle('minor', store);
   // numbers count up once the cards have faded in
   const cells = [...$('endStats').querySelectorAll('b')], calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const t0 = performance.now() + (calm ? 0 : 2600), dur = calm ? 1 : 2200;
@@ -3660,12 +3903,14 @@ function showEnd() {
     if (p < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
-  $('endKeep').textContent = INF() ? 'Skill tree' : 'Keep exploring';   // (Infinite galaxies: straight on to the skill tree)
+  $('endKeep').textContent = INF() ? 'Skill tree' : demo ? 'Keep playing' : 'Keep exploring';   // (Infinite galaxies: straight on to the skill tree)
+  if (tutLessonOn && tutSteps[tutI] && tutSteps[tutI].ask) lessonEnd();   // (a tip's question waiting: it can go; the tutorial itself just waits)
+  document.body.classList.add('endShow');
   $('end').classList.add('show'); $('end').scrollTop = 0;
   endT0 = performance.now(); requestAnimationFrame(drawEndSky);
   sfx('win');
 }
-function hideEnd() { endOn = false; $('end').classList.remove('show'); }
+function hideEnd() { endOn = false; $('end').classList.remove('show'); document.body.classList.remove('endShow'); }
 
 // ---------------------------------------------------------------- achievements
 // Kept on this computer (not in a save), so they carry across every galaxy. Most look at the galaxy you are playing; the
@@ -4975,23 +5220,24 @@ function setupTitle() {
 const LOAD_TIPS = [
   ['Every sector you clear leaves a <b>Stellar Cache</b> with a random, permanent reward.'],
   ['<b>Fortune Finder</b> makes the rarer Stellar Cache rewards turn up more often.'],
-  ['<b>Right-drag</b> or <b>WASD</b> moves the camera; <b>scroll</b> to zoom.'],
-  ['Press <b>1</b> to <b>5</b> to select a whole kind of helper at once.', '', 1],
-  ['Press <b>H</b> to jump to the Fleet Hangar.', 'lin', 1],
-  ['<b>Q</b> unlocks the next sector; <b>E</b> unlocks it and takes you there.', 'lin', 1],
+  ['<b>Right-drag</b> or <b>WASD</b> moves the camera; <b>scroll</b> to zoom.', '', 0, 'The <b>right stick</b> moves the camera; the <b>triggers</b> zoom.'],
+  ['Press <b>1</b> to <b>5</b> to select a whole kind of helper at once.', '', 1, 'Press <b>X</b> to select all your helpers at once.'],
+  ['Press <b>H</b> to jump to the Fleet Hangar.', 'lin', 1, 'Press <b>View</b> to jump to the Fleet Hangar.'],
+  ['<b>Q</b> unlocks the next sector; <b>E</b> unlocks it and takes you there.', 'lin', 1, ''],
   ['Run out of stars to collect and the nearest sector opens <b>for free</b>.', 'lin'],
   ['Rare discoveries hide among the stars. <b>Hunters</b> track them down for you.', '', 1],
-  ['Press <b>M</b> for the stardust meter: what each effect and helper earns.'],
+  ['Press <b>M</b> for the stardust meter: what each effect and helper earns.', '', 0, ''],
   ['There are exactly <b>1,000,000,000</b> stars, and every single one can be collected.'],
   ['<b>Autopilot</b> decides how helpers pick their stars: click it to switch between <b>Top to bottom</b> and <b>Most effective</b>.', '', 1],
-  ['Press <b>Esc</b> any time for the menu and settings.'],
+  ['Press <b>Esc</b> any time for the menu and settings.', '', 0, 'Press <b>Start</b> any time for the menu and settings.'],
 ];
 let loadTipI = 0, loadTipTimer = null, loadHideTimer = null;
 function loadShow(name, info, lin, chal) {
   clearTimeout(loadHideTimer);
   $('ldName').textContent = name; $('ldInfo').textContent = info || '';
   $('ldFill').style.transition = 'none'; loadSet('Getting ready', 0); void $('ldFill').offsetWidth; $('ldFill').style.transition = '';
-  const tips = LOAD_TIPS.filter(t => (lin || t[1] !== 'lin') && !(chal && t[2]));   // (tips marked 1 are about helpers or buying sectors: not in Challenge)
+  const tips = LOAD_TIPS.filter(t => (lin || t[1] !== 'lin') && !(chal && t[2]))   // (tips marked 1 are about helpers or buying sectors: not in Challenge)
+    .map(t => padUI() && t[3] !== undefined ? [t[3]] : t).filter(t => t[0]);      // (with a controller: its own words, or left out)
   loadTipI = (Math.random() * tips.length) | 0; $('ldTip').innerHTML = tips[loadTipI][0]; $('ldTip').style.opacity = 1;
   clearInterval(loadTipTimer);
   loadTipTimer = setInterval(() => { $('ldTip').style.opacity = 0; setTimeout(() => { loadTipI = (loadTipI + 1) % tips.length; $('ldTip').innerHTML = tips[loadTipI][0]; $('ldTip').style.opacity = 1; }, 600); }, 6000);
@@ -5061,6 +5307,7 @@ function exitToMenu() {
   save(go); setTimeout(go, 1500);
 }
 $('endNew').onclick = exitToMenu;
+$('endStore').onclick = () => { if (window.steam && window.steam.store) window.steam.store(); };
 $('detail').onclick = () => setDetail(detailPref === 'low' ? 'auto' : 'low');
 $('btnSfx').onclick = () => { audioPref.sfx = !audioPref.sfx; applyAudioPref(); };
 $('btnMusic').onclick = () => { audioPref.music = !audioPref.music; applyAudioPref(); };
@@ -6568,6 +6815,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   lastFrameAt = performance.now();
   let dt = tickGap(now - last); last = now;
+  padTick(Math.min(dt, 0.1));   // the controller (see 'controller')
   if (!started) { if (!msky.on) render(now / 1000); return; }   // menu: it has its own sky (the galaxy isn't built yet)
   const fdt = Math.min(dt, 0.1);
   if (!won) playTime += dt;
@@ -6694,7 +6942,7 @@ function frame(now) {
   // (once each time the game is started; he waits until he isn't busy with something else)
   if (wasDetailed && !lagAsked) {
     slowT = dt > 0.036 && dt < 0.5 ? slowT + dt : Math.max(0, slowT - dt);
-    if (slowT > 3 && !tutAsking && !tutLessonOn && !cine && !hangarOpen()) { lagAsked = true; lessonStart(lagLesson()); }
+    if (slowT > 3 && !tutAsking && !tutLessonOn && !cine && !hangarOpen() && !endOn) { lagAsked = true; lessonStart(lagLesson()); }   // (not over the end screen)
   }
   idleTick(Math.min(dt, 0.5));   // helpers idle for a while: Pip says so (see idleLesson)
   ppsT += dt; uiT += dt; miniT += dt;
@@ -7584,18 +7832,22 @@ let demoShown = '';
 function demoEnd(over) {
   if (!DEMO || !started) return;
   const w = String((net.role === 'guest' ? net.world : curSave) || 'world');
-  if (over) { if (demoShown === w) return; demoShown = w; }
+  if (over) { if (demoShown === w) return; demoShown = w; demoClose(); showEnd(true); return; }   // both sectors cleared: the demo's end screen
   $('demoTitle').textContent = over ? 'Thanks for playing the demo!' : 'That’s the edge of the demo';
   $('demoSub').textContent = (over ? 'You cleared both demo sectors. ' : 'The demo has ' + DEMO_SEC + ' sectors. ') + 'In the full game the galaxy keeps going:';
-  $('demoList').innerHTML = [
+  $('demoList').innerHTML = demoFeatures().map(t => '<li>' + t + '</li>').join('');
+  $('demoStore').style.display = window.steam && window.steam.store ? '' : 'none';
+  $('demoBox').classList.add('show'); if (over) sfx('win');
+}
+// what the full game has (the demo window and the demo's end screen both list it)
+function demoFeatures() {
+  return [
     '<b>' + NREG + ' sectors and a billion stars</b>, with new upgrades opening up as you expand',
     '<b>All nine cursor effects</b>, from Supernova and Chain Lightning to the Singularity and the Big Bang',
     '<b>The whole fleet</b>: probes, hunters and stations alongside your sweepers',
     '<b>Infinite galaxies</b>, with a skill tree that carries over, and the <b>Challenge</b>',
     '<b>All ' + ACH.length + ' achievements and ' + SKINS.length + ' cursor skins</b>, plus the online leaderboard and cloud backup',
-  ].map(t => '<li>' + t + '</li>').join('');
-  $('demoStore').style.display = window.steam && window.steam.store ? '' : 'none';
-  $('demoBox').classList.add('show'); if (over) sfx('win');
+  ];
 }
 const demoClose = () => $('demoBox').classList.remove('show');
 $('demoOk').onclick = demoClose;
@@ -7610,7 +7862,7 @@ const hangarOpen = () => $('hangarBox').classList.contains('show');
 const clickTab = t => { const b = document.querySelector('#tabs button[data-tab=' + t + ']'); if (b && tab !== t) b.click(); };
 const have = c => `<i>${fmt(Math.floor(Math.min(points, c)))} / ${fmtPrice(c)}</i>`;
 const tutSweeper = () => drones.find(d => d.kind === 1 && !d.launch) || drones.find(d => !d.launch);   // the helper the "steer it" steps are about
-const movingKeys = () => ['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].some(k => keys.has(k));
+const movingKeys = () => pad.cam || ['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].some(k => keys.has(k));
 // the camera glides somewhere (used to show the hangar); moving it yourself takes over at once
 function panTo(x, y, z, dur) { camPan = { x0: camX, y0: camY, z0: zoom, x1: x, y1: y, z1: Math.min(2.5, Math.max(minZoom, z)), t: 0, dur, lx: camX, ly: camY }; }
 function stepPan(dt) {
@@ -7660,12 +7912,12 @@ const tutFirstUp = () => DEFS.find(d => d.tab === 'cursor' && inMode(d) && visib
 function tutBuild() {
   const lin = LIN(), sw = DEFS.find(d => d.id === 'sweepers'), hg = DEFS.find(d => d.id === 'hangar');
   const S = [
-    { text: () => `Let’s start! Move your mouse over the stars to <b>collect</b> them. <i>${Math.min(20, myStars)} / 20</i>`,   // your real star count
+    { text: () => `Let’s start! Move ${padUI() ? 'the <b>left stick</b>' : 'your mouse'} over the stars to <b>collect</b> them. <i>${Math.min(20, myStars)} / 20</i>`,   // your real star count
       done: () => myStars >= 20 },
     { text: () => { const d = tutFirstUp(); return d && points < cost(d) ? 'Nice! Stars give you <b>stardust</b>. Collect a little more for this upgrade. ' + have(cost(d)) : 'Nice! Stars give you <b>stardust</b>. Spend some on this upgrade.'; },
       start: () => { setPanelHidden(false); clickTab('cursor'); tutS.base = upCount('cursor'); }, done: () => upCount('cursor') > tutS.base,
       hi: () => { const d = tutFirstUp(); return d ? rows[d.id].b : null; } },
-    { text: () => 'Now have a look around: <b>right-drag</b> (or WASD) to move, and <b>scroll</b> to zoom.',
+    { text: () => (padUI() ? 'Now have a look around: the <b>right stick</b> moves, and the <b>triggers</b> zoom.' : 'Now have a look around: <b>right-drag</b> (or WASD) to move, and <b>scroll</b> to zoom.'),
       start: () => { tutS.moved = 0; tutS.px = camX; tutS.py = camY; tutS.pz = zoom; },
       tick: () => { tutS.moved += Math.hypot(camX - tutS.px, camY - tutS.py) * zoom + Math.abs(Math.log(zoom / tutS.pz)) * 600; tutS.px = camX; tutS.py = camY; tutS.pz = zoom; },
       done: () => tutS.moved > 900 },
@@ -7716,19 +7968,19 @@ function tutBuild() {
     else if (!dragging && !boxing && !movingKeys()) { const k = 1 - Math.exp(-4 * dt); camX += (d.x - camX) * k; camY += (d.y - camY) * k; }
   };
   S.push(
-    { text: () => 'This is your Sweeper! To steer it, <b>hold the left mouse button</b> and drag a box around it. (Pressing <b>1</b> selects all your Sweepers, too.)',
+    { text: () => (padUI() ? 'This is your Sweeper! To steer it, point next to it, <b>hold A</b> and move to draw a box around it. (Pressing <b>X</b> selects all your helpers, too.)' : 'This is your Sweeper! To steer it, <b>hold the left mouse button</b> and drag a box around it. (Pressing <b>1</b> selects all your Sweepers, too.)'),
       start: () => { const d = tutSweeper(); if (d) panTo(d.x, d.y, 1.4, 1.4); }, tick: follow,
       done: () => drones.some(d => d.sel), world: () => 'sweeper' },
-    { text: () => drones.some(d => d.sel) ? 'Selected! Now <b>click an empty spot</b> to send it there. Clicking on the minimap works too.'
+    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Selected! Now point at an empty spot and press <b>A</b> to send it there. The minimap works too.' : 'Selected! Now <b>click an empty spot</b> to send it there. Clicking on the minimap works too.')
         : 'Oops, it’s not selected any more. Drag a box around it again.',
       start: () => { tutS.o = moveOrders; }, tick: follow, done: () => moveOrders > tutS.o, world: () => 'sweeper' },
-    { text: () => drones.some(d => d.sel) ? 'Now give a <b>quick right-click</b> to deselect it. (Holding the right button still moves the camera, just like before.)'
+    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Now press <b>B</b> to deselect it.' : 'Now give a <b>quick right-click</b> to deselect it. (Holding the right button still moves the camera, just like before.)')
         : 'Zoom! Helpers warp to where you send them and get to work by themselves. <b>Select it again</b> and I’ll show you how to let go.',
       start: () => { tutS.r = rightDeselects; },
       tick: dt => { const d = tutSweeper(); if (d && !d.forced) follow(dt); },   // once it has arrived, keep it in view again
       done: () => rightDeselects > tutS.r, world: () => 'sweeper' });
   S.push({ text: () => 'Every sector you clear leaves a <b>Stellar Cache</b> with a reward. ' + (chal ? 'Remember: clear every star you have and the next sector opens. ' : lin ? 'And if you ever run out of stars, the nearest sector opens <b>for free</b>. ' : '') +
-      'Press <b>Esc</b> any time for the menu. That’s all from me. Have fun out there!', final: true,
+      'Press <b>' + (padUI() ? 'Start' : 'Esc') + '</b> any time for the menu. That’s all from me. Have fun out there!', final: true,
     tick: dt => { tutS.t = (tutS.t || 0) + dt; }, done: () => tutS.t > 14 });
   return S;
 }
@@ -7785,7 +8037,7 @@ function idleTick(dt) {
   idleTipClock += dt;
   let n = 0;
   for (const d of drones) { d.idleFor = d.idle && !d.forced && !d.launch && d.kind !== 2 ? (d.idleFor || 0) + dt : 0; if (d.idleFor > IDLE_TIP_T) n++; }
-  if (n && idleTipClock >= idleTipNext && hasWork() && !tutOn && !tutAsking && !tutLessonOn && !cine && !hangarOpen()) {
+  if (n && idleTipClock >= idleTipNext && hasWork() && !tutOn && !tutAsking && !tutLessonOn && !cine && !hangarOpen() && !endOn) {
     idleTipNext = idleTipClock + IDLE_TIP_GAP; lessonStart(idleLesson());
   }
 }
