@@ -688,6 +688,17 @@
   #load .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: #b7c3d8; font-variant-numeric: tabular-nums; }
   #ldTip { min-height: 40px; margin-top: 30px; font-size: 13px; line-height: 1.5; color: #8fa3bd; transition: opacity .6s ease; }
   #ldTip b { color: #ffe9b0; font-weight: 600; }
+  /* the photosensitivity warning, shown on the loading screen while a world loads (a steady card: nothing on it moves) */
+  #ldWarn { margin: 22px 0 0; padding: 16px 18px 14px; text-align: left; border-radius: 12px; border: 1px solid rgba(255, 212, 71, .35); background: rgba(13, 18, 32, .92); }
+  #ldWarn[hidden], #ldTip[hidden] { display: none; }
+  #ldWarn h3 { margin: 0 0 8px; font-size: 15px; color: #ffe9b0; }
+  #ldWarn p { margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #c5d1e0; }
+  #ldWarn .wrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+  #ldWarn .wrow span { display: flex; align-items: center; gap: 8px; }
+  #ldWarn label { font-size: 13px; color: #8fa3bd; cursor: pointer; }
+  #ldWarnOff { width: 16px; height: 16px; margin: 0; accent-color: #ffd447; cursor: pointer; }
+  #ldWarnOk { padding: 8px 24px; border-radius: 9px; border: 1px solid #5a7ad8; background: linear-gradient(180deg, #2b3c6e, #1a2648); color: #fff; font: 600 14px "Segoe UI", system-ui, sans-serif; cursor: pointer; }
+  #ldWarnOk:hover, #ldWarnOk:focus-visible { border-color: #9db4ff; outline: none; }
   /* the main menu's pages: the main buttons, the list of your worlds (Galaxies), and making a new world */
   #title .tv { display: none; }
   #title[data-view=main] .tv-main, #title[data-view=worlds] .tv-worlds, #title[data-view=new] .tv-new { display: block; }
@@ -917,6 +928,12 @@
   <div class="kick">Entering</div>
   <h2 id="ldName"></h2>
   <div id="ldInfo"></div>
+  <div id="ldWarn" role="alertdialog" aria-labelledby="ldWarnH" hidden>
+    <h3 id="ldWarnH">Photosensitivity warning</h3>
+    <p>A very small number of people may have a seizure when they see certain kinds of light, such as flashing lights or patterns, even if they have never had one before. One Billion Stars avoids flashing and strobing, but it does have bright glows, bursts of particles and fast movement.</p>
+    <p>If you feel dizzy, have blurred vision, eye or face twitching, or feel unwell in any way, stop playing straight away and rest. Effects can be turned down or off in Settings, under Picture.</p>
+    <div class="wrow"><span><input type="checkbox" id="ldWarnOff"><label for="ldWarnOff">Don’t show this again</label></span><button id="ldWarnOk" type="button">Continue</button></div>
+  </div>
   <div class="bar"><div id="ldFill"></div></div>
   <div class="row"><span id="ldStage"></span><span id="ldPct"></span></div>
   <div id="ldTip"></div>
@@ -5171,7 +5188,7 @@ function startGame() {
 async function openWorld(id, isNew) {
   const s = saves.find(q => q.id === id) || {};
   titleBusy(true); titleMsg('');
-  loadShow(s.name || 'Your world', !s.mode ? '' : isNew ? modeName(s.mode) + ' · a brand new galaxy' : worldInfo(s), s.mode !== 'open', s.mode === 'challenge');
+  loadShow(s.name || 'Your world', !s.mode ? '' : isNew ? modeName(s.mode) + ' · a brand new galaxy' : worldInfo(s), s.mode !== 'open', s.mode === 'challenge', true);
   if (!galaxyBuilt || worldUsed) { resetState(); await buildWorld(p => loadSet('Building the galaxy', p * 0.86)); galaxyBuilt = true; }   // (a galaxy already played on is built again)
   loadSet('Loading your world', 88);
   worldUsed = true; curSave = id; noSave = false; guestProfiles = {}; worldCoop = false;
@@ -5183,6 +5200,7 @@ async function openWorld(id, isNew) {
   if (statsMissing) { myStars = collected; myFinds = found.slice(2).reduce((a, b) => a + b, 0); }
   recalc(); refreshUI(); renderMini(); titleBusy(false);
   loadSet('Ready', 100); await new Promise(r => setTimeout(r, 250));   // (a moment on a full bar, so it doesn't just vanish)
+  if (!(await warnWait())) return;   // (the photosensitivity warning, if it still shows: in once Continue is pressed)
   startGame(); tutMaybe(id, !had, false);
   if (demoCap() && !hasWork()) setTimeout(() => demoEnd(true), 900);   // (a finished demo world: its end window again)
 }
@@ -5317,8 +5335,27 @@ const LOAD_TIPS = [
   ['Press <b>Esc</b> any time for the menu and settings.', '', 0, 'Press <b>Start</b> any time for the menu and settings.'],
 ];
 let loadTipI = 0, loadTipTimer = null, loadHideTimer = null;
-function loadShow(name, info, lin, chal) {
+// The photosensitivity warning: on the loading screen each time a world is opened or joined (not between the galaxies of
+// an Infinite world), until "Don't show this again" is ticked. The world keeps loading underneath; it is entered once it
+// has loaded and Continue has been pressed, in whichever order. (Not in an automated test run, which can't press it.)
+const WARN_KEY = 'obs-flash-warning-off';
+let warnGate = null, warnDone = null;
+function warnShow() {
+  let off = false; try { off = localStorage.getItem(WARN_KEY) === '1'; } catch (e) {}
+  if (off || lbOff) { warnGate = null; return; }
+  $('ldWarnOff').checked = false; $('ldWarn').hidden = false; $('ldTip').hidden = true;
+  warnGate = new Promise(r => { warnDone = r; });
+  setTimeout(() => { if (!$('ldWarn').hidden) $('ldWarnOk').focus({ preventScroll: true }); }, 60);   // (Enter or Space continues)
+}
+function warnEnd(ok) {
+  $('ldWarn').hidden = true; $('ldTip').hidden = false;
+  if (warnDone) { const d = warnDone; warnDone = null; d(ok); }
+}
+$('ldWarnOk').onclick = () => { if ($('ldWarnOff').checked) try { localStorage.setItem(WARN_KEY, '1'); } catch (e) {} warnEnd(true); };
+const warnWait = async () => { if (!warnGate) return true; const ok = await warnGate; warnGate = null; return ok; };   // false: the loading was called off
+function loadShow(name, info, lin, chal, warn) {
   clearTimeout(loadHideTimer);
+  if (warn) warnShow(); else { warnGate = null; $('ldWarn').hidden = true; $('ldTip').hidden = false; }
   $('ldName').textContent = name; $('ldInfo').textContent = info || '';
   $('ldFill').style.transition = 'none'; loadSet('Getting ready', 0); void $('ldFill').offsetWidth; $('ldFill').style.transition = '';
   const tips = LOAD_TIPS.filter(t => (lin || t[1] !== 'lin') && !(chal && t[2]))   // (tips marked 1 are about helpers or buying sectors: not in Challenge)
@@ -5332,6 +5369,7 @@ function loadShow(name, info, lin, chal) {
 function loadSet(stage, p) { $('ldStage').textContent = stage; $('ldPct').textContent = Math.round(p) + '%'; $('ldFill').style.width = Math.min(100, p).toFixed(1) + '%'; }
 function loadHide() {   // into the game (the galaxy shows through as the screen fades), or back to the menu if it failed
   menuSkyOn(!started); document.body.classList.remove('loading');
+  if (warnDone) warnEnd(false);   // (back to the menu while the warning still showed)
   const el = $('load'); if (!el.classList.contains('show')) return;
   el.classList.remove('in'); clearInterval(loadTipTimer);
   loadHideTimer = setTimeout(() => el.classList.remove('show'), 450);
@@ -7243,7 +7281,7 @@ async function guestBegin(c) {
   noSave = true; net.building = true;
   $('coopBox').classList.remove('show'); $('title').classList.remove('gone');
   setMode(net.mode); worldRules = net.rules || 1; worldUsed = true;   // play by the host's rules
-  loadShow('Your friend’s galaxy', 'Co-op · ' + modeName(mode), LIN(), CHAL());
+  loadShow('Your friend’s galaxy', 'Co-op · ' + modeName(mode), LIN(), CHAL(), true);
   await freshWorld(p => loadSet('Building the galaxy', p * 0.6));
   titleBusy(true); loadSet('Receiving the galaxy from your friend', 60);
   net.building = false;
@@ -7580,9 +7618,12 @@ function onNet(m, c) {
     recalc(); refreshUI(); renderMini();
     net.ready = true; titleMsg(''); coopUI(); loadSet('Ready', 100);
     $('reset').style.display = 'none'; $('endNew').style.display = 'none';
-    startGame();
-    toast('You joined the host’s galaxy', '#ff9de0');
-    tutMaybe('g:' + net.world, false, true);   // the first time in this galaxy: offer the tutorial
+    warnWait().then(ok => {   // (the photosensitivity warning, if it still shows: in once Continue is pressed)
+      if (!ok || !net.ready || started) return;
+      startGame();
+      toast('You joined the host’s galaxy', '#ff9de0');
+      tutMaybe('g:' + net.world, false, true);   // the first time in this galaxy: offer the tutorial
+    });
   }
 }
 // ---- keeping co-op galaxies identical. Stars collected travel as lists of ids, and if any of that ever goes missing
