@@ -7,10 +7,10 @@
 <meta name="description" content="An incremental space game. Start with a single cursor in a galaxy of one billion stars, build a fleet, unlock 900 sectors and collect every last one.">
 <meta property="og:title" content="One Billion Stars">
 <meta property="og:description" content="A galaxy of one billion stars. Collect every last one. Coming soon to Steam.">
-<meta property="og:image" content="share.jpg">
+<meta property="og:image" content="share.jpg?v=0f5d4326">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#05060f">
-<link rel="icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png?v=815fdf73">
 <style>
   :root {
     --bg: #05060f; --panel: #0d1220; --line: #1e2840; --text: #dbe4f0; --muted: #8fa3bd; --gold: #ffd447; --violet: #b48cff; --blue: #5aa8ff;
@@ -27,7 +27,7 @@
   #sky { position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; }
 
   header.hero { position: relative; min-height: min(92vh, 860px); display: flex; align-items: center; justify-content: center; text-align: center; padding: 48px 0 64px;
-    background: linear-gradient(180deg, rgba(5, 6, 15, .25), rgba(5, 6, 15, .55) 55%, var(--bg)), url(hero.jpg) center / cover no-repeat; }
+    background: linear-gradient(180deg, rgba(5, 6, 15, .25), rgba(5, 6, 15, .55) 55%, var(--bg)), url(hero.jpg?v=4a2f21c6) center / cover no-repeat; }
   .hero .logo { width: min(620px, 92vw); margin: 0 auto 6px; filter: drop-shadow(0 6px 30px rgba(120, 90, 255, .35)); }
   .hero h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .hero .tag { margin: 0 auto 28px; max-width: 34em; font-size: clamp(17px, 2.4vw, 21px); color: #e8ecf7; text-shadow: 0 2px 12px #000; }
@@ -59,6 +59,22 @@
   .feature.flip .shot { order: 2; }
   .shot { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 16px 44px rgba(0, 0, 0, .55); transition: transform .2s, border-color .2s; }
   .shot:hover { transform: scale(1.015); border-color: #3a4c78; }
+  .shot { cursor: zoom-in; }
+
+  /* the photo viewer: a screenshot opened big over the page; clicking anywhere (or Esc, or Back) closes it */
+  #lb { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 64px 72px 56px;
+    background: rgba(3, 4, 10, .93); opacity: 0; transition: opacity .2s; cursor: zoom-out; }
+  #lb[hidden] { display: none; }
+  #lb.open { opacity: 1; }
+  #lb figure { margin: 0; display: flex; flex-direction: column; align-items: center; max-width: 100%; max-height: 100%; }
+  #lb img { width: auto; max-width: 100%; max-height: calc(100vh - 160px); border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 20px 70px rgba(0, 0, 0, .7); }
+  #lb figcaption { margin-top: 12px; color: var(--muted); font-size: 14px; text-align: center; }
+  #lb button { position: absolute; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; padding: 0; border-radius: 50%;
+    border: 1px solid #2c3a5c; background: rgba(13, 18, 32, .85); color: #dbe4f0; font: 24px/1 system-ui, sans-serif; cursor: pointer; transition: border-color .15s, background .15s; }
+  #lb button:hover, #lb button:focus-visible { border-color: #9db4ff; background: #1a2648; outline: none; }
+  #lb .lb-close { top: 12px; right: 12px; }
+  #lb .lb-prev { left: 12px; top: 50%; transform: translateY(-50%); }
+  #lb .lb-next { right: 12px; top: 50%; transform: translateY(-50%); }
   .feature h3 { margin: 0 0 8px; font-size: 24px; color: #fff; }
   .feature p { margin: 0 0 10px; color: #b8c6da; }
   .feature ul { margin: 8px 0 0; padding-left: 18px; color: #b8c6da; }
@@ -79,8 +95,11 @@
     .feature, .feature.flip { grid-template-columns: 1fr; gap: 18px; padding: 24px 0; }
     .feature.flip .shot { order: 0; }
     .btn { min-width: 0; width: 100%; max-width: 340px; }
+    #lb { padding: 64px 12px 76px; }   /* (phones: the arrows move below the picture) */
+    #lb .lb-prev, #lb .lb-next { top: auto; bottom: 14px; transform: none; }
+    #lb .lb-prev { left: calc(50% - 58px); } #lb .lb-next { right: calc(50% - 58px); }
   }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn, .shot { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn, .shot, #lb { transition: none; } }
 </style>
 </head>
 <body>
@@ -89,10 +108,10 @@
 <header class="hero">
   <div class="wrap">
     <h1>One Billion Stars</h1>
-    <img class="logo" src="logo.png" alt="One Billion Stars" width="960" height="540">
+    <img class="logo" src="logo.png?v=5346505c" alt="One Billion Stars" width="960" height="540">
     <p class="tag">Start with a single cursor. Build a fleet, open up the galaxy sector by sector, and collect every last one.</p>
     <div class="cta">
-      <a class="btn" href="play.html">Play the free demo<small>in your browser, on a computer</small></a>
+      <a class="btn" href="play.html?v=2b7ac86d">Play the free demo<small>in your browser, on a computer</small></a>
       <span class="btn steam" id="steamBtn">Coming soon to Steam<small>Windows · Linux · Steam Deck</small></span>
     </div>
   </div>
@@ -105,7 +124,7 @@
       <p class="kicker">Trailer</p>
       <h2>One cursor. One billion stars.</h2>
       <p class="lead">An incremental game about scale: every star in the galaxy is really there, and every one of them can be collected.</p>
-      <div class="trailer"><video controls preload="none" playsinline poster="trailer-poster.jpg" src="trailer.mp4">Your browser can't play this video.</video></div>
+      <div class="trailer"><video controls preload="none" playsinline poster="trailer-poster.jpg?v=588363df" src="trailer.mp4?v=47c764e9">Your browser can't play this video.</video></div>
       <div class="facts">
         <div class="fact"><b>1,000,000,000</b><span>stars, every one real</span></div>
         <div class="fact"><b>900</b><span>sectors to unlock</span></div>
@@ -118,31 +137,31 @@
   <section id="features">
     <div class="wrap">
       <div class="feature">
-        <a class="shot" href="shot-early.jpg"><img src="shot-early.jpg" alt="The cursor collecting stars in the first sector" loading="lazy" width="1920" height="1080"></a>
+        <a class="shot" href="shot-early.jpg?v=9c7fb6f2"><img src="shot-early.jpg?v=9c7fb6f2" alt="The cursor collecting stars in the first sector" loading="lazy" width="1920" height="1080"></a>
         <div><p class="kicker">Start small</p><h3>Sweep up stars with your cursor</h3>
           <p>Move over the stars to collect them. Every star gives stardust, and stardust buys upgrades: a bigger reach, faster attacks, stars worth more.</p>
           <p>Before long your cursor sets off Supernovas, Chain Lightning, Meteors and Singularities, nine cursor effects in all, up to the Big Bang.</p></div>
       </div>
       <div class="feature flip">
-        <a class="shot" href="shot-helpers.jpg"><img src="shot-helpers.jpg" alt="Probes, sweepers and stations collecting stars across a sector" loading="lazy" width="1920" height="1080"></a>
+        <a class="shot" href="shot-helpers.jpg?v=60349ff0"><img src="shot-helpers.jpg?v=60349ff0" alt="Probes, sweepers and stations collecting stars across a sector" loading="lazy" width="1920" height="1080"></a>
         <div><p class="kicker">Build a fleet</p><h3>Helpers that work while you watch</h3>
           <p>The Fleet Hangar builds helpers one at a time, and each kind works in its own way:</p>
           <ul><li><b>Sweepers</b> clear a sector lane by lane</li><li><b>Probes</b> hunt stars on their own</li><li><b>Hunters</b> track down rare discoveries and comets</li><li><b>Stations</b> send out rings that clear everything they pass</li></ul></div>
       </div>
       <div class="feature">
-        <a class="shot" href="shot-galaxy.jpg"><img src="shot-galaxy.jpg" alt="Zoomed out over several sectors of the galaxy" loading="lazy" width="1920" height="1080"></a>
+        <a class="shot" href="shot-galaxy.jpg?v=9b450f43"><img src="shot-galaxy.jpg?v=9b450f43" alt="Zoomed out over several sectors of the galaxy" loading="lazy" width="1920" height="1080"></a>
         <div><p class="kicker">Open up the galaxy</p><h3>900 sectors, piece by piece</h3>
           <p>You start in a single sector. Unlock the ones next to it with stardust, and new upgrades open up as you expand.</p>
           <p>Every cleared sector leaves a Stellar Cache with a random, permanent reward, and somewhere out there are planets, quasars, magnetars and 67 black holes to find.</p></div>
       </div>
       <div class="feature flip">
-        <a class="shot" href="shot-skills.jpg"><img src="shot-skills.jpg" alt="The skill tree of Infinite galaxies" loading="lazy" width="1920" height="1080"></a>
+        <a class="shot" href="shot-skills.jpg?v=2ee5a2a9"><img src="shot-skills.jpg?v=2ee5a2a9" alt="The skill tree of Infinite galaxies" loading="lazy" width="1920" height="1080"></a>
         <div><p class="kicker">Then keep going</p><h3>Infinite galaxies and the Challenge</h3>
           <p>Finished a galaxy? In <b>Infinite galaxies</b> every one you complete earns a Galaxy Point for a skill tree that carries over, so the next galaxy starts stronger.</p>
           <p>Or try the <b>Challenge</b>: no buying sectors, no helpers, just you and a billion stars.</p></div>
       </div>
       <div class="feature">
-        <a class="shot" href="shot-skins.jpg"><img src="shot-skins.jpg" alt="The cursor skins window" loading="lazy" width="1920" height="1080"></a>
+        <a class="shot" href="shot-skins.jpg?v=8c43bfe6"><img src="shot-skins.jpg?v=8c43bfe6" alt="The cursor skins window" loading="lazy" width="1920" height="1080"></a>
         <div><p class="kicker">Show it off</p><h3>Achievements and cursor skins</h3>
           <p>52 achievements unlock 15 cursor skins, from simple recolours to Legendary skins with cursor effects of their own.</p>
           <p>And one Mythic skin that only turns up in Stellar Caches, at very long odds.</p></div>
@@ -156,7 +175,7 @@
         <p class="kicker">Free demo</p>
         <h2>Try the first two sectors now</h2>
         <p>The demo has the start of the game: your cursor, the first upgrades, the Fleet Hangar and your first sweepers, across two sectors. Your progress is saved in your browser.</p>
-        <div class="cta"><a class="btn" href="play.html">Play the demo</a></div>
+        <div class="cta"><a class="btn" href="play.html?v=2b7ac86d">Play the demo</a></div>
         <p class="note">Best on a computer with a mouse. It needs about 300 MB of free memory.</p>
       </div>
     </div>
@@ -165,9 +184,16 @@
 
 <footer>
   <div class="wrap">
-    © 2026 One Billion Stars. All rights reserved. · Online co-op uses PeerJS (MIT License): <a href="THIRD-PARTY-NOTICES.txt">third-party notices</a>
+    © 2026 One Billion Stars. All rights reserved. · Online co-op uses PeerJS (MIT License): <a href="THIRD-PARTY-NOTICES.txt?v=d6d84354">third-party notices</a>
   </div>
 </footer>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
+  <figure><img alt=""><figcaption></figcaption></figure>
+  <button class="lb-close" type="button" aria-label="Close">✕</button>
+  <button class="lb-prev" type="button" data-go="-1" aria-label="Previous screenshot">‹</button>
+  <button class="lb-next" type="button" data-go="1" aria-label="Next screenshot">›</button>
+</div>
 
 <script>
 // once the game is on Steam, put its store link here and the button becomes "Wishlist on Steam"
@@ -189,6 +215,48 @@ if (STEAM_URL) { const b = document.getElementById('steamBtn'), a = document.cre
     }
   }
   draw(); let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 150); });
+})();
+
+// the photo viewer: clicking a screenshot opens it big on this page instead of going to the picture on its own.
+// Clicking anywhere, Esc, or the browser's Back button closes it; the arrows (or the arrow keys) go through the screenshots.
+// (Ctrl-click or a middle click still opens the picture in a new tab, as the links are still there underneath.)
+(function () {
+  const lb = document.getElementById('lb'), im = lb.querySelector('img'), cap = lb.querySelector('figcaption'), shots = [...document.querySelectorAll('a.shot')];
+  let cur = 0, back = null, inHistory = false;
+  function show(i) {
+    cur = (i + shots.length) % shots.length;
+    const a = shots[cur], alt = a.querySelector('img').alt;
+    im.src = a.href; im.alt = alt; cap.textContent = alt + '  ·  ' + (cur + 1) + ' / ' + shots.length;
+  }
+  function open(i) {
+    back = document.activeElement; show(i);
+    lb.hidden = false; document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => lb.classList.add('open'));
+    lb.querySelector('.lb-close').focus({ preventScroll: true });
+    try { history.pushState({ lb: 1 }, ''); inHistory = true; } catch (e) { inHistory = false; }   // so Back closes the picture instead of leaving the site
+  }
+  function hide() {
+    if (lb.hidden) return;
+    lb.classList.remove('open'); lb.hidden = true; document.body.style.overflow = '';
+    if (back) back.focus({ preventScroll: true });
+  }
+  function close() { if (inHistory && history.state && history.state.lb) history.back(); else hide(); }   // (Back fires popstate, which hides it)
+  addEventListener('popstate', () => { inHistory = false; hide(); });
+  shots.forEach((a, i) => a.addEventListener('click', e => {
+    if (e.button || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    e.preventDefault(); open(i);
+  }));
+  lb.addEventListener('click', e => { const b = e.target.closest('button[data-go]'); if (b) show(cur + Number(b.dataset.go)); else close(); });
+  addEventListener('keydown', e => {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') show(cur + 1);
+    else if (e.key === 'ArrowLeft') show(cur - 1);
+    else if (e.key === 'Tab') {   // keep the keyboard inside the viewer while it's open
+      const bs = [...lb.querySelectorAll('button')], k = bs.indexOf(document.activeElement);
+      e.preventDefault(); bs[(k + (e.shiftKey ? bs.length - 1 : 1)) % bs.length].focus();
+    }
+  });
 })();
 </script>
 </body>
