@@ -16,6 +16,13 @@
   #padPtr::before { content: ''; position: absolute; left: -11px; top: -11px; width: 18px; height: 18px; border: 2px solid #fff; border-radius: 50%;
     box-shadow: 0 0 0 2px rgba(0, 0, 0, .55), inset 0 0 0 2px rgba(0, 0, 0, .35); transform: scale(var(--ui, 1)); }
   #padPtr::after { content: ''; position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
+  /* the touch joystick: a faint ring where the finger landed, and a knob under the finger (steady: nothing animates) */
+  #joy { position: fixed; left: 0; top: 0; display: none; pointer-events: none; }
+  #joy i { position: absolute; left: 0; top: 0; border-radius: 50%; }
+  #joyBase { width: 112px; height: 112px; margin: -56px 0 0 -56px; box-sizing: border-box; border: 2px solid rgba(255, 255, 255, .32);
+    background: rgba(255, 255, 255, .05); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); }
+  #joyKnob { width: 50px; height: 50px; margin: -25px 0 0 -25px; box-sizing: border-box; border: 1px solid rgba(255, 255, 255, .5);
+    background: rgba(255, 255, 255, .22); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); }
   .box { position: fixed; background: rgba(16, 21, 31, .9); border: 1px solid #263246; border-radius: 10px; }
   #hud { left: 12px; top: 12px; padding: 12px 14px; width: 270px; pointer-events: none; }
   #pts { font-size: 28px; font-weight: 700; color: #fff; }
@@ -818,6 +825,7 @@
 <div id="padPtr"></div>
 <div id="winbar"><span class="t">One Billion Stars</span><div class="b"><button id="wbMin" title="Minimize">&#8211;</button><button id="wbMax" title="Maximize">&#9744;</button><button id="wbClose" title="Close">&#10005;</button></div></div>
 <canvas id="c"></canvas>
+<div id="joy"><i id="joyBase"></i><i id="joyKnob"></i></div>
 
 <div id="hud" class="box">
   <div id="pts">0</div>
@@ -1071,7 +1079,7 @@
         <span class="lin nochal"><kbd>View</kbd></span><span class="lin nochal">Jump to the Fleet Hangar</span>
         <span><kbd>Start</kbd></span><span>This menu</span>
         <h3>Touch</h3>
-        <span><kbd>Drag one finger</kbd></span><span>Move your cursor and collect</span>
+        <span><kbd>Drag one finger</kbd></span><span>A joystick appears where you touch: drag that way to move your cursor and collect</span>
         <span><kbd>Two fingers</kbd></span><span>Move the camera; pinch to zoom</span>
         <span><kbd>Tap</kbd></span><span>Click</span>
       </div>
@@ -2800,21 +2808,60 @@ cv.addEventListener('wheel', e => {
   zoom = Math.min(2.5, Math.max(minZoom, zoom * Math.exp(-e.deltaY * 0.0015)));
   camX = wx - (mx - W / 2) / zoom; camY = wy - (my - H / 2) / zoom;
 }, { passive: false });
-// touch (a Steam Deck's screen, a tablet): one finger moves the collecting circle, collecting as it goes; two fingers move
-// the camera and pinch to zoom, both at once. A quick tap still clicks (the hangar, sending selected helpers), because
-// the browser turns a tap into a click.
-const touches = new Map(); let pinch = null;
+// touch (a phone, a tablet, a Steam Deck's screen): one finger is a joystick. It appears where the finger lands, and
+// dragging away from that spot moves the cursor (the collecting circle) that way, faster the further out; past the ring's
+// edge the ring follows the finger, so turning back answers at once. Two fingers move the camera and pinch to zoom, both
+// at once. A quick tap clicks where it lands (the hangar, sending selected helpers there); the cursor stays where it is.
+const JOY_R = 56;   // the ring's radius, in CSS pixels (about the same size under a finger on any screen)
+const touches = new Map(); let pinch = null, joy = null, tap = null;
+const joyOn = () => started && !$('hangarBox').classList.contains('show');
+function joyShow() {
+  $('joy').style.display = joy ? 'block' : 'none';
+  if (!joy) return;
+  $('joyBase').style.transform = `translate(${joy.bx.toFixed(1)}px, ${joy.by.toFixed(1)}px)`;
+  $('joyKnob').style.transform = `translate(${joy.x.toFixed(1)}px, ${joy.y.toFixed(1)}px)`;
+}
+function joyTick(dt) {   // every frame: the cursor moves the way the knob is pushed
+  if (!joy) return;
+  if (!joyOn()) { joy = null; joyShow(); return; }
+  const dx = joy.x - joy.bx, dy = joy.y - joy.by, d = Math.hypot(dx, dy), DZ = 6;
+  if (d <= DZ) return;
+  const m = Math.min(1, (d - DZ) / (JOY_R - DZ)), sp = 1.05 * Math.min(W, H) * Math.pow(m, 1.6) * dt / d;   // (full: across the screen's short side in about a second)
+  mx = Math.min(W, Math.max(0, mx + dx * sp)); my = Math.min(H, Math.max(0, my + dy * sp)); inside = true;
+}
+function touchTap(x, y) {   // the same as a left click there
+  if (overHangar(x, y)) { openHangar(); return; }
+  const sel = drones.filter(d => d.sel);
+  if (sel.length) { orderMove(sel, toWorldX(x), toWorldY(y)); for (const d of sel) d.sel = false; }
+}
 cv.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;
+  e.preventDefault();   // (so the browser sends no pretend mouse events after a tap, which would move the cursor to it)
+  const ae = document.activeElement;
+  if (ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur();
   touchAt = performance.now(); touches.set(e.pointerId, { x: e.clientX, y: e.clientY }); pinch = null;
   if (pad.on) padOff();
-  if (touches.size === 1) { mx = e.clientX / VS; my = e.clientY / VS; inside = true; }
+  if (touches.size === 1 && joyOn()) {
+    tap = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+    joy = { id: e.pointerId, bx: e.clientX, by: e.clientY, x: e.clientX, y: e.clientY };
+    if (!inside) { mx = W / 2; my = H / 2; inside = true; }   // (no cursor yet: it starts in the middle)
+  } else tap = joy = null;   // a second finger: the camera instead
+  joyShow();
 });
 cv.addEventListener('pointermove', e => {
   const t = e.pointerType === 'touch' && touches.get(e.pointerId);
   if (!t) return;
   touchAt = performance.now(); t.x = e.clientX; t.y = e.clientY;
-  if (touches.size === 1) { mx = e.clientX / VS; my = e.clientY / VS; inside = true; return; }
+  if (touches.size === 1) {   // (a finger left over from two does nothing until it is lifted)
+    if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 12) tap = null;
+    if (joy && joy.id === e.pointerId) {
+      joy.x = e.clientX; joy.y = e.clientY;
+      const dx = joy.x - joy.bx, dy = joy.y - joy.by, d = Math.hypot(dx, dy);
+      if (d > JOY_R) { joy.bx = joy.x - dx / d * JOY_R; joy.by = joy.y - dy / d * JOY_R; }
+      joyShow();
+    }
+    return;
+  }
   const [a, b] = touches.values(), cx = (a.x + b.x) / 2 / VS, cy = (a.y + b.y) / 2 / VS, d = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
   if (pinch) {   // the galaxy point that was under the fingers' midpoint stays under it
     const wx = camX + (pinch.cx - W / 2) / zoom, wy = camY + (pinch.cy - H / 2) / zoom;
@@ -2823,7 +2870,15 @@ cv.addEventListener('pointermove', e => {
   }
   pinch = { cx, cy, d };
 });
-for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, e => { if (e.pointerType === 'touch') { touches.delete(e.pointerId); pinch = null; } });
+for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, e => {
+  if (e.pointerType !== 'touch') return;
+  touches.delete(e.pointerId); pinch = null;
+  if (joy && joy.id === e.pointerId) { joy = null; joyShow(); }
+  if (tap && tap.id === e.pointerId) {
+    const q = tap; tap = null;
+    if (t === 'pointerup' && performance.now() - q.at < 350 && joyOn()) touchTap(e.clientX / VS, e.clientY / VS);
+  }
+});
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if ($('hangarBox').classList.contains('show')) {   // inside the hangar: arrows look through the helpers, Esc leaves
@@ -6943,6 +6998,7 @@ function frame(now) {
   padTick(Math.min(dt, 0.1));   // the controller (see 'controller')
   if (!started) { if (!msky.on) render(now / 1000); return; }   // menu: it has its own sky (the galaxy isn't built yet)
   const fdt = Math.min(dt, 0.1);
+  joyTick(fdt);   // the touch joystick
   if (!won) playTime += dt;
   stepBuild(dt);
   if ($('hangarBox').classList.contains('show')) renderHangar();
