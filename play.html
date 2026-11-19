@@ -2710,7 +2710,6 @@ cv.addEventListener('mousemove', e => {
   if (dragging) { camX -= (e.clientX / VS - mx) / zoom; camY -= (e.clientY / VS - my) / zoom; }
   if (rClick) rClick.moved += Math.abs(e.clientX / VS - mx) + Math.abs(e.clientY / VS - my);
   mx = e.clientX / VS; my = e.clientY / VS; inside = true;
-  cv.style.cursor = overHangar(mx, my) ? 'pointer' : '';
   if (selStart && Math.hypot(mx - selStart.x, my - selStart.y) > 6) boxing = true;
 });
 cv.addEventListener('mouseleave', () => { inside = false; });
@@ -5924,7 +5923,10 @@ function render(time) {
     ctx.fillRect(selStart.x, selStart.y, mx - selStart.x, my - selStart.y);
     ctx.strokeRect(selStart.x + 0.5, selStart.y + 0.5, mx - selStart.x, my - selStart.y);
   }
-  // cursor
+  // cursor: while the circle is drawn, the mouse pointer is hidden (no crosshair in the middle of it);
+  // over the Fleet Hangar it is a hand, and while dragging a selection box it is the crosshair again
+  const ptr = !inside || boxing ? '' : overHangar(mx, my) ? 'pointer' : 'none';
+  if (cv.style.cursor !== ptr) cv.style.cursor = ptr;
   if (inside && !boxing) {
     const R = curRadius * zoom, crit = flashCrit && curFlash > 0;
     curSkin().draw(ctx, mx, my, R, performance.now() / 1000, crit ? 0 : curFlash);   // the cursor skin (see 'cursor skins')
