@@ -1826,7 +1826,7 @@ const SEC_GATE = { hangar: 2, zoom: 2, crit: 3, comet: 3, echo: 5, chain: 6, sho
   hunters: 10, huSpeed: 10, huTime: 11, huBounty: 12,
   stations: 20, stSpeed: 20, stRadius: 22 };
 // The demo: Chain Lightning opens once you have your second sector (so the demo has a cursor effect to try), its upgrades
-// are priced so it can be maxed within the demo's two sectors, and there are at most 10 sweepers and 8 Telescope levels
+// are priced so it can be maxed within the demo's two sectors, and there are at most 20 sweepers and 8 Telescope levels
 // (with no steep last levels).
 // (DEMO_CHAIN: the first price and growth of Lightning Chance and Lightning Bolts in the demo; the full game is unchanged)
 const DEMO_CHAIN = { first: 3000, growth: 1.75 };
@@ -1834,7 +1834,7 @@ if (DEMO) {
   SEC_GATE.chain = 2;
   for (const d of DEFS) {
     if (d.id === 'chainCh' || d.id === 'chainN') { d.first = DEMO_CHAIN.first; d.growth = DEMO_CHAIN.growth; d.lateZ = 0; }
-    if (d.id === 'sweepers') { d.max = 10; d.lateZ = 0; }
+    if (d.id === 'sweepers') { d.max = 20; d.lateZ = 0; }
     if (d.id === 'zoom') { d.max = 8; d.lateZ = 0; }   // Telescope: 8 levels in the demo (28 in the full game)
     if (d.id === 'comet') d.demoHide = true;   // (not shown in the demo at all)
   }
@@ -2779,6 +2779,7 @@ let mPan = null;   // right-drag on the minimap moves it, like right-drag in the
 // (mvx, mvy) is the galaxy position of the minimap's top-left corner.
 let mz = 1, mvx = 0, mvy = 0;
 const MZ_MAX = REG, mSpan = () => WORLD / mz;
+const MZ_START = REG / 3;   // where it starts: 3 x 3 sectors (yours and the ones around it, so the dark locked ones show)
 function mClamp() { const s = mSpan(); mvx = Math.min(WORLD - s, Math.max(0, mvx)); mvy = Math.min(WORLD - s, Math.max(0, mvy)); }
 const miniPos = e => {
   const r = mini.getBoundingClientRect(), s = mSpan();
@@ -4834,7 +4835,7 @@ async function freshWorld(onP) {
   dirty.fill(0); recount(); recalc(); refreshUI(); renderMini(); titleBusy(false);
 }
 function startGame() {
-  mz = MZ_MAX; mvx = camX - mSpan() / 2; mvy = camY - mSpan() / 2; mClamp(); renderMini();   // the minimap starts fully zoomed in, around where you are
+  mz = MZ_START; mvx = camX - mSpan() / 2; mvy = camY - mSpan() / 2; mClamp(); renderMini();   // the minimap starts zoomed in around where you are, with the sectors next to yours showing
   started = true; last = performance.now(); $('title').classList.add('gone'); document.body.classList.add('playing'); initAudio(); loadHide(); }
 // open a saved world (or start an empty slot fresh) and begin playing, behind the loading screen
 async function openWorld(id, isNew) {
@@ -6695,6 +6696,7 @@ function frame(now) {
     slowT = dt > 0.036 && dt < 0.5 ? slowT + dt : Math.max(0, slowT - dt);
     if (slowT > 3 && !tutAsking && !tutLessonOn && !cine && !hangarOpen()) { lagAsked = true; lessonStart(lagLesson()); }
   }
+  idleTick(Math.min(dt, 0.5));   // helpers idle for a while: Pip says so (see idleLesson)
   ppsT += dt; uiT += dt; miniT += dt;
   if (ppsT >= 0.5) { pps = pps * 0.5 + (earnedWindow / ppsT) * 0.5; if (pps < 0.05) pps = 0; earnedWindow = 0; ppsT = 0; }
   if (uiT >= 0.2) { uiT = 0; refreshUI(); }
@@ -7771,6 +7773,36 @@ function lagLesson() {
       'They look a bit plainer but run much smoother. You can change it any time in <b>Settings</b>.',
     answer: yes => { if (yes) { setDetail('low'); toast('Switched to simple stars', '#8fa3bd'); } },
     done: () => false }];
+}
+// Pip's tip when helpers have sat idle (yellow light) for a while although your sectors still have stars: he offers to
+// select them, so one click sends them off. Then he waits 10 minutes of play before saying it again. (Hunters are left
+// out: they idle when there is nothing rare left to hunt, and sending them somewhere doesn't change that.)
+const IDLE_TIP_T = 12, IDLE_TIP_GAP = 600;
+let idleTipClock = 0, idleTipNext = 0;
+const idleHelpers = () => drones.filter(d => d.idle && !d.forced && !d.launch && d.kind !== 2);
+function idleTick(dt) {
+  if (!started || net.role === 'guest' || CHAL()) return;
+  idleTipClock += dt;
+  let n = 0;
+  for (const d of drones) { d.idleFor = d.idle && !d.forced && !d.launch && d.kind !== 2 ? (d.idleFor || 0) + dt : 0; if (d.idleFor > IDLE_TIP_T) n++; }
+  if (n && idleTipClock >= idleTipNext && hasWork() && !tutOn && !tutAsking && !tutLessonOn && !cine && !hangarOpen()) {
+    idleTipNext = idleTipClock + IDLE_TIP_GAP; lessonStart(idleLesson());
+  }
+}
+function idleLesson() {
+  const n = idleHelpers().length, one = n === 1, them = one ? 'it' : 'them', ap = DEFS.find(d => d.id === 'auto');
+  const apTip = !up.auto ? (inMode(ap) && !gated(ap) ? ' Or get <b>Autopilot</b> in the Fleet Hangar, and idle helpers find work on their own.' : '')
+    : apMode === 0 ? ' Or switch <b>Autopilot</b> back on in the Fleet Hangar, and idle helpers find work on their own.' : '';
+  return [{ ask: true, yes: one ? 'Select it' : 'Select them', no: 'Not now',
+    text: () => (one ? 'One of your helpers is' : '<b>' + n + ' helpers</b> are') + ' <b>idle</b>: the yellow light means there’s nothing left for ' + them +
+      ' in ' + (one ? 'its' : 'their') + ' sector. Want me to select ' + them + '? Then click a spot with stars (or on the minimap) to send ' + them + ' there.' + apTip,
+    answer: yes => {
+      if (!yes) return;
+      const idle = new Set(idleHelpers());
+      for (const d of drones) d.sel = idle.has(d);
+      if (idle.size) { sfx('order'); renderMini(); toast('Click a spot with stars, or on the minimap, to send ' + (idle.size === 1 ? 'it' : 'them'), '#ffd447'); }
+    },
+    done: () => !idleHelpers().length }];   // (they got busy anyway: the tip goes away by itself)
 }
 function lessonStart(steps) {
   tutResume = tutOn && !tutLessonOn ? { steps: tutSteps, i: tutI } : null;
