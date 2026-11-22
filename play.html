@@ -977,6 +977,7 @@
       <li><b>Sectors can’t be bought.</b> The next one opens only when every star in your sectors is collected.</li>
       <li><b>No helpers.</b> The Fleet Hangar never appears, so every star is collected by you.</li>
       <li><b>Half-strength boosts.</b> Stellar Caches and discoveries give 50% less than in Linear.</li>
+      <li><b>Small steps.</b> Upgrades come in many small levels instead of a few big ones, so there is always one within reach.</li>
       <li><b>No skin effects.</b> Cursor skins keep their look, but the Legendary and Mythic effects are off.</li>    </ul>
     <button id="chalGo">Let’s go</button>
   </div>
@@ -1725,8 +1726,8 @@ const DEFS = [
     show: l => Math.round((32 + 6 * l) * radMult * curOver) + ' px' + (curOver > 1 ? ' (incl. +' + Math.round((curOver - 1) * 100) + '% from attack speed)' : '') },
   { id: 'speed', tab: 'cursor', group: 'cursor', name: 'Rapid Fire', desc: 'Less time between attacks. Fastest is one attack every 0.25 s; anything beyond that becomes attack size instead', base: 20, growth: 1.58, max: RF_MAX,
     show: l => { const raw = rawInterval(l), o = overSize(raw), hk = skX('cu2'); return raw >= CUR_CAP ? secs(raw / hk) : secs(CUR_CAP / hk) + ' (max) +' + Math.round((o - 1) * 100) + '% size' + (o >= OVER_MAX ? ' (max)' : ''); } },
-  { id: 'value', tab: 'cursor', group: 'cursor', name: 'Refinery', desc: 'Everything is worth 9% more stardust per level', base: 150, growth: 1.45, max: 40,
-    show: l => '×' + fmt(Math.pow(REFINE, l) * valMult) },
+  { id: 'value', tab: 'cursor', group: 'cursor', name: 'Refinery', desc: 'Everything is worth 9% more stardust per level', stepDesc: () => 'Everything is worth about ' + +((Math.pow(REFINE, 1 / CHAL_STEPS) - 1) * 100).toFixed(1) + '% more stardust per level (9% for every ' + CHAL_STEPS + ')', base: 150, growth: 1.45, max: 40,
+    show: l => { const x = Math.pow(REFINE, l) * valMult; return '×' + (x < 10 ? +x.toFixed(3) : fmt(x)); } },   // (small numbers with 3 decimals: a Challenge step adds about 1.4%)
   { id: 'hangar', tab: 'cursor', group: 'cursor', only: 'open', name: 'Fleet Hangar', desc: 'Unlocks the Fleet menu and its helpers', base: 750, growth: 1, max: 1,
     show: l => l ? 'Unlocked' : 'Locked' },
   { id: 'zoom', tab: 'cursor', group: 'cursor', name: 'Telescope', desc: 'Lets you zoom out further', base: 500, growth: 2.1, max: 28,
@@ -1734,17 +1735,17 @@ const DEFS = [
   // Cursor effects: bought once to switch them on (all at the same price); the upgrades listed under each one (sub) only
   // appear once it is unlocked, and each improves just one thing. They start at the price the effect's second level used to have.
   { id: 'crit', tab: 'cursor', group: 'cursor', name: 'Supernova', desc: 'Chance for an attack to give several times the stardust', base: FX_COST, growth: 1, max: 1,
-    show: l => l ? (critP(up.critCh) * 100).toFixed(0) + '% for ×' + critMult.toFixed(1) : 'Off' },
+    show: l => l ? +(critP(up.critCh) * 100).toFixed(1) + '% for ×' + critMult.toFixed(1) : 'Off' },
   { id: 'critCh', sub: 'crit', name: 'Supernova Chance', desc: 'Supernovas happen more often', base: FX_COST * 2.05, growth: 2.05, max: 19,
-    show: l => (critP(l) * 100).toFixed(0) + '% chance' },
+    show: l => +(critP(l) * 100).toFixed(1) + '% chance' },
   { id: 'critShock', sub: 'crit', name: 'Supernova Shockwave', desc: 'A Supernova can also set off a big Shockwave around it', base: 5e8, growth: 3, max: 8,
-    show: l => l ? (critShockP(l) * 100).toFixed(0) + '% of Supernovas' : 'Off' },
+    show: l => l ? +(critShockP(l) * 100).toFixed(1) + '% of Supernovas' : 'Off' },
   { id: 'comet', tab: 'cursor', group: 'cursor', name: 'Comet Catcher', desc: 'Comets are worth more', base: 600, growth: 1.75, max: 20,
     show: l => Math.round(50 * (1 + 0.15 * l)) + ' stars each' },
   { id: 'echo', tab: 'cursor', group: 'cursor', name: 'Shockwave', desc: 'Chance for an attack to blast a 60% wider area too', base: FX_COST, growth: 1, max: 1,
-    show: l => l ? (echoP(up.echoCh) * 100).toFixed(0) + '% chance' : 'Off' },
+    show: l => l ? +(echoP(up.echoCh) * 100).toFixed(1) + '% chance' : 'Off' },
   { id: 'echoCh', sub: 'echo', name: 'Shockwave Chance', desc: 'Shockwaves happen more often', base: FX_COST * 2, growth: 2, max: 14,
-    show: l => (echoP(l) * 100).toFixed(0) + '% chance' },
+    show: l => +(echoP(l) * 100).toFixed(1) + '% chance' },
   { id: 'chain', tab: 'cursor', group: 'cursor', name: 'Chain Lightning', desc: 'Chance for an attack to call down lightning: bolts strike stars outside your circle and blast the area around each one', base: FX_COST, growth: 1, max: 1,
     show: l => l ? (chainChance(up.chainCh) * 100).toFixed(1) + '% chance, ' + chainBolts(up.chainN) + ' bolts' : 'Off' },
   { id: 'chainCh', sub: 'chain', name: 'Lightning Chance', desc: 'Lightning strikes more often', base: FX_COST * 2.2, growth: 2.2, max: 11,
@@ -1760,7 +1761,7 @@ const DEFS = [
   { id: 'shotSize', sub: 'shot', name: 'Shot Size', desc: 'Bigger shots, so they sweep up a wider path', base: FX_COST * 2.4, growth: 2.4, max: 15,
     show: l => (shotSize(l) * 2).toFixed(1) + ' px wide' },   // (one decimal: a level adds less than a pixel at first)
   { id: 'shotTwin', sub: 'shot', name: 'Twin Shot', desc: 'A Plasma Shot can come with a second one, fired off another way', base: 8e6, growth: 2.3, max: 8,
-    show: l => l ? (twinP(l) * 100).toFixed(0) + '% of shots' : 'Off' },
+    show: l => l ? +(twinP(l) * 100).toFixed(1) + '% of shots' : 'Off' },
   { id: 'battery', tab: 'cursor', group: 'cursor', name: 'Capacitor', desc: 'Stores attacks while nothing is in range, then fires them in a burst. Stored attacks are far more likely to set off Supernova, Shockwave, Lightning and Rush', base: FX_COST, growth: 1, max: 1,
     show: l => l ? (1 + up.batteryN) + (up.batteryN ? ' stored attacks' : ' stored attack') + ', ×' + capBoost(up.batteryX) + ' procs' : 'Off' },
   { id: 'batteryN', sub: 'battery', name: 'Capacitor Cells', desc: 'Stores one more attack', base: FX_COST * 4.6, growth: 4.6, max: 4,
@@ -1774,13 +1775,13 @@ const DEFS = [
   { id: 'meteorN', sub: 'meteor', name: 'Meteor Shower', desc: 'Every Meteor Strike brings more meteors with it', base: 2e8, growth: 3.5, max: 5,
     show: l => (1 + l) + (l ? ' meteors' : ' meteor') },
   { id: 'rush', tab: 'cursor', group: 'cursor', name: 'Stardust Rush', desc: 'Now and then an attack sets off a rush: for a while, all the stardust you get is multiplied', base: FX_COST, growth: 1, max: 1,
-    show: l => l ? (rushChance(up.rushCh) * 100).toFixed(2) + '% chance, ×' + rushX(up.rushPow).toFixed(1) + ' for ' + Math.round(rushTime(up.rushDur)) + ' s' : 'Off' },
+    show: l => l ? (rushChance(up.rushCh) * 100).toFixed(2) + '% chance, ×' + +rushX(up.rushPow).toFixed(2) + ' for ' + +rushTime(up.rushDur).toFixed(1) + ' s' : 'Off' },
   { id: 'rushCh', sub: 'rush', name: 'Rush Chance', desc: 'Rushes start more often', base: FX_COST * 2.3, growth: 2.3, max: 9,
     show: l => (rushChance(l) * 100).toFixed(2) + '% chance' },
   { id: 'rushPow', sub: 'rush', name: 'Rush Power', desc: 'A rush multiplies your stardust more', base: FX_COST * 2.3, growth: 2.3, max: 9,
-    show: l => '×' + rushX(l).toFixed(1) },
+    show: l => '×' + +rushX(l).toFixed(2) },
   { id: 'rushDur', sub: 'rush', name: 'Rush Length', desc: 'Rushes last longer', base: FX_COST * 2.3, growth: 2.3, max: 9,
-    show: l => Math.round(rushTime(l)) + ' s' },
+    show: l => +rushTime(l).toFixed(1) + ' s' },
   { id: 'vortex', tab: 'cursor', group: 'cursor', name: 'Singularity', desc: 'Each attack has a chance to open a singularity somewhere else on your screen, where the most stars are; it keeps pulling them in while you carry on, slowly drifting towards more stars as it grows', base: FX_COST, growth: 1, max: 1,
     show: l => l ? pctP(vortexP(up.vortexRate)) + ' chance, lasts ' + vortexTime(up.vortexDur).toFixed(1) + ' s' : 'Off' },
   { id: 'vortexRate', sub: 'vortex', name: 'Singularity Chance', desc: 'Singularities open more often', base: FX_COST * 2.5, growth: 2.5, max: 9,
@@ -1788,17 +1789,17 @@ const DEFS = [
   { id: 'vortexDur', sub: 'vortex', name: 'Singularity Lifetime', desc: 'Singularities last longer', base: FX_COST * 2.5, growth: 2.5, max: 9,
     show: l => 'lasts ' + vortexTime(l).toFixed(1) + ' s' },
   { id: 'vortexSize', sub: 'vortex', name: 'Singularity Reach', desc: 'Singularities pull from further away', base: 1e9, growth: 2, max: 10,
-    show: l => '+' + 12 * l + '% reach' },
+    show: l => '+' + +(12 * l).toFixed(1) + '% reach' },
   // (in the Open galaxy discoveries pay stardust, so seeing them all is worth far more there: it costs far more too, and
   // being a side purchase it doesn't hold back the upgrades listed after it)
   { id: 'radar', tab: 'cursor', group: 'cursor', name: 'Deep Scanner', desc: 'Shows rare discoveries on the minimap', base: 30000, openPrice: 1e7, side: true, growth: 1, max: 1, toggle: true,
     show: l => l ? 'On' : 'Off' },
   { id: 'carto', tab: 'cursor', group: 'cursor', name: 'Fortune Finder', desc: 'Stellar Caches give the rarer rewards more often', base: 15000, growth: 2.05, max: 15,
     show: l => 'Legendary ' + tierPct(4, l).toFixed(2) + '%' },
-  { id: 'insight', tab: 'cursor', group: 'cursor', name: 'Stellar Insight', desc: 'Every discovery bonus is 10% stronger per level', base: 40000, growth: 2.3, max: 10,
-    show: l => '×' + (1 + 0.1 * l).toFixed(1) + ' bonuses' },
-  { id: 'core', tab: 'cursor', group: 'cursor', name: 'Galactic Core', desc: 'Everything you collect is worth 6% more per level', base: 3e9, growth: 1.5, max: 15,
-    show: l => '×' + (1 + 0.06 * l).toFixed(2) + ' stardust' },
+  { id: 'insight', tab: 'cursor', group: 'cursor', name: 'Stellar Insight', desc: 'Every discovery bonus is 10% stronger per level', stepDesc: () => 'Every discovery bonus is about ' + +(10 / CHAL_STEPS).toFixed(1) + '% stronger per level (10% for every ' + CHAL_STEPS + ')', base: 40000, growth: 2.3, max: 10,
+    show: l => '×' + +(1 + 0.1 * l).toFixed(3) + ' bonuses' },
+  { id: 'core', tab: 'cursor', group: 'cursor', name: 'Galactic Core', desc: 'Everything you collect is worth 6% more per level', stepDesc: () => 'Everything you collect is worth ' + +(6 / CHAL_STEPS).toFixed(1) + '% more per level (6% for every ' + CHAL_STEPS + ')', base: 3e9, growth: 1.5, max: 15,
+    show: l => '×' + +(1 + 0.06 * l).toFixed(3) + ' stardust' },
   // ---- the end game: a few huge upgrades for the last stretch, priced for it
   { id: 'bigbang', tab: 'cursor', group: 'cursor', name: 'Big Bang', desc: 'Each attack has a small chance to set off a colossal blast around your cursor that collects everything far around it', base: 5e7, growth: 1, max: 1,
     show: l => l ? Math.round(bangR(up.bangSize)) + ' px blast, ' + pctP(bangP(up.bangRate)) + ' chance' : 'Off' },
@@ -1881,8 +1882,22 @@ for (const d of DEFS) { d.first = niceUp(COST_X * d.base); if (d.openPrice) d.fi
 const LATE_TOP = 2e11, LATE_SPREAD = 60;
 const idFrac = id => { let h = 2166136261; for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
 for (const d of DEFS) d.lateZ = d.max > 1 && d.id !== 'forge' ? Math.log10(Math.max(2, LATE_TOP * Math.pow(LATE_SPREAD, idFrac(d.id)) / (d.first * Math.pow(d.growth, d.max - 1)))) : 0;
-const lateX = (d, l) => { if (!d.lateZ) return 1; const f = l / (d.max - 1); return f <= 0.5 ? 1 : Math.pow(10, d.lateZ * Math.pow((f - 0.5) / 0.5, 2)); };
-const cost = d => Math.ceil((!LIN() && d.firstOpen || d.first) * Math.pow(d.growth, up[d.id]) * lateX(d, up[d.id]) * skX(d.tab === 'drones' ? 'he3' : 'cu3'));
+// (The Challenge has none of this steeper climb: with no helpers and no sectors to buy, it would leave long waits between
+// upgrades. Its upgrades come in small steps instead; see CHAL_STEPS.)
+const lateX = (d, l) => { if (!d.lateZ || CHAL()) return 1; const f = l / (d.max - 1); return f <= 0.5 ? 1 : Math.pow(10, d.lateZ * Math.pow((f - 0.5) / 0.5, 2)); };
+// The Challenge: an upgrade that grows smoothly comes in CHAL_STEPS small steps per level instead of whole levels, so there
+// is always a next step within reach (together with no steep last levels, see lateX, a bot playing it never waits more
+// than about 10 minutes of game time for its next upgrade). A step gives its share of a level and costs its share of that
+// level's price (the steps of one level add up to exactly its price), so the last step ends at the same strength as whole
+// levels would. up[] then holds fractions (2.5 = two levels and three of six steps). Upgrades that add whole things
+// (lightning bolts, meteors, stored attacks, Overcharge) and Stellar Forge keep whole levels.
+const CHAL_STEPS = 6;
+const STEP_WHOLE = new Set(['chainN', 'batteryN', 'batteryX', 'meteorN', 'forge']);
+const steps = d => CHAL() && d.max > 1 && d.growth > 1 && d.tab !== 'drones' && !STEP_WHOLE.has(d.id) ? CHAL_STEPS : 1;
+const stepPart = d => { const s = steps(d); return s > 1 ? (Math.pow(d.growth, 1 / s) - 1) / (d.growth - 1) : 1; };
+const lvShown = d => Math.round(up[d.id] * steps(d));   // the level as the player sees it (counted in steps in the Challenge)
+const levelsBought = () => DEFS.reduce((a, d) => a + lvShown(d), 0);
+const cost = d => Math.ceil((!LIN() && d.firstOpen || d.first) * Math.pow(d.growth, up[d.id]) * lateX(d, up[d.id]) * skX(d.tab === 'drones' ? 'he3' : 'cu3') * stepPart(d));
 // how many sectors must be unlocked before each upgrade can be bought for the first time
 const SEC_GATE = { hangar: 2, zoom: 2, crit: 3, comet: 3, echo: 5, chain: 6, shot: 7, battery: 8, meteor: 10, rush: 11, vortex: 12, radar: 15, carto: 18, insight: 22,
   sweepers: 2, swSpeed: 2, swRadius: 3, dValue: 3, auto: 4, squad: 6, dFleet: 14,
@@ -1971,7 +1986,8 @@ function buy(d) {
   if (d.tab === 'drones' && !fleetOpen()) return;
   const c = cost(d);
   if (points < c) return;
-  points -= c; up[d.id]++; sfx('buy');
+  const s = steps(d);
+  points -= c; up[d.id] = s > 1 ? Math.min(d.max, Math.round(up[d.id] * s + 1) / s) : up[d.id] + 1; sfx('buy');
   if (d.id in KIND_OF && !LIN()) { const p = spawnPoint(); addDrone(p[0], p[1], KIND_OF[d.id]); }   // open mode: it is there at once
   else if (d.id in KIND_OF) buildQ.push({ kind: KIND_OF[d.id], left: BUILD_T[KIND_OF[d.id]] });   // the hangar builds it; it launches when done
   recalc(); refreshUI();
@@ -3165,7 +3181,7 @@ function buildUI() {
     }
     const b = document.createElement('button');
     b.className = d.sub ? 'up sub' : 'up'; b.dataset.tab = d.tab;
-    b.innerHTML = `<div class="t"><span>${d.name}</span><span class="lv"></span></div><div class="d">${d.desc}</div>` +
+    b.innerHTML = `<div class="t"><span>${d.name}</span><span class="lv"></span></div><div class="d">${steps(d) > 1 && d.stepDesc ? d.stepDesc() : d.desc}</div>` +
       `<div class="e"><span class="eff"></span><span class="cost"></span></div>`;
     b.onclick = () => buy(d);
     (inHangar ? $('hgUps') : list).appendChild(b);   // fleet upgrades live inside the Fleet Hangar
@@ -3236,10 +3252,10 @@ function refreshUI() {
   for (const d of DEFS) {
     if (!inMode(d)) continue;
     const r = rows[d.id], l = up[d.id], maxed = l >= d.max;
-    r.lv.textContent = d.max === 1 ? '' : 'Lv ' + l + ' / ' + d.max;
+    r.lv.textContent = d.max === 1 ? '' : 'Lv ' + lvShown(d) + ' / ' + d.max * steps(d);
     const sw = !!d.toggle && maxed;   // a bought on/off upgrade: its row is now a switch
     const isAp = d.id === 'auto', swOff = isAp ? apMode === 0 : off[d.id];   // (Autopilot has three modes, the others are on/off)
-    r.eff.textContent = sw ? (isAp ? AP_MODES[apMode] : swOff ? 'Off' : 'On') : maxed ? d.show(l) : d.show(l) + ' → ' + d.show(l + 1);
+    r.eff.textContent = sw ? (isAp ? AP_MODES[apMode] : swOff ? 'Off' : 'On') : maxed ? d.show(l) : d.show(l) + ' → ' + d.show(Math.min(d.max, l + 1 / steps(d)));
     const lock = gated(d);
     r.cost.textContent = lock ? (DEMO && d.sec > DEMO_SEC ? 'In the full game' : 'Needs ' + d.sec + ' sectors unlocked') : sw ? (isAp ? 'Click: ' + AP_MODES[(apMode + 1) % 3] : swOff ? 'Click to turn on' : 'Click to turn off') : maxed ? (d.max === 1 ? 'Unlocked' : 'MAX') : fmtPrice(cost(d));
     r.b.classList.toggle('max', maxed && !sw); r.b.classList.toggle('sw', sw); r.b.classList.toggle('swoff', sw && swOff);
@@ -3930,7 +3946,7 @@ function showEnd(demo) {   // demo: the demo's end, stripped down (see demoEnd)
       ? { x: rnd(), y: rnd(), v: 0.004 + rnd() * 0.006, p: rnd() * 6, a: 0.55 + rnd() * 0.4, spr: sprites[k % 3] }
       : { x: rnd(), y: rnd(), v: 0.002 + rnd() * 0.008, p: rnd() * 6, a: 0.25 + rnd() * 0.6, r: 1 + rnd() * 1.6, c: TINTS[k % 3] });
   }
-  const rare = found.slice(2).reduce((a, b) => a + b, 0), levels = Object.values(up).reduce((a, b) => a + b, 0);
+  const rare = found.slice(2).reduce((a, b) => a + b, 0), levels = levelsBought();
   const stats = [
     ['Time played', playTime, fmtTime],
     ['Stardust earned', totalEarned, v => fmt(Math.floor(v))],
@@ -4026,7 +4042,7 @@ const ACH = [
   { cat: 'Stardust', id: 'dust1b', name: 'Billionaire', desc: 'Earn 1 billion stardust in one galaxy', p: () => prog(totalEarned, 1e9) },
   { cat: 'Stardust', id: 'dust1t', name: 'Trillionaire', desc: 'Earn 1 trillion stardust in one galaxy', p: () => prog(totalEarned, 1e12) },
   { cat: 'Stardust', id: 'life1qa', name: 'Stardust Tycoon', desc: 'Earn 1 quadrillion stardust, over all your galaxies', life: true, p: () => prog(ach.c.dust || 0, 1e15) },
-  { cat: 'Upgrades', id: 'lv100', name: 'Tinkerer', desc: 'Buy 100 upgrade levels in one galaxy', p: () => prog(Object.values(up).reduce((a, b) => a + b, 0), 100) },
+  { cat: 'Upgrades', id: 'lv100', name: 'Tinkerer', desc: 'Buy 100 upgrade levels in one galaxy', p: () => prog(levelsBought(), 100) },
   { cat: 'Upgrades', id: 'maxed', name: 'Maxed Out', desc: 'Buy every level of an upgrade', ok: () => DEFS.some(d => inMode(d) && d.max > 1 && up[d.id] >= d.max) },
   { cat: 'Upgrades', id: 'arsenal', name: 'Full Arsenal', desc: 'Have all nine cursor effects in one galaxy', p: () => prog(FX_IDS.filter(k => up[k] > 0).length, FX_IDS.length) },
   { cat: 'Helpers', id: 'help1', name: 'Ground Crew', desc: 'Get your first helper', p: () => prog(drones.length, 1) },
@@ -7772,7 +7788,7 @@ $('coopHost').onclick = hostCoop;
 const cleanName = n => (String(n == null ? '' : n).replace(/\s+/g, ' ').trim().slice(0, 16)) || 'Player';
 function cleanStat(s) {   // never trust the shape of what another game sends
   s = s && typeof s === 'object' ? s : {};
-  const u = {}; for (const k in up) u[k] = Math.max(0, Math.floor(+((s.up || {})[k]) || 0));
+  const u = {}; for (const k in up) u[k] = Math.max(0, Math.round(8 * (+((s.up || {})[k]) || 0)) / 8);
   return { name: cleanName(s.name), points: +s.points || 0, stars: +s.stars || 0, finds: +s.finds || 0, ships: +s.ships || 0, up: u };
 }
 const myStat = () => ({ name: myName, points, stars: myStars, finds: myFinds, ships: drones.length, up: Object.assign({}, up) });
