@@ -1163,6 +1163,56 @@
   #tut button { border-radius: 8px; }
   #hangarBox h2 { letter-spacing: .01em; }
   #hgPrev, #hgNext { border-radius: 12px; }
+  /* the co-op window: the title with your name beside it, Host and Join as two matching cards with the action at the bottom,
+     the status as a quiet bar, and the buttons at the foot */
+  #coopBox .card { width: min(640px, calc(100vw - 32px)); padding: 22px 24px 18px; }
+  #coopBox .chead { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  #coopBox .chead h2 { margin: 0 0 4px; }
+  #coopBox .csub { margin: 0; font-size: 13px; color: var(--bq-dim); }
+  #coopBox .nm { flex: none; flex-direction: column; align-items: flex-end; gap: 4px; margin: 2px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--bq-faint); }
+  #coopBox .nm input { width: 150px; padding: 6px 12px; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; color: #ffc9ee; cursor: default;
+    background: rgba(255, 122, 217, .08); border: 1px solid rgba(255, 122, 217, .3); border-radius: 999px; }
+  #coopBox .cols { gap: 10px; margin-top: 18px; }
+  #coopBox .cols > .cpcard { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 16px 16px; border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015)); border: 1px solid var(--bq-line2); box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset; }
+  #coopBox .ci { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; margin-bottom: 10px; border-radius: 50%;
+    background: rgba(255, 122, 217, .12); border: 1px solid rgba(255, 122, 217, .4); }
+  #coopBox .ci::before { content: ''; width: 24px; height: 24px; background: #ff9de0;
+    -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
+  #coopBox .chost .ci::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M8.3%2015.7a5.2%205.2%200%20010-7.4M15.7%208.3a5.2%205.2%200%20010%207.4M5.4%2018.6a9.3%209.3%200%20010-13.2M18.6%205.4a9.3%209.3%200%20010%2013.2%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M8.3%2015.7a5.2%205.2%200%20010-7.4M15.7%208.3a5.2%205.2%200%20010%207.4M5.4%2018.6a9.3%209.3%200%20010-13.2M18.6%205.4a9.3%209.3%200%20010%2013.2%22%2F%3E%3C%2Fsvg%3E"); }
+  #coopBox .cjoin .ci::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10%204h8a1%201%200%20011%201v14a1%201%200%2001-1%201h-8%22%2F%3E%3Cpath%20d%3D%22M4%2012h10M10.5%208.5L14%2012l-3.5%203.5%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10%204h8a1%201%200%20011%201v14a1%201%200%2001-1%201h-8%22%2F%3E%3Cpath%20d%3D%22M4%2012h10M10.5%208.5L14%2012l-3.5%203.5%22%2F%3E%3C%2Fsvg%3E"); }
+  #coopBox h3 { margin: 0 0 4px; color: #fff; font-size: 16px; }
+  #coopBox .cpcard p { margin: 0 0 14px; font-size: 12.5px; line-height: 1.4; }
+  #coopBox .cpcard p b { color: #ffc9ee; font-weight: 600; }
+  #coopBox .cpcard button.go { margin-top: auto; padding: 10px 14px; border-radius: 10px; }
+  #coopBox .cpcard input { margin: auto 0 8px; padding: 10px 12px; border-radius: 10px; background: rgba(6, 9, 18, .7); border: 1px solid var(--bq-line); transition: var(--bq-tr); }
+  #coopBox .cpcard input:focus { outline: none; border-color: rgba(255, 150, 225, .6); box-shadow: 0 0 0 3px rgba(255, 122, 217, .12); }
+  #coopBox .cpcard input + button.go { margin-top: 0; }
+  #coopCode { margin: 2px 0 10px; font-size: 32px; letter-spacing: .2em; margin-right: -.2em; }
+  #coopBox #coopCopy { margin-top: 0; }
+  #coopAddr { width: 100%; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--bq-line2); text-align: center; }
+  #coopAddr:empty { display: none; }
+  #coopAddr b { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #ff9de0; }
+  #coopAddr span { margin: 6px 0 8px; padding: 6px 10px; font-size: 14px; border-radius: 8px; background: rgba(6, 9, 18, .6); border: 1px solid var(--bq-line2); overflow-wrap: anywhere; }
+  #coopAddr small { text-align: left; color: var(--bq-faint); line-height: 1.45; }
+  #coopStatus { margin: 12px 0 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; color: #ffe2b0;
+    background: rgba(255, 212, 71, .06); border: 1px solid rgba(255, 212, 71, .2); }
+  #coopStatus:empty { display: none; }
+  #coopBox .cfoot { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--bq-line2); }
+  #coopBox .cfoot span { flex: 1; min-width: 0; font-size: 12px; color: var(--bq-faint); }
+  #coopBox .cfoot button { border-radius: 10px; }
+  #coopBox.hosting .cols { grid-template-columns: 1fr; }
+  #coopBox.hosting .cjoin { display: none; }
+  #coopBox.hosting .cpcard button.go, #coopBox.hosting #coopAddr span { width: 300px; max-width: 100%; box-sizing: border-box; margin-left: auto; margin-right: auto; }
+  #coopBox.hosting #coopAddr small { max-width: 460px; margin: 10px auto 0; text-align: center; }
+  #coopBox #coopCopyAddr { color: var(--bq-text); font-weight: 600; background: var(--bq-ghost); border: 1px solid var(--bq-line); box-shadow: 0 1px 0 rgba(255, 255, 255, .05) inset; text-shadow: none; }
+  #coopBox #coopCopyAddr:hover { background: var(--bq-ghost-h); border-color: rgba(255, 150, 225, .55); color: #fff; box-shadow: none; }
+  @media (max-width: 560px) { #coopBox .chead { flex-direction: column; } #coopBox .nm { align-items: flex-start; } }
+  #coopBox .cfoot span b { color: #c3d0e0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* the version, in the main menu's bottom-right corner */
+  #verTag { position: absolute; right: 16px; bottom: 12px; font-size: 11px; letter-spacing: .04em; color: #56637a; font-variant-numeric: tabular-nums; pointer-events: none; }
+  #verTag:empty { display: none; }
+  .toast { max-width: min(600px, calc(100vw - 40px)); box-sizing: border-box; text-align: center; line-height: 1.4; }
   /* New world: the galaxy types as three matching cards, each with its icon in its own colour */
   #newBox { width: 480px; }
   #newBox .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 6px; }
@@ -1313,6 +1363,7 @@
       <button id="newCancel" class="textbtn">Back</button>
     </div>
     <div id="titleMsg"></div>
+    <div id="verTag"></div>
     <div class="tfoot">© 2026 One Billion Stars. All rights reserved. · Online co-op uses PeerJS (MIT License); see THIRD-PARTY-NOTICES.txt</div>
   </div>
 </div>
@@ -1524,27 +1575,30 @@
 
 <div id="coopBox">
   <div class="card box">
-    <h2>Play together</h2>
-    <p>Up to four players share one galaxy: the stars, sectors and discoveries. Each keeps their own stardust, upgrades and fleet. Everyone needs this same version of the game and an internet connection.</p>
-    <label class="nm">Your name <input id="coopName" maxlength="16" aria-label="Your name" readonly></label>
+    <div class="chead">
+      <div><h2>Play together</h2><p class="csub">Up to four players in one galaxy, each with their own stardust and upgrades.</p></div>
+      <label class="nm">Your name <input id="coopName" maxlength="16" aria-label="Your name" readonly></label>
+    </div>
     <div class="cols">
-      <div>
+      <div class="cpcard chost">
+        <i class="ci"></i>
         <h3>Host</h3>
-        <p>Your friend plays in <b>your</b> galaxy. Start hosting, then send them the code or your IP address.</p>
+        <p>Friends join <b>your</b> galaxy.</p>
         <button id="coopHost" class="go">Start hosting</button>
         <div id="coopCode"></div>
         <button id="coopCopy" class="go" style="display:none">Copy code</button>
         <div id="coopAddr"></div>
       </div>
-      <div>
+      <div class="cpcard cjoin">
+        <i class="ci"></i>
         <h3>Join</h3>
-        <p>Type the code, or the IP address, your friend sent you. You play in <b>their</b> galaxy; your own game is saved first and stays as it is; restart the game to return to it.</p>
-        <input id="coopJoinCode" maxlength="400" placeholder="Code or IP address(es)" aria-label="Co-op code or IP address">
+        <p>Play in <b>a friend’s</b> galaxy. Yours is saved first.</p>
+        <input id="coopJoinCode" maxlength="400" placeholder="Code or IP address" aria-label="Co-op code or IP address">
         <button id="coopJoin" class="go">Join</button>
       </div>
     </div>
     <div id="coopStatus"></div>
-    <button id="coopClose">Close</button> <button id="coopPlayers">Team &amp; players</button>
+    <div class="cfoot"><span>Everyone needs the same version. Yours is <b id="coopVer"></b></span><button id="coopPlayers">Team &amp; players</button><button id="coopClose">Close</button></div>
   </div>
 </div>
 
@@ -1700,6 +1754,8 @@ const fullDisc = () => mode === 'linear' || mode === 'infinite';   // discoverie
 // first DEMO_SEC sectors. What needs more sectors (later upgrades, other modes, most achievements and skins) says "full game".
 // No leaderboard, cloud backup or imports, and co-op only with other demo players. Clearing both sectors ends the demo.
 const DEMO = true, DEMO_SEC = 2;
+// the game's version: the date of the build it changed in (set by tools/stamp-version.js, with a fingerprint of this file)
+const GAME_VERSION = '2026.11.23.2', GAME_BUILD = 'dc9431fcf3';
 const demoCap = () => DEMO && nUnlocked >= DEMO_SEC;   // no more sectors in the demo
 // ---- Infinite galaxies: what carries over from one galaxy to the next (kept in the world's save, with the host in co-op).
 // n: which galaxy this is; gp: Galaxy Points not spent yet; earned: all ever earned; sk: skills learned; time: play time of
@@ -4079,12 +4135,13 @@ $('cacheAll').onclick = cacheOpenAll;
 $('cacheClose').onclick = cacheClose;
 $('cacheStatsClose').onclick = () => $('cacheStats').classList.remove('show');
 $('cacheStatsOpen').onclick = () => { $('cacheStats').classList.remove('show'); cacheOpenBox(); };
-function toast(text, col) {
+function toast(text, col, ms = 3000) {   // (ms: how long it stays; the fade in and out keep their share of it)
   const box = $('toasts'), el = document.createElement('div');
   el.className = 'toast'; el.style.color = col; el.textContent = text;
+  if (ms !== 3000) el.style.animationDuration = ms + 'ms';
   box.appendChild(el);
   while (box.children.length > 4) box.firstChild.remove();
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), ms);
 }
 
 // ---------------------------------------------------------------- inside the Fleet Hangar
@@ -8365,6 +8422,7 @@ function coopUI() {
   btnLeave.style.display = guest ? 'inline-block' : 'none'; btnLeave.textContent = net.conn ? 'Disconnect' : 'Back to menu';
   reset.style.display = guest ? 'none' : '';
   // the same state, spelled out in the co-op window
+  $('coopBox').classList.toggle('hosting', net.role === 'host' && !!up2);   // (while hosting, the Host card fills the window: there is nothing to join)
   $('coopCode').textContent = net.role === 'host' ? net.code : '';
   $('coopCopy').style.display = net.role === 'host' && net.code ? '' : 'none';
   $('coopHost').style.display = net.role === 'host' && up2 ? 'none' : '';
@@ -8440,6 +8498,9 @@ async function sendWorld(g) {
 }
 // guest: the connection is up. From here on this is the host's galaxy, and your own game is never written again
 // (it was saved just before connecting).
+// the other player's version, as sent ('' from a game older than version numbers), and the notice when it isn't yours
+const verClean = v => typeof v === 'string' ? v.replace(/[^0-9.]/g, '').slice(0, 20) : '';
+const verNote = (who, v) => who + ' ' + (v ? 'version ' + v : 'an older version') + ' and you have ' + GAME_VERSION + '. If anything seems off, update both games.';
 function playerId() {   // stays the same between sessions, so the host can give you your progress back
   try {
     let id = localStorage.getItem('obs-player');
@@ -8450,7 +8511,7 @@ function playerId() {   // stays the same between sessions, so the host can give
 // guest: the line to the host is open. Say hello and wait to be let in; nothing of your own game changes until then.
 function guestConnected(c) {
   net.conn = c;
-  c.send({ t: 'hello', id: playerId(), name: myName });
+  c.send({ t: 'hello', id: playerId(), name: myName, v: GAME_VERSION });
   titleMsg('Connected, waiting for the host…'); coopSay('Connected, waiting for the host…');
   setTimeout(() => { if (net.conn === c && !net.building && !net.ready && net.fail) net.fail('The host did not answer. They may be running an older version of the game.'); }, 12000);
 }
@@ -8606,7 +8667,7 @@ async function tryReconnect(R) {
     if (settled || net.recon !== R) { try { c.close(); } catch (e) {} return; }
     settled = true; R.fail = null;
     net.conn = c; net.lastHost = performance.now();
-    c.send({ t: 'hello', id: playerId(), name: myName, rejoin: true, world: net.world });
+    c.send({ t: 'hello', id: playerId(), name: myName, rejoin: true, world: net.world, v: GAME_VERSION });
     R.waiting = setTimeout(() => { if (net.recon === R && net.conn === c) { try { c.close(); } catch (e) {} } }, 10000);   // no answer: hang up and try again
   };
   setTimeout(fail, 12000);
@@ -8659,13 +8720,14 @@ function onNet(m, c) {
       coopUI();
       if (back) {   // it still has the galaxy: straight back in, and the resync settles what either side collected meanwhile
         toast(g.name + ' reconnected', PCOL[g.slot]);
-        c.send({ t: 'welcome', mode, world: curSave, rejoin: true, rules: worldRules, demo: DEMO });
+        c.send({ t: 'welcome', mode, world: curSave, rejoin: true, rules: worldRules, demo: DEMO, v: GAME_VERSION });
         c.send({ t: 'ready', rejoin: true, slot: g.slot, team, unl: unlStr(), h: hangarReg, inf: INF() ? infSave() : null });
         c.send({ t: 'sum', a: new Uint32Array(regionAlive).buffer, won, urgent: true });
         return;
       }
       toast(g.name + ' joined (' + (guestCount() + 1) + ' players in the galaxy)', PCOL[g.slot]);
-      c.send({ t: 'welcome', mode, world: curSave, rules: worldRules, demo: DEMO });
+      g.v = verClean(m.v); if (g.v !== GAME_VERSION) toast(verNote(g.name + ' has', g.v), '#ff8a3d', 9000);
+      c.send({ t: 'welcome', mode, world: curSave, rules: worldRules, demo: DEMO, v: GAME_VERSION });
       sendWorld(g);
     } else if (m.t === 'd' && g.on) {
       g.last = performance.now();
@@ -8739,7 +8801,7 @@ function onNet(m, c) {
   if (m.t === 'welcome' && !net.building && !net.ready && cleanMode(m.mode) === 'challenge' && !openUnlocked()) {
     if (net.fail) net.fail('That galaxy is a Challenge. Collect every star in a Linear galaxy first to join one.'); return;
   }
-  if (m.t === 'welcome') { if (!net.building && !net.ready) { net.mode = m.mode; net.rules = Math.max(1, Math.floor(+m.rules || 1)); net.world = String(m.world || $('joinCode').value.trim()).slice(0, 80); guestBegin(c); } return; }
+  if (m.t === 'welcome') { if (!net.building && !net.ready) { net.hostV = verClean(m.v); net.mode = m.mode; net.rules = Math.max(1, Math.floor(+m.rules || 1)); net.world = String(m.world || $('joinCode').value.trim()).slice(0, 80); guestBegin(c); } return; }
   if (m.t === 'd') {
     net.lastHost = performance.now();
     const ids = new Uint32Array(asBuffer(m.ids));
@@ -8799,6 +8861,7 @@ function onNet(m, c) {
       if (!ok || !net.ready || started) return;
       startGame();
       toast('You joined the host’s galaxy', '#ff9de0');
+      if (net.hostV !== GAME_VERSION) toast(verNote('The host has', net.hostV), '#ff8a3d', 9000);
       tutMaybe('g:' + net.world, false, true);   // the first time in this galaxy: offer the tutorial
     });
   }
@@ -9030,6 +9093,7 @@ $('panelHide').onclick = () => setPanelHidden(true);
 $('panelShow').onclick = () => setPanelHidden(false);
 try { if (localStorage.getItem('obs-panel') === 'hidden') document.body.classList.add('panelHidden'); } catch (e) {}
 $('coopName').value = myName;   // (shown only: see 'your username')
+$('verTag').textContent = 'Version ' + GAME_VERSION + (DEMO ? ' · demo' : ''); $('coopVer').textContent = GAME_VERSION + (DEMO ? ' (demo)' : '');
 
 // web version only: register the offline/installable helper (skipped for the desktop app and local files)
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
