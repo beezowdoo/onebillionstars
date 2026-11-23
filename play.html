@@ -249,7 +249,7 @@
      resize handle on the picked one, and a toolbar at the top */
   #hudEd { position: fixed; inset: 0; z-index: 1; display: none; background: rgba(0, 0, 0, .25); cursor: default; }
   body.hudedit #hudEd { display: block; }
-  body.hudedit .hudEl { z-index: 2 !important; pointer-events: auto !important; cursor: move; outline: 2px dashed rgba(90, 168, 255, .7); outline-offset: 3px; }
+  body.hudedit .hudEl { z-index: 2 !important; pointer-events: auto !important; cursor: move; touch-action: none; outline: 2px dashed rgba(90, 168, 255, .7); outline-offset: 3px; }
   body.hudedit .hudEl * { pointer-events: none !important; }
   body.hudedit .hudEl.hudSel { outline: 2px solid #ffd447; }
   body.hudedit #panel { display: flex !important; }
@@ -258,7 +258,7 @@
   body.hudedit #chat.hudSel { display: block !important; }
   body.hudedit #chatLog:empty::before { content: 'Chat messages show here'; font-size: 13px; color: #dbe4f0; background: rgba(0, 0, 0, .72); border-radius: 6px; padding: 3px 8px; }
   body.hudedit #mascot, body.hudedit #tut, body.hudedit #toasts, body.hudedit #secBuy { display: none !important; }
-  #hudGrip { position: fixed; z-index: 61; display: none; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #ffd447;
+  #hudGrip { position: fixed; z-index: 61; display: none; touch-action: none; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #ffd447;
     border: 2px solid #0b0f18; box-shadow: 0 0 10px rgba(255, 212, 71, .6); cursor: nwse-resize; }
   #hudGrip.ew { cursor: ew-resize; } #hudGrip.nesw { cursor: nesw-resize; }
   #hudPrevBox { position: fixed; inset: 0; z-index: 3; display: none; align-items: center; justify-content: center; pointer-events: none; }
@@ -2942,7 +2942,7 @@ if (pref.hdr && hdrCan) {
   } catch (e) { hdrOn = !!ctx; }
 }
 if (!ctx) ctx = cv.getContext('2d');
-// ---- screen effects (Settings > Picture; CRT on unless switched off, the others off unless chosen): CRT (a gently curved screen with dark rounded corners,
+// ---- screen effects (Settings > Picture; CRT on unless switched off, the others off unless chosen): CRT (a gently curved screen that still fills the whole window,
 // a vignette and a faint pattern of red, green and blue phosphor stripes), chromatic aberration (red and blue a few
 // pixels apart, more toward the edges) and scanlines (fine dark lines over the whole window). All steady: nothing
 // flickers or rolls. CRT and chromatic aberration redraw the finished picture of the galaxy through WebGL onto a second
@@ -2953,11 +2953,12 @@ const CRT_K = 0.1, CHROMA = 0.002;   // how curved the CRT screen is; how far ap
 const post = { gl: null, cv: null, tex: null, u: null, on: false, shown: false, failed: false };
 const postWant = () => (pref.crt || pref.chroma) && !hdrOn && !post.failed;
 // a point on the screen (view units, like mx/my) -> the point of the galaxy's picture shown there: the curved CRT screen
-// shows the picture bent, so the cursor and clicks go where things appear (the shader does the same sum)
+// shows the picture bent, so the cursor and clicks go where things appear (the shader does the same sum). Each line of the
+// picture bows outward toward the middle of the screen while the corners stay put, so the picture reaches every corner
 function crtWarp(x, y) {
   if (!pref.crt || !post.shown) return [x, y];
-  const cx = x / W * 2 - 1, cy = y / H * 2 - 1, f = (1 + CRT_K * (cx * cx + cy * cy)) / (1 + CRT_K);
-  return [(cx * f + 1) / 2 * W, (cy * f + 1) / 2 * H];
+  const cx = x / W * 2 - 1, cy = y / H * 2 - 1;
+  return [(cx * (1 + CRT_K * cy * cy) / (1 + CRT_K) + 1) / 2 * W, (cy * (1 + CRT_K * cx * cx) / (1 + CRT_K) + 1) / 2 * H];
 }
 function postInit() {
   const c = document.getElementById('post'), gl = c.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
@@ -2974,7 +2975,7 @@ precision mediump float;
 uniform sampler2D t; uniform vec2 res; uniform float k, ca, crt; varying vec2 v;
 void main() {
   vec2 c = v * 2.0 - 1.0; float r2 = dot(c, c);
-  vec2 w = c * (1.0 + k * r2) / (1.0 + k);          // the curved screen (k = 0: flat)
+  vec2 w = c * (1.0 + k * c.yx * c.yx) / (1.0 + k);  // the curved screen (k = 0: flat), corners pinned so it fills the window
   vec2 uv = w * 0.5 + 0.5, d = w * ca;               // chromatic aberration: red one way, blue the other, more toward the edges
   vec3 col = vec3(texture2D(t, uv + d).r, texture2D(t, uv).g, texture2D(t, uv - d).b);
   if (crt > 0.5) {
@@ -2983,9 +2984,7 @@ void main() {
     col += glow * 0.06;
     float m = mod(floor(gl_FragCoord.x), 3.0);       // phosphor stripes, one pixel each
     vec3 mask = m < 0.5 ? vec3(1.14, 0.9, 0.9) : m < 1.5 ? vec3(0.9, 1.14, 0.9) : vec3(0.9, 0.9, 1.14);
-    col *= mask * (1.0 - 0.45 * pow(r2 * 0.5, 1.4)) * 1.02;   // and a vignette
-    vec2 e = clamp((1.0 - abs(w)) * res * 0.5, 0.0, 1.0);    // outside the curved screen: black, with a smooth edge
-    col *= e.x * e.y;
+    col *= mask * (1.0 - 0.35 * pow(r2 * 0.5, 1.4)) * 1.02;   // and a gentle vignette
   }
   gl_FragColor = vec4(col, 1.0);
 }`));
@@ -6040,12 +6039,14 @@ for (const t of ['mousedown', 'click', 'pointerdown', 'contextmenu', 'dblclick']
   const el = e.target.closest && e.target.closest('.hudEl');
   if (!el) return;
   e.preventDefault(); e.stopImmediatePropagation();
-  if (t === 'mousedown' && !e.button) { hudPick(el.dataset.hudk); hudMove = { k: el.dataset.hudk, mx: e.clientX, my: e.clientY, r: el.getBoundingClientRect(), moved: false }; }
+  // (the press starts a move: blocking pointerdown here also stops the browser sending mousedown and mousemove for it, so a
+  // real mouse is followed by its pointer events; the controller sends both kinds, and the second one is ignored)
+  if ((t === 'pointerdown' || t === 'mousedown') && !e.button && !hudMove) { hudPick(el.dataset.hudk); hudMove = { k: el.dataset.hudk, mx: e.clientX, my: e.clientY, r: el.getBoundingClientRect(), moved: false }; }
 }, { capture: true, passive: false });
 // dragging a window moves it. Where it ends up is kept as its distance from the nearest screen edges (sideways only for
 // the upgrade panel, which always reaches from top to bottom); the meter keeps using its own saved place.
 let hudMove = null;
-addEventListener('mousemove', e => {
+function hudMoveTo(e) {
   if (!hudMove) return;
   const { k, mx, my, r } = hudMove, dx = e.clientX - mx, dy = e.clientY - my;
   if (!hudMove.moved && Math.hypot(dx, dy) < 4) return;   // (a plain click only picks it)
@@ -6059,28 +6060,31 @@ addEventListener('mousemove', e => {
     applyHud();
   }
   hudGrip();
-});
-addEventListener('mouseup', () => {
+}
+function hudMoveEnd() {
   if (!hudMove) return;
   if (hudMove.moved) { if (hudMove.k === 'meter') { try { localStorage.setItem('obs-meter-box', JSON.stringify(mtBox)); } catch (e) {} } else hudSave(); }
   hudMove = null;
-});
+}
+for (const t of ['pointermove', 'mousemove']) addEventListener(t, hudMoveTo);   // (the place comes from where the press began, so getting both is harmless)
+for (const t of ['pointerup', 'pointercancel', 'mouseup']) addEventListener(t, hudMoveEnd);
 function hudResetPlace(k) { if (k === 'meter' || k === 'all') { mtBox = null; try { localStorage.removeItem('obs-meter-box'); } catch (e) {} } }
 addEventListener('keydown', e => { if (hudOn() && e.key === 'Escape' && !$('askBox').classList.contains('show')) { hudClose(); e.stopImmediatePropagation(); } }, true);
 // dragging the handle: moving it outwards makes the window bigger (the upgrade panel only counts sideways moves)
-$('hudGrip').addEventListener('mousedown', e => {
+for (const t of ['pointerdown', 'mousedown']) $('hudGrip').addEventListener(t, e => {   // (by mouse, touch or controller, like moving)
   if (e.button) return;
   e.preventDefault(); e.stopPropagation();
+  if (hudDrag) return;
   const d = hudDef(hudK), r = $(d.id).getBoundingClientRect();
   hudDrag = { s0: hudS(hudK), mx: e.clientX, my: e.clientY, w: r.width, h: r.height, c: d.corner };
 });
-addEventListener('mousemove', e => {
+for (const t of ['pointermove', 'mousemove']) addEventListener(t, e => {
   if (!hudDrag) return;
   const { s0, mx, my, w, h, c } = hudDrag, fx = (e.clientX - mx) * c[0] / w, fy = (e.clientY - my) * c[1] / h;
   const f = 1 + (c[1] ? (fx + fy) / 2 : fx), s = Math.round(Math.min(2, Math.max(0.5, s0 * f)) * 100) / 100;
   (hudSet[hudK] = hudSet[hudK] || {}).s = s; applyHud(); hudFill(); hudGrip();
 });
-addEventListener('mouseup', () => { if (hudDrag) { hudDrag = null; hudSave(); } });
+for (const t of ['pointerup', 'pointercancel', 'mouseup']) addEventListener(t, () => { if (hudDrag) { hudDrag = null; hudSave(); } });
 addEventListener('resize', () => { if (hudOn()) hudGrip(); });
 
 // ---------------------------------------------------------------- title screen
