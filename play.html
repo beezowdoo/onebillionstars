@@ -951,6 +951,256 @@
   #end .thanks { animation-delay: 4.4s; margin-top: 26px; font-size: 13px; letter-spacing: .3em; margin-right: -.3em; text-transform: uppercase; color: #8795b8; }
   @media (prefers-reduced-motion: reduce) { #end.show, #end .wrap > * { animation-duration: .01s; animation-delay: 0s; } }
   @keyframes pop { 0% { opacity: 0; transform: translateY(-8px); } 8% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+  /* ===== the look of the menus and buttons, laid over the rules above: deep glass windows with a thin starlight line on top, and one
+       family of buttons (plain glass, main blue, reward gold, leave or delete red, co-op pink). Steady: hovers only change colour ===== */
+  :root {
+    --bq-card: linear-gradient(180deg, rgba(25, 32, 52, .97), rgba(11, 15, 26, .98));
+    --bq-line: rgba(132, 162, 224, .17);
+    --bq-line2: rgba(132, 162, 224, .1);
+    --bq-hi: rgba(120, 175, 255, .55);
+    --bq-text: #dde6f3; --bq-dim: #8fa3bd; --bq-faint: #66788f;
+    --bq-ghost: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+    --bq-ghost-h: linear-gradient(180deg, rgba(120, 170, 255, .16), rgba(120, 170, 255, .06));
+    --bq-blue: linear-gradient(180deg, #5596f3, #2c62c6);
+    --bq-blue-h: linear-gradient(180deg, #64a3ff, #3570d8);
+    --bq-gold: linear-gradient(180deg, #ffe8a8, #ffb45e);
+    --bq-red: linear-gradient(180deg, #d9534a, #a8322b);
+    --bq-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 2px 0 rgba(255, 255, 255, .03) inset, 0 1px 0 rgba(255, 255, 255, .07) inset;
+    --bq-tr: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease, filter .16s ease;
+  }
+
+  /* ---- the windows: deep glass, a soft shadow, a thin starlight line along the top; the room behind dims and softens */
+  #menuBox, #settingsBox, #achBox, #skinBox, #lbBox, #cloudBox, #askBox, #quitBox, #playersBox, #coopBox, #hangarBox, #cacheBox, #cacheStats,
+  #chalBox, #demoBox, #infWin, #skBox, #mythBox { background: radial-gradient(ellipse at center, rgba(3, 5, 12, .55), rgba(2, 3, 8, .86)) !important; backdrop-filter: blur(3px); }
+  #menuBox .card, #settingsBox .card, #achBox .card, #skinBox .card, #lbBox .card, #cloudBox .card, #askBox .card, #quitBox .card, #playersBox .card,
+  #coopBox .card, #hangarBox .card, #cacheBox .card, #cacheStats .card, #chalBox .card, #demoBox .card, #infWin .card, #hudPrevBox .card {
+    position: relative; background: var(--bq-card); border: 1px solid var(--bq-line); border-radius: 16px; box-shadow: var(--bq-shadow); }
+  #settingsBox .card { background: linear-gradient(180deg, rgba(20, 26, 43, .98), rgba(10, 14, 24, .98)); }
+  #menuBox .card::before, #settingsBox .card::before, #achBox .card::before, #skinBox .card::before, #lbBox .card::before, #cloudBox .card::before,
+  #askBox .card::before, #quitBox .card::before, #playersBox .card::before, #coopBox .card::before, #hangarBox .card::before, #cacheBox .card::before,
+  #cacheStats .card::before, #chalBox .card::before, #demoBox .card::before, #infWin .card::before {
+    content: ''; position: absolute; left: 12%; right: 12%; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(140, 185, 255, .7) 30%, rgba(255, 214, 120, .65) 70%, transparent); }
+  #menuBox h2, #achBox h2, #skinBox h2, #lbBox h2, #cloudBox h2, #playersBox h2, #coopBox h2, #askBox h2, #quitBox h2, #settingsBox .snav h2 { letter-spacing: .01em; font-weight: 750; }
+  /* a small gold mark under the menu's title */
+  #menuBox h2 { margin-bottom: 18px !important; }
+  #menuBox h2::after { content: ''; display: block; width: 64px; height: 1px; margin: 11px auto 0; background: linear-gradient(90deg, transparent, #ffd447, transparent); }
+
+  /* ---- scrollbars inside windows and panels: thin and quiet */
+  #menuBox ::-webkit-scrollbar, #settingsBox ::-webkit-scrollbar, #achBox ::-webkit-scrollbar, #skinBox ::-webkit-scrollbar, #lbBox ::-webkit-scrollbar,
+  #panel ::-webkit-scrollbar, #hangarBox ::-webkit-scrollbar, #saveList::-webkit-scrollbar, #cloudBox ::-webkit-scrollbar { width: 8px; }
+  #menuBox ::-webkit-scrollbar-thumb, #settingsBox ::-webkit-scrollbar-thumb, #achBox ::-webkit-scrollbar-thumb, #skinBox ::-webkit-scrollbar-thumb, #lbBox ::-webkit-scrollbar-thumb,
+  #panel ::-webkit-scrollbar-thumb, #hangarBox ::-webkit-scrollbar-thumb, #saveList::-webkit-scrollbar-thumb, #cloudBox ::-webkit-scrollbar-thumb {
+    background: rgba(132, 162, 224, .22); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+  #menuBox ::-webkit-scrollbar-track, #settingsBox ::-webkit-scrollbar-track, #achBox ::-webkit-scrollbar-track, #skinBox ::-webkit-scrollbar-track, #lbBox ::-webkit-scrollbar-track,
+  #panel ::-webkit-scrollbar-track, #hangarBox ::-webkit-scrollbar-track, #saveList::-webkit-scrollbar-track, #cloudBox ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---- one family of buttons. Plain: soft glass. Main: luminous blue. Reward: gold. Leave or delete: a red tint */
+  #menuBox .mbtns button, #title .big.minor, #title .mid, #title #worldsBack, #saveList .go, #newBox .modes button, #settingsBox .sbtn, #settingsBox .sdone,
+  .cbtns button, #achBox .cbtns button, #skinBox .cbtns button, #lbBox button, #cloudBox button, #askBox button, #quitBox button, #playersBox .card > button,
+  #coopBox button, #hangarClose, #hgGo, #hgPrev, #hgNext, #skBox .skFoot button, #infWin button.minor, #demoBox button.minor, #hudBar button, #hudPrevBox button,
+  #foot button, #meter .mh button, .maxbtn, .selrow button, #tut button {
+    background: var(--bq-ghost); border: 1px solid var(--bq-line); color: var(--bq-text); box-shadow: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 1px 2px rgba(0, 0, 0, .3);
+    transition: var(--bq-tr); }
+  #menuBox .mbtns button:hover, #title .big.minor:hover, #title .mid:hover, #title #worldsBack:hover, #saveList .go:hover, #newBox .modes button:hover, #settingsBox .sbtn:hover:not(:disabled),
+  .cbtns button:hover:not(:disabled), #achBox .cbtns button:hover, #skinBox .cbtns button:hover, #lbBox button:hover, #cloudBox button:hover:not(:disabled), #askBox button:hover, #quitBox button:hover,
+  #playersBox .card > button:hover, #coopBox button:hover:not(:disabled), #hangarClose:hover, #hgGo:hover, #hgPrev:hover, #hgNext:hover, #skBox .skFoot button:hover,
+  #infWin button.minor:hover, #demoBox button.minor:hover, #hudBar button:hover, #foot button:hover, #meter .mh button:hover, .maxbtn:hover, .selrow button:hover, #tut button:hover {
+    background: var(--bq-ghost-h); border-color: var(--bq-hi); color: #fff; box-shadow: 0 1px 0 rgba(255, 255, 255, .07) inset, 0 0 0 1px rgba(90, 160, 255, .12), 0 4px 16px rgba(50, 110, 230, .18); }
+  /* main */
+  #menuBox .mbtns .go, #title .big:not(.minor), #settingsBox .sdone, #askBox #askYes, #cloudBox .go, #coopBox button.go, #chalBox button, #demoBox button:not(.minor) {
+    color: #fff; font-weight: 650; background: var(--bq-blue); border: 1px solid rgba(150, 195, 255, .55);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .28) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 6px 20px rgba(44, 98, 198, .35); text-shadow: 0 1px 1px rgba(0, 0, 0, .3); transition: var(--bq-tr); }
+  #menuBox .mbtns .go:hover, #title .big:not(.minor):hover, #settingsBox .sdone:hover, #askBox #askYes:hover, #cloudBox .go:hover, #coopBox button.go:hover:not(:disabled), #chalBox button:hover, #demoBox button:not(.minor):hover {
+    background: var(--bq-blue-h); border-color: rgba(180, 215, 255, .8); box-shadow: 0 1px 0 rgba(255, 255, 255, .32) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 8px 28px rgba(60, 130, 255, .45); }
+  /* reward / finish */
+  .cbtns button.main, #hudBar .go, #end .btns button:not(.minor) { color: #1d1405; background: var(--bq-gold); border: 1px solid rgba(255, 230, 160, .7);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .55) inset, 0 6px 22px rgba(255, 170, 80, .3); }
+  .cbtns button.main:hover:not(:disabled), #hudBar .go:hover { filter: brightness(1.06); box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 8px 28px rgba(255, 170, 80, .45); }
+  /* leave / delete */
+  #menuBox #mExit, #title .mid.quit, #saveList .del, #cloudBox .danger, #foot button:not(.plain) { color: #ffb0a8; background: linear-gradient(180deg, rgba(255, 90, 80, .1), rgba(255, 90, 80, .03)); border-color: rgba(255, 115, 100, .3); }
+  #menuBox #mExit:hover, #title .mid.quit:hover, #saveList .del:hover, #cloudBox .danger:hover, #foot button:not(.plain):hover {
+    color: #fff; background: linear-gradient(180deg, rgba(255, 90, 80, .24), rgba(255, 90, 80, .1)); border-color: rgba(255, 130, 115, .65); box-shadow: 0 4px 18px rgba(220, 60, 50, .22); }
+  #quitBox #quitYes, #askBox #askYes.danger { color: #fff; background: var(--bq-red); border: 1px solid rgba(255, 150, 140, .5); box-shadow: 0 1px 0 rgba(255, 255, 255, .2) inset, 0 6px 20px rgba(200, 50, 40, .35); }
+  #quitBox #quitYes:hover, #askBox #askYes.danger:hover { filter: brightness(1.1); }
+  /* co-op stays pink */
+  #menuBox #mTeam, #title .join button, .gift button { color: #ffb3e6; background: linear-gradient(180deg, rgba(255, 122, 217, .12), rgba(255, 122, 217, .04)); border-color: rgba(255, 122, 217, .38); }
+  #menuBox #mTeam:hover, #title .join button:hover:not(:disabled) { color: #fff; border-color: rgba(255, 150, 225, .75); box-shadow: 0 4px 18px rgba(255, 90, 200, .2); }
+  /* keyboard and controller: a clear ring on the button you are on */
+  #menuBox button:focus-visible, #title button:focus-visible, #settingsBox button:focus-visible, .cbtns button:focus-visible, #askBox button:focus-visible {
+    outline: 2px solid #8fc0ff; outline-offset: 2px; }
+
+  /* ---- the Esc menu: each button with its own icon */
+  #menuBox .card { width: 380px; padding: 22px 24px 18px; }
+  #menuBox .mbtns { gap: 7px; }
+  #menuBox .mbtns button { position: relative; display: flex; align-items: center; gap: 12px; text-align: left; padding: 11px 16px; border-radius: 11px; font-weight: 550; }
+  #menuBox .mbtns button::before { content: ''; flex: none; width: 19px; height: 19px; background: currentColor; opacity: .85;
+    -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
+  #menuBox .mbtns button::after { content: ''; margin-left: auto; width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-top: 1.6px solid currentColor; transform: rotate(45deg); opacity: .3; }
+  #menuBox .mbtns .go::after, #menuBox #mExit::after { display: none; }
+  #menuBox .mbtns .go { justify-content: center; padding: 13px 16px; font-size: 16px; }
+  #menuBox .mbtns .go::before { width: 15px; height: 15px; opacity: 1; }
+  #menuBox #mResume::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%205.5v13l10-6.5z%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%205.5v13l10-6.5z%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mTeam::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22%2F%3E%3Cpath%20d%3D%22M3.5%2019c.6-3%202.8-5%205.5-5s4.9%202%205.5%205%22%2F%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%229%22%20r%3D%222.4%22%2F%3E%3Cpath%20d%3D%22M15.2%2014.1c2.6-.2%204.7%201.6%205.3%204.9%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22%2F%3E%3Cpath%20d%3D%22M3.5%2019c.6-3%202.8-5%205.5-5s4.9%202%205.5%205%22%2F%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%229%22%20r%3D%222.4%22%2F%3E%3Cpath%20d%3D%22M15.2%2014.1c2.6-.2%204.7%201.6%205.3%204.9%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mCoop::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22%2F%3E%3Cpath%20d%3D%22M3.5%2019c.6-3%202.8-5%205.5-5s4.9%202%205.5%205%22%2F%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%229%22%20r%3D%222.4%22%2F%3E%3Cpath%20d%3D%22M15.2%2014.1c2.6-.2%204.7%201.6%205.3%204.9%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%223%22%2F%3E%3Cpath%20d%3D%22M3.5%2019c.6-3%202.8-5%205.5-5s4.9%202%205.5%205%22%2F%3E%3Ccircle%20cx%3D%2216.5%22%20cy%3D%229%22%20r%3D%222.4%22%2F%3E%3Cpath%20d%3D%22M15.2%2014.1c2.6-.2%204.7%201.6%205.3%204.9%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mSettings::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h9M17%207h3M4%2017h3M11%2017h9%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h9M17%207h3M4%2017h3M11%2017h9%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mAch::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204h8v5a4%204%200%2001-8%200z%22%2F%3E%3Cpath%20d%3D%22M8%206H5.5a2.5%202.5%200%20002.7%203.6M16%206h2.5a2.5%202.5%200%2001-2.7%203.6M12%2013v4M8.5%2020h7M10%2017h4%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204h8v5a4%204%200%2001-8%200z%22%2F%3E%3Cpath%20d%3D%22M8%206H5.5a2.5%202.5%200%20002.7%203.6M16%206h2.5a2.5%202.5%200%2001-2.7%203.6M12%2013v4M8.5%2020h7M10%2017h4%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mSkins::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203.5l2.3%205.3%205.7.6-4.3%203.8%201.3%205.6L12%2015.9l-5%202.9%201.3-5.6L4%209.4l5.7-.6z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203.5l2.3%205.3%205.7.6-4.3%203.8%201.3%205.6L12%2015.9l-5%202.9%201.3-5.6L4%209.4l5.7-.6z%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mLb::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2020v-6M12%2020V5M19%2020v-10%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2020v-6M12%2020V5M19%2020v-10%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mExit::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14%204h4a1%201%200%20011%201v14a1%201%200%2001-1%201h-4%22%2F%3E%3Cpath%20d%3D%22M10%208l-4%204%204%204M6%2012h9%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14%204h4a1%201%200%20011%201v14a1%201%200%2001-1%201h-4%22%2F%3E%3Cpath%20d%3D%22M10%208l-4%204%204%204M6%2012h9%22%2F%3E%3C%2Fsvg%3E"); }
+  #menuBox #mExit { margin-top: 10px; justify-content: center; }
+  #menuBox .note { margin-top: 14px; color: var(--bq-faint); }
+
+  /* ---- the main menu */
+  #title .big { width: 284px; padding: 13px 0; border-radius: 12px; font-size: 16px; letter-spacing: .01em; }
+  #title .big small { color: rgba(225, 236, 255, .78); font-weight: 500; }
+  #title .big.minor { font-weight: 650; color: #cfdaea; }
+  #title .big.minor small { color: var(--bq-dim); }
+  #title .trow { width: 284px; gap: 8px; }
+  body.desktop #title .mid.desk { display: flex !important; }
+  #title .mid { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 0; border-radius: 11px; font-weight: 600; color: #c3cfe0; }
+  #title .mid::before, #title .big::before { content: ''; flex: none; width: 16px; height: 16px; background: currentColor; opacity: .8;
+    -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
+  #title .big::before { display: none; }
+  #title #btnAch::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204h8v5a4%204%200%2001-8%200z%22%2F%3E%3Cpath%20d%3D%22M8%206H5.5a2.5%202.5%200%20002.7%203.6M16%206h2.5a2.5%202.5%200%2001-2.7%203.6M12%2013v4M8.5%2020h7M10%2017h4%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204h8v5a4%204%200%2001-8%200z%22%2F%3E%3Cpath%20d%3D%22M8%206H5.5a2.5%202.5%200%20002.7%203.6M16%206h2.5a2.5%202.5%200%2001-2.7%203.6M12%2013v4M8.5%2020h7M10%2017h4%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #btnLb::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2020v-6M12%2020V5M19%2020v-10%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2020v-6M12%2020V5M19%2020v-10%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #btnSkins::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203.5l2.3%205.3%205.7.6-4.3%203.8%201.3%205.6L12%2015.9l-5%202.9%201.3-5.6L4%209.4l5.7-.6z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203.5l2.3%205.3%205.7.6-4.3%203.8%201.3%205.6L12%2015.9l-5%202.9%201.3-5.6L4%209.4l5.7-.6z%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #btnTitleSettings::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h9M17%207h3M4%2017h3M11%2017h9%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h9M17%207h3M4%2017h3M11%2017h9%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #btnCloud::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%2018a4%204%200%2001-.4-8A6%206%200%200118%2011.5a3.3%203.3%200%2001-.5%206.5z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%2018a4%204%200%2001-.4-8A6%206%200%200118%2011.5a3.3%203.3%200%2001-.5%206.5z%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #btnQuit::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%204v8%22%2F%3E%3Cpath%20d%3D%22M7.2%207.2a7%207%200%20109.6%200%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%204v8%22%2F%3E%3Cpath%20d%3D%22M7.2%207.2a7%207%200%20109.6%200%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #worldsBack::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.5%206l-6%206%206%206%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.5%206l-6%206%206%206%22%2F%3E%3C%2Fsvg%3E"); }
+  #title #worldsBack { display: flex; width: 284px; }
+  #title .join { width: 284px; }
+  #title .join input, #newName { background: rgba(6, 9, 18, .7); border: 1px solid var(--bq-line); border-radius: 11px; box-shadow: 0 1px 0 rgba(0, 0, 0, .4) inset; transition: var(--bq-tr); }
+  #title .join input:focus, #newName:focus { outline: none; border-color: var(--bq-hi); box-shadow: 0 0 0 3px rgba(90, 160, 255, .15); }
+  #title .join button { border-radius: 11px; }
+  #title .textbtn { border-radius: 8px; transition: var(--bq-tr); }
+  #title .textbtn:hover { background: rgba(255, 255, 255, .05); }
+  /* your worlds */
+  #saveList .go { border-radius: 12px; padding: 10px 14px; }
+  #saveList .go b { font-weight: 650; }
+  #saveList .del { width: 42px; border-radius: 12px; font-size: 0; display: flex; align-items: center; justify-content: center; }
+  #saveList .del::before { content: ''; width: 17px; height: 17px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%207h14M10%207V5h4v2M7%207l1%2012h8l1-12%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%207h14M10%207V5h4v2M7%207l1%2012h8l1-12%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; }
+  /* making a world: the kinds as cards */
+  #newBox .modes button { border-radius: 13px; padding: 12px 14px; color: var(--bq-dim); }
+  #newBox .modes button.on { background: linear-gradient(180deg, rgba(90, 160, 255, .2), rgba(90, 160, 255, .06)); border-color: rgba(130, 185, 255, .75);
+    box-shadow: 0 0 0 1px rgba(130, 185, 255, .35) inset, 0 6px 22px rgba(50, 110, 230, .2); color: #c3d2e6; }
+  #newBox .modes button.locked { background: rgba(255, 255, 255, .015); box-shadow: none; }
+
+  /* ---- Settings */
+  #settingsBox .snav { background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .01)); border-right: 1px solid var(--bq-line2); }
+  #settingsBox .stab { position: relative; border-radius: 10px; transition: var(--bq-tr); }
+  #settingsBox .stab.on { background: linear-gradient(90deg, rgba(90, 160, 255, .22), rgba(90, 160, 255, .06)); border-color: rgba(120, 175, 255, .32); box-shadow: 0 4px 14px rgba(40, 90, 200, .15); }
+  #settingsBox .stab.on::before { content: ''; position: absolute; left: -15px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: #7dbbff; box-shadow: 0 0 10px rgba(125, 187, 255, .7); }
+  #settingsBox .sdone { border-radius: 11px; }
+  #settingsBox h4 { color: #9db0c8; }
+  #settingsBox .sgrp { background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .015)); border: 1px solid var(--bq-line2); border-radius: 13px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .03) inset; }
+  #settingsBox .sr + .sr, #settingsBox .kr + .kr { border-top-color: rgba(132, 162, 224, .08); }
+  #settingsBox .sw { background: #0d1322; border-color: rgba(132, 162, 224, .25); box-shadow: 0 1px 2px rgba(0, 0, 0, .5) inset; }
+  #settingsBox .sw::after { background: #9fb0c8; box-shadow: 0 1px 3px rgba(0, 0, 0, .5); }
+  #settingsBox .sw.on { background: var(--bq-blue); border-color: rgba(150, 195, 255, .7); box-shadow: 0 0 12px rgba(60, 130, 255, .4); }
+  #settingsBox input[type=range]::-webkit-slider-runnable-track { height: 6px; background: linear-gradient(90deg, #3d7fe8, #6cb2ff var(--p), #141c2c var(--p)); box-shadow: 0 1px 2px rgba(0, 0, 0, .5) inset; }
+  #settingsBox input[type=range]::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -6px; border: 3px solid #5a9cff; box-shadow: 0 0 0 4px rgba(90, 156, 255, .15), 0 2px 6px rgba(0, 0, 0, .6); }
+  #settingsBox .sbtn { border-radius: 9px; }
+  #settingsBox .seg { background: rgba(6, 9, 18, .7); border-color: var(--bq-line); border-radius: 10px; }
+  #settingsBox .seg button { border-radius: 8px; transition: var(--bq-tr); }
+  #settingsBox .seg button.on { background: var(--bq-blue); color: #fff; box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 3px 10px rgba(44, 98, 198, .35); }
+  #settingsBox input.txt { background: rgba(6, 9, 18, .7); border-color: var(--bq-line); border-radius: 9px; }
+  /* the keys look like keys */
+  #settingsBox .kc { background: linear-gradient(180deg, #1d2740, #121a2b); border: 1px solid rgba(132, 162, 224, .3); border-bottom: 2px solid #0a0f1a; border-radius: 7px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset; }
+  #settingsBox .kc:hover:not(:disabled) { border-color: var(--bq-hi); border-bottom-color: #0a0f1a; }
+  #settingsBox .kc.wait { background: linear-gradient(180deg, rgba(255, 212, 71, .2), rgba(255, 212, 71, .06)); border-color: #ffd447; border-bottom-color: #6b5410; }
+
+  /* ---- the upgrades panel and the stats box */
+  #hud, #panel, #panelShow, #meter, #mini { border-color: var(--bq-line) !important; border-radius: 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .05) inset; }
+  #hud, #panel, #panelShow, #meter { background: linear-gradient(180deg, rgba(22, 29, 47, .92), rgba(11, 15, 26, .92)); }
+  #bar { height: 8px; background: rgba(6, 9, 18, .8); box-shadow: 0 1px 2px rgba(0, 0, 0, .6) inset; }
+  #barFill { background: linear-gradient(90deg, #4f9bff, #3fe0c5); box-shadow: 0 0 10px rgba(63, 224, 197, .45); }
+  #unlock { border-radius: 9px; color: #ffe08a; background: linear-gradient(180deg, rgba(255, 212, 71, .12), rgba(255, 212, 71, .03)); border-color: rgba(255, 212, 71, .38); transition: var(--bq-tr); }
+  #unlock:hover:not(.no) { background: linear-gradient(180deg, rgba(255, 212, 71, .22), rgba(255, 212, 71, .07)); border-color: #ffd447; box-shadow: 0 0 14px rgba(255, 212, 71, .18); }
+  #secBuyBtn { border-radius: 11px; background: linear-gradient(180deg, rgba(48, 40, 16, .96), rgba(26, 22, 10, .96)); box-shadow: 0 6px 22px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .1) inset; }
+  #tabs { border-bottom-color: var(--bq-line2); }
+  #tabs button { transition: var(--bq-tr); }
+  #tabs button:hover { color: #c9d6e8; }
+  #tabs button.on { color: #fff; box-shadow: inset 0 -2px #6cb2ff, 0 8px 14px -10px rgba(108, 178, 255, .9) inset; text-shadow: 0 0 12px rgba(120, 180, 255, .45); }
+  #tabs #panelHide { border-left-color: var(--bq-line2); }
+  .up { position: relative; border-radius: 11px; background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015)); border: 1px solid var(--bq-line2);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset; transition: var(--bq-tr); }
+  .up:hover:not(.no) { background: linear-gradient(180deg, rgba(110, 165, 255, .14), rgba(110, 165, 255, .04)); border-color: rgba(120, 175, 255, .5); box-shadow: 0 4px 16px rgba(40, 100, 230, .16); }
+  .up .cost { color: #ffd86a; }
+  .up.sub { background: rgba(255, 255, 255, .02); }
+  .relic { border-radius: 11px; background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .015)); border-color: var(--bq-line2); }
+  #foot { border-top-color: var(--bq-line2); }
+  #foot button { border-radius: 8px; padding: 4px 10px; }
+  #foot button.plain { color: var(--bq-dim); }
+  .maxbtn { border-radius: 999px; }
+
+  /* ---- achievements, skins, leaderboard */
+  #achList .ach { border-radius: 12px; background: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .01)); border-color: var(--bq-line2); }
+  #achList .ach.got { background: linear-gradient(180deg, rgba(255, 212, 71, .12), rgba(255, 212, 71, .02)); border-color: rgba(255, 212, 71, .4); box-shadow: 0 4px 18px rgba(255, 190, 70, .08); }
+  #achList .ach i { height: 4px; background: linear-gradient(90deg, #4f9bff, #7dc4ff var(--p), rgba(255, 255, 255, .06) var(--p)); }
+  #achList h3, #lbList h3, #lbList th { color: #9db0c8; }
+  #skinList .skin { border-radius: 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .01)); transition: var(--bq-tr); }
+  #skinList .skin.open:hover { background: linear-gradient(180deg, rgba(110, 165, 255, .12), rgba(110, 165, 255, .03)); }
+  #skinList .skin.on { background: linear-gradient(180deg, rgba(255, 212, 71, .14), rgba(255, 212, 71, .02)); box-shadow: 0 0 0 1px rgba(255, 212, 71, .35) inset, 0 6px 22px rgba(255, 190, 70, .12); }
+  #lbTabs button { border-radius: 999px; padding: 6px 14px; }
+  #lbTabs button.on { color: #fff; background: var(--bq-blue); border-color: rgba(150, 195, 255, .6); box-shadow: 0 3px 12px rgba(44, 98, 198, .35); }
+  #lbList tr.me td { background: rgba(90, 160, 255, .14); }
+  #lbList tr.me td:first-child { box-shadow: inset 3px 0 #6cb2ff; }
+  #lbList th, #lbList td { border-bottom-color: rgba(132, 162, 224, .08); }
+  .cbtns button, #achBox .cbtns button, #skinBox .cbtns button, #lbBox .cbtns button { border-radius: 10px; padding: 9px 20px; }
+
+  /* ---- small things: "are you sure?", notices, the HUD editor's bar, Pip's bubble */
+  #askBox .card, #quitBox .card { padding: 24px 24px 20px; }
+  #askBox button, #quitBox button { border-radius: 10px; padding: 10px 20px; }
+  .toast { background: linear-gradient(180deg, rgba(24, 31, 50, .95), rgba(12, 16, 27, .95)); box-shadow: 0 8px 26px rgba(0, 0, 0, .45); }
+  #hudBar { background: var(--bq-card); border-radius: 14px; }
+  #hudBar button { border-radius: 9px; }
+  #tut { background: linear-gradient(180deg, rgba(24, 31, 50, .97), rgba(12, 16, 27, .97)); box-shadow: 0 12px 34px rgba(0, 0, 0, .5); }
+  #tut::before { background: rgba(20, 27, 44, .97); }
+  #tut button { border-radius: 8px; }
+  #hangarBox h2 { letter-spacing: .01em; }
+  #hgPrev, #hgNext { border-radius: 12px; }
+  /* New world: the galaxy types as three matching cards, each with its icon in its own colour */
+  #newBox { width: 480px; }
+  #newBox .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 6px; }
+  #newBox .modes button { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 16px 10px 14px; }
+  #newBox .modes button[data-mode=linear] { --mc: #7dbbff; } #newBox .modes button[data-mode=infinite] { --mc: #b894ff; } #newBox .modes button[data-mode=challenge] { --mc: #ff9f72; }
+  #newBox .modes .mi { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; margin-bottom: 10px; border-radius: 50%;
+    background: color-mix(in srgb, var(--mc) 13%, transparent); border: 1px solid color-mix(in srgb, var(--mc) 42%, transparent); }
+  #newBox .modes .mi::before, #newBox .modes small::before { content: ''; background: currentColor;
+    -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
+  #newBox .modes .mi::before { width: 24px; height: 24px; background: var(--mc); }
+  #newBox .modes button[data-mode=linear] .mi::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223.5%22%20y%3D%223.5%22%20width%3D%2217%22%20height%3D%2217%22%20rx%3D%222.5%22%2F%3E%3Cpath%20d%3D%22M9.2%203.5v17M14.8%203.5v17M3.5%209.2h17M3.5%2014.8h17%22%2F%3E%3Crect%20x%3D%229.2%22%20y%3D%229.2%22%20width%3D%225.6%22%20height%3D%225.6%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223.5%22%20y%3D%223.5%22%20width%3D%2217%22%20height%3D%2217%22%20rx%3D%222.5%22%2F%3E%3Cpath%20d%3D%22M9.2%203.5v17M14.8%203.5v17M3.5%209.2h17M3.5%2014.8h17%22%2F%3E%3Crect%20x%3D%229.2%22%20y%3D%229.2%22%20width%3D%225.6%22%20height%3D%225.6%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E"); }
+  #newBox .modes button[data-mode=infinite] .mi::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2012c-2-2.7-3.6-4-5.5-4a4%204%200%20000%208c1.9%200%203.5-1.3%205.5-4zm0%200c2%202.7%203.6%204%205.5%204a4%204%200%20000-8c-1.9%200-3.5%201.3-5.5%204z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2012c-2-2.7-3.6-4-5.5-4a4%204%200%20000%208c1.9%200%203.5-1.3%205.5-4zm0%200c2%202.7%203.6%204%205.5%204a4%204%200%20000-8c-1.9%200-3.5%201.3-5.5%204z%22%2F%3E%3C%2Fsvg%3E"); }
+  #newBox .modes button[data-mode=challenge] .mi::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2019.5l6.5-11%203.6%206%202.2-3.4%205.7%208.4z%22%2F%3E%3Cpath%20d%3D%22M9.5%208.5V4.5l3%201-3%201%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2019.5l6.5-11%203.6%206%202.2-3.4%205.7%208.4z%22%2F%3E%3Cpath%20d%3D%22M9.5%208.5V4.5l3%201-3%201%22%2F%3E%3C%2Fsvg%3E"); }
+  #newBox .modes button b { margin: 0 0 4px; font-size: 14.5px; white-space: nowrap; }
+  #newBox .modes button span { font-size: 12px; line-height: 1.35; color: var(--bq-dim); }
+  #newBox .modes button.on span { color: #c3d2e6; }
+  #newBox .modes small { display: none; align-items: center; gap: 5px; margin-top: 9px; padding: 3px 8px; white-space: nowrap; border-radius: 999px; font-size: 11px; font-weight: 600;
+    color: #9db0c8; background: rgba(255, 255, 255, .04); border: 1px solid var(--bq-line2); }
+  #newBox .modes small::before { width: 11px; height: 11px; }
+  #newBox .modes small::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2211%22%20width%3D%2214%22%20height%3D%229%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%2011V8a4%204%200%20018%200v3%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2211%22%20width%3D%2214%22%20height%3D%229%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%2011V8a4%204%200%20018%200v3%22%2F%3E%3C%2Fsvg%3E"); }
+  #newBox .modes button.locked { opacity: 1; border-style: dashed; }
+  #newBox .modes button.locked small { display: inline-flex; }
+  #newBox .modes button.locked .mi, #newBox .modes button.locked b, #newBox .modes button.locked span { opacity: .5; }
+  #newBox .modes button.locked .mi { filter: grayscale(.7); }
+  #newBox .modes button.locked b { color: #c3d0e0; }
+  /* windows with a colour of their own keep it on their main button */
+  #coopBox button.go { background: linear-gradient(180deg, #c95fae, #8f3479); border-color: rgba(255, 175, 230, .55);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 6px 20px rgba(200, 60, 160, .32); }
+  #coopBox button.go:hover:not(:disabled) { background: linear-gradient(180deg, #d870bd, #a03e88); border-color: rgba(255, 195, 238, .8); box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 8px 26px rgba(220, 80, 180, .42); }
+  #chalBox button { background: linear-gradient(180deg, #f08a58, #c25a2e); border-color: rgba(255, 195, 160, .6);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 6px 20px rgba(230, 110, 60, .32); }
+  #chalBox button:hover { background: linear-gradient(180deg, #ff9a68, #d0663a); border-color: rgba(255, 210, 180, .85); box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 8px 26px rgba(240, 120, 70, .42); }
+  #demoBox button:not(.minor), #demoBox button:not(.minor):hover { color: #1d1405; text-shadow: none; background: var(--bq-gold); border-color: rgba(255, 230, 160, .7);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .55) inset, 0 6px 22px rgba(255, 170, 80, .3); }
+  #demoBox button:not(.minor):hover { filter: brightness(1.06); }
+  #infWin #infToTree, #skBox #skNext { color: #fff; background: linear-gradient(180deg, #8d68e6, #5a39a8); border: 1px solid rgba(205, 180, 255, .6);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 6px 20px rgba(130, 90, 230, .35); }
+  #infWin #infToTree:hover, #skBox #skNext:hover { background: linear-gradient(180deg, #9b78f2, #6644b8); box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 8px 26px rgba(150, 110, 250, .45); }
 </style>
 </head>
 <body>
@@ -1055,9 +1305,9 @@
     <div id="newBox" class="tv tv-new">
       <input id="newName" maxlength="24" placeholder="Name of this world" aria-label="Name of this world">
       <div class="modes">
-        <button data-mode="linear" class="on"><b>Linear</b><span>Start with a single sector and unlock the galaxy piece by piece. New upgrades open up as you expand, and helpers are built in the Fleet Hangar.</span></button>
-        <button data-mode="infinite"><b>Infinite galaxies</b><span></span></button>
-        <button data-mode="challenge" class="wide"><b>Challenge</b><span></span></button>
+        <button data-mode="linear" class="on"><i class="mi"></i><b>Linear</b><span></span><small></small></button>
+        <button data-mode="infinite"><i class="mi"></i><b>Infinite galaxies</b><span></span><small></small></button>
+        <button data-mode="challenge"><i class="mi"></i><b>Challenge</b><span></span><small></small></button>
       </div>
       <button id="newCreate" class="big">Create world</button>
       <button id="newCancel" class="textbtn">Back</button>
@@ -1165,13 +1415,9 @@
         <button id="mTeam">Team</button>
         <button id="mCoop">Co-op: play together</button>
         <button id="mSettings">Settings</button>
-        <button id="mMeter">Stardust meter</button>
-        <button id="mHideUi">Hide the interface</button>
-        <button id="mSkill" class="infonly">Skill tree</button>
         <button id="mAch">Achievements</button>
         <button id="mSkins">Cursor skins</button>
         <button id="mLb">Leaderboard</button>
-        <button id="mControls">Controls</button>
         <button id="mExit">Save &amp; exit to menu</button>
       </div>
       <div id="mNote" class="note"></div>
@@ -2922,7 +3168,7 @@ function stepDrones(dt) {
 const pref = { ui: 100, bright: 100, hdr: false };   // (and fxv: visual effects strength, see below)
 try { Object.assign(pref, JSON.parse(localStorage.getItem('obs-settings') || '{}')); } catch (e) {}
 pref.ui = Math.min(200, Math.max(60, +pref.ui || (window.steam && window.steam.deck ? 130 : 100)));   // (on a Steam Deck's small screen the interface starts bigger)
-if (window.steam && window.steam.deck) document.body.classList.add('deck');   // (Esc menu > Controls then opens the controller's page)
+if (window.steam && window.steam.deck) document.body.classList.add('deck');
 pref.bright = Math.min(400, Math.max(50, +pref.bright || 100)); pref.hdr = !!pref.hdr; pref.swapMouse = !!pref.swapMouse;   // swapMouse: the mouse buttons swapped, see mBtn
 // effects: pref.fxv = how strongly they show, 0 (off) to 100% (full); the old setting (fx: 0 off, 1 reduced, 2 full) carries over
 if (pref.fxv === undefined) pref.fxv = [0, 50, 100][+pref.fx] ?? 100;
@@ -3097,7 +3343,7 @@ function keyMoveName() {   // the four camera keys in one go: WASD (or ZQSD, or 
 const keyText = s => s.replace(/\[\[(\w+)\]\]/g, (m, a) => a === 'move' ? keyMoveName() : a === 'rdrag' ? (pref.swapMouse ? 'Left-drag' : 'Right-drag') : keyLabel(a));
 const keyTextOk = s => [...s.matchAll(/\[\[(\w+)\]\]/g)].every(m => m[1] === 'move' || m[1] === 'rdrag' || keyB[m[1]].some(Boolean));
 function keyTitles() {   // the tooltips that name a key
-  for (const [id, t, a] of [['btnSkill', 'Skill tree', 'skills'], ['btnTeam', 'Team window', 'team'], ['panelShow', 'Show the upgrades', 'panel'], ['panelHide', 'Hide the upgrades', 'panel'], ['mHideUi', 'Hide the interface', 'ui']]) {
+  for (const [id, t, a] of [['btnSkill', 'Skill tree', 'skills'], ['btnTeam', 'Team window', 'team'], ['panelShow', 'Show the upgrades', 'panel'], ['panelHide', 'Hide the upgrades', 'panel']]) {
     const el = $(id); if (el) el.title = keyB[a].some(Boolean) ? t + ' (' + keyLabel(a) + ')' : t;
   }
 }
@@ -3354,7 +3600,7 @@ function padTick(dt) {
     if (!(lx || ly || rx || ry || lt > 0.2 || rt > 0.2 || now.some((b, i) => b && !prev[i]))) return;
     pad.on = true; document.body.classList.add('padOn');
     pad.x = inside ? mx * VS : innerWidth / 2; pad.y = inside ? my * VS : innerHeight / 2;
-    if (!pad.told && started) { pad.told = true; toast('Controller: left stick moves, A clicks. All the buttons are under Controls in the menu (Start)', '#8fa3bd'); }
+    if (!pad.told && started) { pad.told = true; toast('Controller: left stick moves, A clicks. All the buttons are in Settings > Controller (Start opens the menu)', '#8fa3bd'); }
   }
   const hangarIn = $('hangarBox').classList.contains('show');
   let moved = false;
@@ -5616,7 +5862,6 @@ function guestNewGalaxy(n) {   // the host moved on to the next galaxy: back to 
   skClose(); $('infWin').classList.remove('show');
   ask('The host started galaxy ' + (Math.floor(+n) || '') + '', 'Join again with the same code to play the new galaxy together.', 'Back to menu', () => location.reload());
 }
-$('mSkill').onclick = () => { toggleMenu(false); skOpen(); };
 
 // ---------------------------------------------------------------- leaderboard
 // The leaderboard server (see the "Leaderboard server" folder): while you play, your stats for this galaxy are sent to
@@ -6184,18 +6429,20 @@ let newMode = 'linear';
 const OPEN_KEY = 'obs-open-unlocked';
 const openUnlocked = () => { if (DEMO) return false; try { if (localStorage.getItem(OPEN_KEY) === '1') return true; } catch (e) {} return saves.some(s => s.mode !== 'open' && s.pct >= 1); };
 function unlockOpen() { const was = openUnlocked(); try { localStorage.setItem(OPEN_KEY, '1'); } catch (e) {} return !was; }
-const MODE_TXT = {
-  infinite: 'Linear rules, but it never ends. Every galaxy you finish earns a Galaxy Point for the skill tree, and the next galaxy starts stronger.',
-  challenge: 'Linear, but much harder. No buying sectors, no helpers.',
+const MODE_TXT = {   // (one short line each, on the New world cards)
+  linear: 'Unlock the galaxy one sector at a time.',
+  infinite: 'Galaxy after galaxy, with a skill tree.',
+  challenge: 'No buying sectors and no helpers.',
 };
 function refreshModes() {
   const ok = openUnlocked();
   if (!ok && newMode !== 'linear') newMode = 'linear';
-  for (const m of ['infinite', 'challenge']) {
-    const b = document.querySelector('#newBox .modes button[data-mode="' + m + '"]');
-    b.disabled = !ok; b.classList.toggle('locked', !ok);
-    b.querySelector('b').textContent = modeName(m) + (ok ? '' : DEMO ? ' · full game' : ' · locked');
-    b.querySelector('span').textContent = ok ? MODE_TXT[m] : DEMO ? MODE_TXT[m] + ' Available in the full game.' : 'Collect every star in a Linear galaxy to unlock this mode.';
+  for (const m of ['linear', 'infinite', 'challenge']) {
+    const b = document.querySelector('#newBox .modes button[data-mode="' + m + '"]'), can = m === 'linear' || ok;
+    b.disabled = !can; b.classList.toggle('locked', !can);
+    b.querySelector('b').textContent = modeName(m);
+    b.querySelector('span').textContent = MODE_TXT[m];
+    b.querySelector('small').textContent = can ? '' : DEMO ? 'Full game only' : 'Finish Linear first';
   }
   document.querySelectorAll('#newBox .modes button').forEach(x => x.classList.toggle('on', x.dataset.mode === newMode));
 }
@@ -8958,19 +9205,15 @@ function toggleMenu(show) {
     $('mTeam').style.display = $('btnTeam').classList.contains('on') ? '' : 'none';
     $('mTeam').textContent = $('btnTeam').textContent || 'Team';
     $('mCoop').textContent = $('btnCoop').textContent;
-    $('mMeter').textContent = 'Stardust meter: ' + (mtOn ? 'shown' : 'hidden');
     $('mExit').textContent = guest ? (net.conn ? 'Disconnect' : 'Back to menu') : 'Save & exit to menu';
     $('mNote').textContent = guest ? 'Your progress in this galaxy is kept by the host.' : 'Your world also saves itself every 30 seconds.';
   }
   box.classList.toggle('show', on);
 }
-$('mControls').onclick = () => { toggleMenu(false); openSettings(padUI() ? 'pad' : 'controls'); };   // Settings > Controls (with a controller: its page)
 $('mAch').onclick = achOpen;
 $('mLb').onclick = lbOpen;
-$('mMeter').onclick = () => { setMeter(!mtOn); $('mMeter').textContent = 'Stardust meter: ' + (mtOn ? 'shown' : 'hidden'); };
 const fromMenu = f => () => { toggleMenu(false); f(); };
 $('mResume').onclick = () => toggleMenu(false);
-$('mHideUi').onclick = fromMenu(() => setUi(true));
 $('mTeam').onclick = fromMenu(() => showPlayers());
 $('mCoop').onclick = fromMenu(() => $('btnCoop').click());
 $('mSettings').onclick = fromMenu(() => $('btnSettings').click());
