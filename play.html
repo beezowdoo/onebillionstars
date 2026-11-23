@@ -332,6 +332,17 @@
   #panelShow:hover { border-color: #5aa8ff; }
   body.panelHidden #panel { display: none; }
   body.panelHidden #panelShow { display: block; }
+  /* the interface hidden (F1, the menu's button, or clicking the left stick): just the galaxy and your cursor. Windows still open
+     as usual; a quiet line at the bottom says how to bring it back, and on a touch screen a faint eye in the corner does */
+  body.uiOff #hud, body.uiOff #panel, body.uiOff #panelShow, body.uiOff #secBuy, body.uiOff #meter, body.uiOff #mini, body.uiOff #chat,
+  body.uiOff #toasts, body.uiOff #mascot, body.uiOff #achPop { display: none !important; }
+  #uiHint { position: fixed; left: 0; right: 0; bottom: 26px; z-index: 60; display: flex; justify-content: center; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+  #uiHint.on { opacity: 1; }
+  #uiHint span { zoom: var(--ui, 1); padding: 8px 16px; border-radius: 999px; background: rgba(12, 16, 30, .82); border: 1px solid #263246; color: #c9d4e4; font: 600 14px "Segoe UI", system-ui, sans-serif; }
+  #uiShow { position: fixed; right: 12px; bottom: 12px; z-index: 20; display: none; width: 46px; height: 46px; align-items: center; justify-content: center; padding: 0;
+    border-radius: 50%; background: rgba(16, 21, 31, .55); border: 1px solid #263246; color: #c9d4e4; cursor: pointer; zoom: var(--ui, 1); }
+  #uiShow svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  body.uiOff.touchy #uiShow { display: flex; }
   /* co-op: a clear button for the team window */
   #btnTeam { display: none; margin-top: 8px; width: 100%; pointer-events: auto; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; color: #ff9de0;
     background: #1d1420; border: 1px solid #7a4a6c; border-radius: 8px; padding: 7px 10px; }
@@ -982,6 +993,8 @@
 <canvas id="mini" class="box" width="270" height="270"></canvas>
 <div id="chat"><div id="chatLog"></div><input id="chatIn" maxlength="200" placeholder="Press Enter to chat" aria-label="Chat message" autocomplete="off"></div>
 <div id="toasts"></div>
+<div id="uiHint"><span></span></div>
+<button id="uiShow" title="Show the interface" aria-label="Show the interface"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
 <div id="mascot"><div id="mInner">
   <svg id="mBot" viewBox="-40 -40 80 80" width="100" height="100" aria-hidden="true">
     <defs>
@@ -1153,6 +1166,7 @@
         <button id="mCoop">Co-op: play together</button>
         <button id="mSettings">Settings</button>
         <button id="mMeter">Stardust meter</button>
+        <button id="mHideUi">Hide the interface</button>
         <button id="mSkill" class="infonly">Skill tree</button>
         <button id="mAch">Achievements</button>
         <button id="mSkins">Cursor skins</button>
@@ -1248,6 +1262,7 @@
           <div><span class="mk"><kbd>X</kbd></span><span>Select all your helpers</span></div>
           <div><span class="mk"><kbd>Y</kbd></span><span>Hide or show the upgrades</span></div>
           <div><span class="mk"><kbd>View</kbd></span><span>Jump to the Fleet Hangar</span></div>
+          <div><span class="mk"><kbd>Left stick click</kbd></span><span>Hide or show the interface</span></div>
           <div><span class="mk"><kbd>Start</kbd></span><span>The menu</span></div>
         </div>
         <h4>Touch</h4>
@@ -3005,6 +3020,7 @@ screenFx();
 // (same area; a wider window shows more to the sides and less up and down). VS = real pixels per such unit.
 let W = 0, H = 0, dpr = 1, VS = 1, mx = 0, my = 0, inside = false, dragging = false;
 const keys = new Set();   // the keys held down, by their place on the keyboard (KeyboardEvent.code)
+let uiOff = false, uiHintT = 0;   // the interface hidden (see setUi)
 // ---- key bindings: every keyboard shortcut can be changed in Settings > Controls, two keys per action. Kept on this
 // computer as obs-keys = { action: [key, key] } (only the changed ones). Keys are matched by their place on the keyboard,
 // so W A S D stay together on any layout, and shown by what they type on this keyboard when the browser can tell.
@@ -3028,6 +3044,7 @@ const KEY_ACTS = [
   { k: 'meter', grp: 'Windows', name: 'Stardust meter', def: ['KeyM', ''] },
   { k: 'team', grp: 'Windows', name: 'Team window', tag: 'co-op', def: ['KeyT', ''] },
   { k: 'chat', grp: 'Windows', name: 'Chat', tag: 'co-op', def: ['Enter', 'NumpadEnter'] },
+  { k: 'ui', grp: 'Windows', name: 'Hide or show the interface', def: ['F1', ''] },
 ];
 // keys that can't be given to an action: Esc (menus, going back), F11 (fullscreen), Tab, F12, and the ones Windows keeps;
 // while waiting for a key, Backspace / Delete leave the slot empty
@@ -3038,6 +3055,8 @@ function keyLoad() {
   try { s = JSON.parse(localStorage.getItem('obs-keys') || '{}') || {}; } catch (e) {}
   keyB = {};
   for (const a of KEY_ACTS) { const v = s[a.k]; keyB[a.k] = Array.isArray(v) && v.length === 2 && v.every(c => typeof c === 'string' && !KEY_FIXED.includes(c)) ? v.slice() : a.def.slice(); }
+  // (an action added in an update keeps its usual key only if you haven't already given that key to something else)
+  for (const a of KEY_ACTS) if (!s[a.k]) keyB[a.k] = keyB[a.k].map(c => c && KEY_ACTS.some(b => b !== a && s[b.k] && keyB[b.k].includes(c)) ? '' : c);
 }
 keyLoad();
 function keySave() {
@@ -3079,7 +3098,7 @@ function keyMoveName() {   // the four camera keys in one go: WASD (or ZQSD, or 
 const keyText = s => s.replace(/\[\[(\w+)\]\]/g, (m, a) => a === 'move' ? keyMoveName() : a === 'rdrag' ? (pref.swapMouse ? 'Left-drag' : 'Right-drag') : keyLabel(a));
 const keyTextOk = s => [...s.matchAll(/\[\[(\w+)\]\]/g)].every(m => m[1] === 'move' || m[1] === 'rdrag' || keyB[m[1]].some(Boolean));
 function keyTitles() {   // the tooltips that name a key
-  for (const [id, t, a] of [['btnSkill', 'Skill tree', 'skills'], ['btnTeam', 'Team window', 'team'], ['panelShow', 'Show the upgrades', 'panel'], ['panelHide', 'Hide the upgrades', 'panel']]) {
+  for (const [id, t, a] of [['btnSkill', 'Skill tree', 'skills'], ['btnTeam', 'Team window', 'team'], ['panelShow', 'Show the upgrades', 'panel'], ['panelHide', 'Hide the upgrades', 'panel'], ['mHideUi', 'Hide the interface', 'ui']]) {
     const el = $(id); if (el) el.title = keyB[a].some(Boolean) ? t + ' (' + keyLabel(a) + ')' : t;
   }
 }
@@ -3227,21 +3246,26 @@ addEventListener('keydown', e => {
     return;
   }
   // the chat key (Enter) opens the co-op chat (unless a box or button already has the keyboard)
-  if (a === 'chat' && $('chat').classList.contains('on') && !/^(INPUT|BUTTON|TEXTAREA)$/.test(e.target.tagName || '')) { e.preventDefault(); $('chatIn').focus(); return; }
+  if (a === 'chat' && $('chat').classList.contains('on') && !/^(INPUT|BUTTON|TEXTAREA)$/.test(e.target.tagName || '')) { e.preventDefault(); setUi(false); $('chatIn').focus(); return; }
   keys.add(c);
   if (a) keyDo(a, e);
   if (k === 'escape' && started && $('cacheBox').classList.contains('show')) { cacheClose(); return; }
   if (k === 'escape' && started) {   // Esc closes whatever window is open; with none open it opens (or closes) the menu
     const open = ['playersBox', 'coopBox', 'settingsBox', 'cacheStats'].filter(id => $(id).classList.contains('show'));
     for (const id of open) $(id).classList.remove('show');
-    if (!open.length) toggleMenu();
+    if (!open.length) { if (uiOff) setUi(false); else toggleMenu(); }   // (with the interface hidden, Esc first brings it back)
   }
 });
 function keyDo(a, e) {   // what each key does (e: the key press; a controller's button gives none)
   const rep = e && e.repeat;
   if (a === 'fast' && started && !rep) refreshUI();   // (the Unlock button turns into ×10 at once)
-  if (a === 'panel' && started) setPanelHidden(!document.body.classList.contains('panelHidden'));
-  if (a === 'meter' && started) setMeter(!mtOn);
+  if (a === 'ui') {   // hide or show the whole interface (F1 would open the browser's help otherwise)
+    if (e) e.preventDefault();
+    if (started && !rep) { if ($('menuBox').classList.contains('show')) toggleMenu(false); setUi(!uiOff); }
+  }
+  // the upgrades and the meter: with the interface hidden, their key brings it back with them showing
+  if (a === 'panel' && started) { if (uiOff) { setUi(false); setPanelHidden(false); } else setPanelHidden(!document.body.classList.contains('panelHidden')); }
+  if (a === 'meter' && started) { if (uiOff) { setUi(false); if (!mtOn) setMeter(true); } else setMeter(!mtOn); }
   if (a === 'team' && started && $('btnTeam').classList.contains('on')) showPlayers();
   if (a === 'skills' && started && INF()) { if (skShown()) skClose(); else skOpen(); }   // the skill tree (Infinite galaxies)
   if (a === 'hangar' && started && hangarReg >= 0) { camX = secMidX(hangarReg); camY = secMidY(hangarReg); }
@@ -3259,7 +3283,8 @@ addEventListener('blur', () => { keys.clear(); if (started) refreshUI(); });
 // the pointer sends the page ordinary mouse events, and B / Start send Esc. The rest: right stick moves the camera (or
 // scrolls the list under the pointer; click it to go faster), the triggers zoom (the minimap too, when pointed at), the
 // D-pad jumps between buttons, X selects every helper, Y hides or shows the upgrades, LB / RB switch tabs (in the hangar:
-// helper pages), View jumps to the Fleet Hangar. Moving the real mouse hands control back to it.
+// helper pages), View jumps to the Fleet Hangar, clicking the left stick hides the interface. Moving the real mouse hands
+// control back to it.
 const pad = { on: false, x: 0, y: 0, prev: [], downEl: null, slider: null, rep: [], cam: false, told: false };
 const padUI = () => pad.on || !!(window.steam && window.steam.deck);   // show controller words instead of mouse ones (Pip, hints)
 const padEl = () => document.elementFromPoint(pad.x, pad.y);
@@ -3308,6 +3333,10 @@ function padSnap(dx, dy) {
   }
   return false;
 }
+addEventListener('pointerdown', e => { if (e.pointerType === 'touch') document.body.classList.add('touchy'); }, true);
+addEventListener('mousemove', e => {
+  if (e.isTrusted && !(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) && performance.now() - touchAt > 1000 && Math.abs(e.movementX) + Math.abs(e.movementY) > 3) document.body.classList.remove('touchy');
+}, true);
 function padOff() { pad.on = false; pad.downEl = pad.slider = null; document.body.classList.remove('padOn'); $('padPtr').style.display = 'none'; }
 addEventListener('mousemove', e => { if (pad.on && e.isTrusted && Math.abs(e.movementX) + Math.abs(e.movementY) > 3) padOff(); }, true);
 function padTick(dt) {
@@ -3375,14 +3404,16 @@ function padTick(dt) {
   if (hit(9)) padKey('Escape');
   if (started && !hangarIn) {
     if (hit(2)) selectKind(-1);                                                            // X: every helper
-    if (hit(3)) setPanelHidden(!document.body.classList.contains('panelHidden'));          // Y: the upgrades
+    if (hit(3)) keyDo('panel');                                                            // Y: the upgrades
     if (hit(8)) keyDo('hangar');                                                           // View: the Fleet Hangar
+    if (hit(10)) keyDo('ui');                                                              // clicking the left stick: the interface
   }
   if (hit(4) || hit(5)) {   // LB / RB: the tab to the left / right (in the hangar: the helper pages)
     const dir = hit(4) ? -1 : 1;
     if (skShown()) skTabSet((skTab + dir + SK_BR.length) % SK_BR.length);
     else if (hangarIn) hgStep(dir);
     else if (started) {
+      setUi(false);
       if (document.body.classList.contains('panelHidden')) setPanelHidden(false);
       const bs = [...document.querySelectorAll('#tabs button[data-tab]')].filter(b => b.offsetParent !== null);
       const i = bs.findIndex(b => b.dataset.tab === tab);
@@ -5936,6 +5967,7 @@ const hudOn = () => document.body.classList.contains('hudedit');
 const hudDef = k => HUD_EL.find(e => e.k === k);
 $('hudItems').innerHTML = HUD_EL.map(e => `<button data-k="${e.k}">${e.name}</button>`).join('');
 function hudOpen() {
+  setUi(false, true);
   if (!started) { document.body.classList.add('hudSample'); hudSampleMini(); }   // from the main menu: a sample HUD over its sky
   $('settingsBox').classList.remove('show'); $('menuBox').classList.remove('show');
   inside = false; document.body.classList.add('hudedit');
@@ -6069,6 +6101,7 @@ async function freshWorld(onP) {
 }
 function startGame() {
   mz = MZ_START; mvx = camX - mSpan() / 2; mvy = camY - mSpan() / 2; mClamp(); renderMini();   // the minimap starts zoomed in around where you are, with the sectors next to yours showing
+  setUi(false, true);
   started = true; last = performance.now(); $('title').classList.add('gone'); document.body.classList.add('playing'); initAudio(); loadHide(); }
 // open a saved world (or start an empty slot fresh) and begin playing, behind the loading screen
 async function openWorld(id, isNew) {
@@ -6216,6 +6249,7 @@ const LOAD_TIPS = [
   ['Run out of stars to collect and the nearest sector opens <b>for free</b>.', 'lin'],
   ['Rare discoveries hide among the stars. <b>Hunters</b> track them down for you.', '', 1],
   ['Press <b>[[meter]]</b> for the stardust meter: what each effect and helper earns.', '', 0, ''],
+  ['Press <b>[[ui]]</b> to hide the interface and just watch the galaxy. <b>Esc</b> brings it back.', '', 0, '<b>Click the left stick</b> to hide the interface and just watch the galaxy.'],
   ['There are exactly <b>1,000,000,000</b> stars, and every single one can be collected.'],
   ['<b>Autopilot</b> decides how helpers pick their stars: click it to switch between <b>Top to bottom</b> and <b>Most effective</b>.', '', 1],
   ['Press <b>Esc</b> any time for the menu and settings.', '', 0, 'Press <b>Start</b> any time for the menu and settings.'],
@@ -6995,7 +7029,7 @@ function render(time) {
         ctx.globalAlpha = 0.06 + 0.12 * pulse; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
       }
       if (nova) skFill(ctx, x, y, R, '255,212,71', 0.04 + 0.55 * pulse);   // a Supernova glows gold, whatever the skin
-      ctx.fillStyle = col; ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(nameOf(o.slot), x, y - R - 7); ctx.textAlign = 'start';
+      if (!uiOff) { ctx.fillStyle = col; ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(nameOf(o.slot), x, y - R - 7); ctx.textAlign = 'start'; }
     }
   }
   // locked sectors: dimmed, with a gold outline around the one the Unlock button would open
@@ -7014,8 +7048,8 @@ function render(time) {
       const sx = (rx * RS - camX) * zoom + hw, sy = (ry * RS - camY) * zoom + hh;
       ctx.fillStyle = `rgba(0,0,0,${0.66 * fade})`; ctx.fillRect(sx, sy, size, size);
       if (unlocked[r]) { ctx.strokeStyle = `rgba(255,212,71,${0.8 * fade})`; ctx.lineWidth = 3; ctx.strokeRect(sx + 3, sy + 3, size - 6, size - 6); continue; }
-      if (r === unlTarget) { ctx.strokeStyle = '#ffd447'; ctx.lineWidth = 2; ctx.strokeRect(sx + 3, sy + 3, size - 6, size - 6); }
-      if (size >= 160) {
+      if (r === unlTarget && !uiOff) { ctx.strokeStyle = '#ffd447'; ctx.lineWidth = 2; ctx.strokeRect(sx + 3, sy + 3, size - 6, size - 6); }
+      if (size >= 160 && !uiOff) {
         const here = r === camSec;   // the sector you are in gets a buy button under its name, so its name leaves room for it
         const tx = Math.min(sx + size - 90, Math.max(sx + 90, hw)), ty = Math.min(sy + size - (here ? 70 : 30), Math.max(sy + 40, hh));
         ctx.fillStyle = r === unlTarget ? '#ffd447' : '#8fa3bd';
@@ -7026,7 +7060,7 @@ function render(time) {
     ctx.textAlign = 'start';
     // zoomed out far enough to see several sectors: each unlocked one shows how much of it is collected, small and faint
     // in its top-left corner (green once cleared)
-    if (size >= 110 && size < Math.max(W, H) * 0.9) {
+    if (size >= 110 && size < Math.max(W, H) * 0.9 && !uiOff) {
       ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textBaseline = 'top';
       for (let ry = ry0; ry <= ry1; ry++) for (let rx = rx0; rx <= rx1; rx++) {
         const r = ry * REG + rx; if (!unlocked[r]) continue;
@@ -7046,19 +7080,20 @@ function render(time) {
       if (cine.phase === 'arrive') drawArrival(hg, cine.t, time);
     } else if (hg && hg.x > -hg.r * 2 && hg.y > -hg.r * 2 && hg.x < W + hg.r * 2 && hg.y < H + hg.r * 2) {
       const hot = inside && overHangar(mx, my);
-      if (tutWorld('hangar')) {   // the tutorial points at the hangar: a steady gold ring around it
+      if (tutWorld('hangar') && !uiOff) {   // the tutorial points at the hangar: a steady gold ring around it
         ctx.strokeStyle = 'rgba(255,212,71,.2)'; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(hg.x, hg.y, hg.r * 1.4 + 6, 0, 6.2832); ctx.stroke();
         ctx.strokeStyle = 'rgba(255,212,71,.9)'; ctx.lineWidth = 2.5; ctx.stroke();
       }
       const bi = hg.r >= 60 ? buildInfo() : null;
       if (bi) bi.s = sc / hg.r;   // the helper in the bay is shown at the size it will fly out at
       ctx.save(); ctx.translate(hg.x, hg.y); ctx.scale(hg.r, hg.r); drawHangar(ctx, time, hot, bi); ctx.restore();
-      if (buildQ.length) {   // building: an arc that closes as the helper nears completion
+      if (buildQ.length && !uiOff) {   // building: an arc that closes as the helper nears completion
         ctx.strokeStyle = '#ffb84a'; ctx.lineWidth = 3; ctx.beginPath();
         ctx.arc(hg.x, hg.y, hg.r * 1.14, -1.5708, -1.5708 + 6.2832 * (1 - buildQ[0].left / BUILD_T[buildQ[0].kind])); ctx.stroke();
       }
       ctx.font = '600 12px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillStyle = hot ? '#ffe2a8' : '#ffb84a'; ctx.fillText(hot ? 'Fleet Hangar · click to enter' : 'Fleet Hangar', hg.x, hg.y + hg.r * 1.25 + 14); ctx.textAlign = 'start';
+      if (!uiOff) { ctx.fillStyle = hot ? '#ffe2a8' : '#ffb84a'; ctx.fillText(hot ? 'Fleet Hangar · click to enter' : 'Fleet Hangar', hg.x, hg.y + hg.r * 1.25 + 14); }
+      ctx.textAlign = 'start';
     }
   }
   // drones
@@ -7198,18 +7233,20 @@ function render(time) {
       ctx.strokeStyle = `rgba(255,212,71,${0.75 * fade})`; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(mx, my, R + 6, -1.5708, -1.5708 + 6.2832 * rushLeft / rushFull); ctx.stroke();
     }
-    // charge ring: fills up as the next attack gets ready
-    const ready = 1 - curCd / curInterval;
-    ctx.strokeStyle = ready >= 1 ? '#fff' : '#ffd447'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(mx, my, R, -1.5708, -1.5708 + 6.2832 * ready); ctx.stroke();
-    // Capacitor: one pip per stored attack, above the circle
-    for (let j = 0, nCap = capN(); j < nCap; j++) {
-      ctx.fillStyle = j < Math.floor(curBank) ? '#ffd447' : 'rgba(255,255,255,.18)';
-      ctx.beginPath(); ctx.arc(mx + (j - (nCap - 1) / 2) * 9, my - R - 9, 3, 0, 6.2832); ctx.fill();
+    if (!uiOff) {   // (these go with the interface: just the cursor itself stays)
+      // charge ring: fills up as the next attack gets ready
+      const ready = 1 - curCd / curInterval;
+      ctx.strokeStyle = ready >= 1 ? '#fff' : '#ffd447'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(mx, my, R, -1.5708, -1.5708 + 6.2832 * ready); ctx.stroke();
+      // Capacitor: one pip per stored attack, above the circle
+      for (let j = 0, nCap = capN(); j < nCap; j++) {
+        ctx.fillStyle = j < Math.floor(curBank) ? '#ffd447' : 'rgba(255,255,255,.18)';
+        ctx.beginPath(); ctx.arc(mx + (j - (nCap - 1) / 2) * 9, my - R - 9, 3, 0, 6.2832); ctx.fill();
+      }
+      drawLastStars(hw, hh, R);
     }
-    drawLastStars(hw, hh, R);
   }
-  if (net.role) drawChatBubbles(hw, hh);
+  if (net.role && !uiOff) drawChatBubbles(hw, hh);
   const gain = Math.min(hdrOn ? 4 : 2, pref.bright / 100);
   if (gain !== 1) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -8724,6 +8761,19 @@ $('btnLeave').onclick = () => {
   else leave();
 };
 // hide / show the upgrade panel (remembered on this computer)
+// the whole interface hidden or shown. Not saved: every world starts with it showing. quiet: no line about how to bring it back
+function setUi(off, quiet) {
+  off = !!off && started;
+  if (off !== uiOff) { uiOff = off; document.body.classList.toggle('uiOff', off); }
+  const h = $('uiHint'); clearTimeout(uiHintT); h.classList.remove('on');
+  if (off && !quiet) {
+    const k = keyB.ui.filter(Boolean).map(keyName)[0];
+    h.firstChild.textContent = 'Interface hidden · ' + (pad.on ? 'click the left stick to show it' : document.body.classList.contains('touchy') ? 'tap the eye in the corner to show it'
+      : 'press ' + (k ? k + ' or Esc' : 'Esc') + ' to show it');
+    h.classList.add('on'); uiHintT = setTimeout(() => h.classList.remove('on'), 3500);
+  }
+}
+$('uiShow').onclick = () => setUi(false);
 function setPanelHidden(h) { document.body.classList.toggle('panelHidden', h); try { localStorage.setItem('obs-panel', h ? 'hidden' : ''); } catch (e) {} }
 $('panelHide').onclick = () => setPanelHidden(true);
 $('panelShow').onclick = () => setPanelHidden(false);
@@ -8916,6 +8966,7 @@ $('mLb').onclick = lbOpen;
 $('mMeter').onclick = () => { setMeter(!mtOn); $('mMeter').textContent = 'Stardust meter: ' + (mtOn ? 'shown' : 'hidden'); };
 const fromMenu = f => () => { toggleMenu(false); f(); };
 $('mResume').onclick = () => toggleMenu(false);
+$('mHideUi').onclick = fromMenu(() => setUi(true));
 $('mTeam').onclick = fromMenu(() => showPlayers());
 $('mCoop').onclick = fromMenu(() => $('btnCoop').click());
 $('mSettings').onclick = fromMenu(() => $('btnSettings').click());
