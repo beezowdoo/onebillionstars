@@ -17,6 +17,12 @@
     box-shadow: 0 0 0 2px rgba(0, 0, 0, .55), inset 0 0 0 2px rgba(0, 0, 0, .35); transform: scale(var(--ui, 1)); }
   #padPtr::after { content: ''; position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
   /* the touch joystick: a faint ring where the finger landed, and a knob under the finger (steady: nothing animates) */
+  /* screen effects (Settings > Picture): the CRT / chromatic aberration picture sits just above the galaxy and lets clicks
+     through; the scanlines are a steady see-through layer over everything */
+  #post { position: fixed; inset: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
+  #scanFx { position: fixed; inset: 0; z-index: 2147483000; display: none; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, .26) 2px, rgba(0, 0, 0, .26) 3px); }
+  body.scan #scanFx { display: block; }
   #joy { position: fixed; left: 0; top: 0; display: none; pointer-events: none; }
   #joy i { position: absolute; left: 0; top: 0; border-radius: 50%; }
   #joyBase { width: 112px; height: 112px; margin: -56px 0 0 -56px; box-sizing: border-box; border: 2px solid rgba(255, 255, 255, .32);
@@ -145,29 +151,100 @@
   #menuBox .mbtns .go { color: #fff; font-weight: 600; border-color: #3a5a94; background: rgba(90, 168, 255, .12); }
   #menuBox #mTeam { color: #ff9de0; border-color: rgba(255, 122, 217, .45); }
   #menuBox #mExit { margin-top: 6px; color: #ff9d9d; border-color: rgba(255, 110, 110, .35); }
-  #menuBox #mKeys { display: none; }
-  #menuBox.keys #mKeys { display: flex; flex-direction: column; }
-  #mKeys h2 { order: -2; }
-  #padKeys { margin-top: 10px; }
-  body.padOn #padKeys, body.deck #padKeys { order: -1; margin: 0 0 10px; }   /* playing with a controller (or on a Steam Deck): its buttons first */
-  #menuBox.keys #mMain { display: none; }
-  #menuBox.keys .card { width: 520px; }
-  #menuBox .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; font-size: 13px; color: #b6c3d6; }
-  #menuBox .keys h3 { grid-column: 1 / -1; margin: 10px 0 0; color: #8fa3bd; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-  #menuBox .keys h3:first-child { margin-top: 0; }
-  #menuBox kbd { font: inherit; font-size: 12px; color: #fff; background: rgba(255, 255, 255, .06); border: 1px solid #33415a; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
-  #menuBox #mKeys .mbtns { margin-top: 14px; }
   #menuBox .note { margin-top: 12px; text-align: center; color: #6f8098; font-size: 12px; }
+  /* ---- the Settings window: tabs down the left, one page at a time; each setting is a row, what it is on the left and
+     its control on the right (switches, sliders, buttons). The window keeps one size, so changing tabs doesn't move it */
   #settingsBox { position: fixed; inset: 0; z-index: 30; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, .7); }
   #settingsBox.show { display: flex; }
-  #settingsBox .card { position: static; width: 520px; overflow-y: auto; box-sizing: border-box; padding: 18px 22px; }
-  #settingsBox h2 { margin: 0 0 6px; color: #fff; font-size: 22px; }
-  #settingsBox h3 { margin: 16px 0 8px; color: #8fa3bd; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-  #settingsBox .srow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-  #settingsBox .srow label, #settingsBox .srow button { width: 130px; flex: none; box-sizing: border-box; color: #dbe4f0; font-size: 13px; }
-  #settingsBox .srow input { flex: 1; margin: 0; accent-color: #5aa8ff; cursor: pointer; }
-  #settingsBox .srow input:disabled { opacity: .35; cursor: default; }
-  #settingsBox .srow input.txt { flex: none; width: 150px; cursor: text; font: inherit; font-size: 13px; color: #fff; background: #0b111c; border: 1px solid #263246; border-radius: 7px; padding: 6px 8px; }
+  #settingsBox .card { position: static; display: flex; width: 960px; height: 740px; box-sizing: border-box; padding: 0; overflow: hidden; color: #dbe4f0; font-size: 13px; background: rgba(13, 18, 28, .97); }
+  #settingsBox button { font: inherit; cursor: pointer; }
+  #settingsBox button:disabled { opacity: .4; cursor: default; }
+  #settingsBox .snav { flex: none; width: 196px; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px 16px; box-sizing: border-box;
+    background: rgba(255, 255, 255, .025); border-right: 1px solid #1d2738; }
+  #settingsBox .snav h2 { margin: 0 0 16px 10px; color: #fff; font-size: 22px; }
+  #settingsBox .stab { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; font-size: 14px; padding: 9px 12px; color: #8fa3bd; background: none;
+    border: 1px solid transparent; border-radius: 9px; }
+  #settingsBox .stab svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #settingsBox .stab:hover { color: #dbe4f0; background: rgba(255, 255, 255, .04); }
+  #settingsBox .stab.on { color: #fff; background: rgba(90, 168, 255, .14); border-color: rgba(90, 168, 255, .35); }
+  #settingsBox .stab.on svg { color: #7dbbff; }
+  #settingsBox .sfill { flex: 1; }
+  #settingsBox .sdone { width: 100%; padding: 9px 12px; font-size: 14px; font-weight: 600; color: #fff; background: rgba(90, 168, 255, .12); border: 1px solid #3a5a94; border-radius: 9px; }
+  #settingsBox .sdone:hover { border-color: #5aa8ff; }
+  #settingsBox .spages { flex: 1; min-width: 0; overflow-x: hidden; overflow-y: auto; padding: 24px 26px 20px; box-sizing: border-box; }
+  #settingsBox .spage { display: none; }
+  #settingsBox .spage.on { display: block; }
+  #settingsBox .sph { margin: 0 0 14px; }
+  #settingsBox .sph h3 { margin: 0; color: #fff; font-size: 18px; font-weight: 700; }
+  #settingsBox .sph p { margin: 3px 0 0; color: #6f8098; font-size: 12.5px; }
+  #settingsBox .sph p b { color: #b6c3d6; font-weight: 600; }
+  #settingsBox h4 { margin: 18px 0 7px 2px; color: #8fa3bd; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  #settingsBox .sgrp { background: rgba(255, 255, 255, .025); border: 1px solid #1d2738; border-radius: 10px; }
+  #settingsBox .sr { display: flex; align-items: center; gap: 18px; min-height: 32px; padding: 10px 14px; }
+  #settingsBox .sr + .sr { border-top: 1px solid #1a2231; }
+  #settingsBox .sl { flex: 1; min-width: 0; }
+  #settingsBox .sl b { display: block; color: #dbe4f0; font-size: 13.5px; font-weight: 600; }
+  #settingsBox .sl small { display: block; margin-top: 2px; color: #6f8098; font-size: 12px; line-height: 1.35; }
+  #settingsBox .sc { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+  #settingsBox .sc.wide { width: 320px; }
+  #settingsBox .snote { margin: 8px 2px 0; color: #6f8098; font-size: 12px; }
+  #settingsBox .num { width: 40px; text-align: right; color: #8fa3bd; font-size: 13px; font-variant-numeric: tabular-nums; }
+  /* switches */
+  #settingsBox .sw { position: relative; flex: none; width: 44px; height: 24px; padding: 0; border-radius: 12px; background: #172031; border: 1px solid #2c3a52;
+    transition: background-color .15s, border-color .15s; }
+  #settingsBox .sw::after { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #8fa3bd; transition: transform .15s, background-color .15s; }
+  #settingsBox .sw:hover:not(:disabled) { border-color: #5aa8ff; }
+  #settingsBox .sw.on { background: #2b67c4; border-color: #5aa8ff; }
+  #settingsBox .sw.on::after { transform: translateX(20px); background: #fff; }
+  /* sliders: the part up to the handle is filled (--p, set by the page) */
+  #settingsBox input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; height: 18px; margin: 0; background: none; cursor: pointer; --p: 50%; }
+  #settingsBox input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #5aa8ff var(--p), #1c2638 var(--p)); }
+  #settingsBox input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -5px; box-sizing: border-box; border-radius: 50%;
+    background: #fff; border: 3px solid #5aa8ff; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+  #settingsBox input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: #1c2638; }
+  #settingsBox input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: #5aa8ff; }
+  #settingsBox input[type=range]::-moz-range-thumb { width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #fff; border: 3px solid #5aa8ff; }
+  #settingsBox input[type=range]:disabled { opacity: .35; cursor: default; }
+  /* buttons, choices, the name box */
+  #settingsBox .sbtn { padding: 7px 14px; color: #dbe4f0; background: rgba(255, 255, 255, .04); border: 1px solid #2c3a52; border-radius: 8px; white-space: nowrap; }
+  #settingsBox .sbtn:hover:not(:disabled) { border-color: #5aa8ff; }
+  #settingsBox .sbtn.on { color: #ffd447; border-color: #a8862c; }
+  #settingsBox .seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid #2c3a52; border-radius: 9px; background: #0d1320; }
+  #settingsBox .seg button { padding: 6px 12px; border: 0; border-radius: 7px; color: #8fa3bd; background: none; white-space: nowrap; }
+  #settingsBox .seg button:hover:not(.on) { color: #dbe4f0; background: rgba(255, 255, 255, .04); }
+  #settingsBox .seg button.on { color: #fff; background: rgba(90, 168, 255, .22); }
+  #settingsBox input.txt { width: 180px; box-sizing: border-box; cursor: text; font: inherit; font-size: 13px; color: #fff; background: #0b111c; border: 1px solid #263246; border-radius: 8px; padding: 7px 10px; }
+  /* Controls: the keys (two per action, click one to change it), and the mouse / controller lists */
+  #settingsBox .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
+  #settingsBox .kcol { min-width: 0; }
+  #settingsBox .kgrid h4:first-child { margin-top: 0; }
+  #settingsBox .kr { display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 12px; }
+  #settingsBox .kr + .kr { border-top: 1px solid #1a2231; }
+  #settingsBox .kr > span { flex: 1; min-width: 0; color: #dbe4f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #settingsBox .kr > span i { margin-left: 6px; font-style: normal; font-size: 11px; color: #6f8098; }
+  #settingsBox .kc { flex: none; width: 68px; height: 26px; padding: 0 4px; font-size: 12px; color: #fff; background: #0d1320; border: 1px solid #33415a; border-bottom-width: 2px;
+    border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #settingsBox .kc:hover:not(:disabled) { border-color: #5aa8ff; }
+  #settingsBox .kc.none { color: #4f5d73; }
+  #settingsBox .kc.wait { color: #ffd447; border-color: #ffd447; background: rgba(255, 212, 71, .08); }
+  #settingsBox .kc.fixed:disabled { opacity: 1; color: #8fa3bd; border-style: dashed; border-bottom-width: 1px; }
+  #settingsBox span.kc { visibility: hidden; }
+  #settingsBox .kfoot { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 14px; }   /* (under Sectors, where the left column is shorter) */
+  #settingsBox .kfoot .sbtn { padding: 5px 12px; }
+  #settingsBox .kfoot .snote { margin: 0 2px; line-height: 1.4; }
+  #settingsBox .kfoot .snote b { color: #dbe4f0; font-weight: 600; }
+  #settingsBox .mhead { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 6px; }
+  #settingsBox .mhead h4 { margin: 0 0 0 2px; }
+  #settingsBox .mswap { display: flex; align-items: center; gap: 10px; color: #b6c3d6; font-size: 12.5px; }
+  #settingsBox .mswap label { cursor: pointer; }
+  #settingsBox .mlist { display: grid; grid-template-columns: 1fr 1fr; }
+  #settingsBox .mlist.one { grid-template-columns: 1fr; }
+  #settingsBox .mlist > div { display: flex; align-items: baseline; gap: 10px; padding: 7px 12px; border-top: 1px solid #1a2231; color: #b6c3d6; }
+  #settingsBox .mlist > div:nth-child(-n+2) { border-top: 0; }
+  #settingsBox .mlist.one > div:nth-child(2) { border-top: 1px solid #1a2231; }
+  #settingsBox .mlist .mk { flex: none; width: 120px; }
+  #settingsBox .mlist.one .mk { width: 150px; }
+  #settingsBox kbd { font: inherit; font-size: 12px; color: #fff; background: rgba(255, 255, 255, .06); border: 1px solid #33415a; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
   /* the HUD editor: a clear layer over the game (so clicks don't collect), each HUD window outlined and clickable, a round
      resize handle on the picked one, and a toolbar at the top */
   #hudEd { position: fixed; inset: 0; z-index: 1; display: none; background: rgba(0, 0, 0, .25); cursor: default; }
@@ -209,12 +286,6 @@
   #hudBar .go { color: #1a1206; font-weight: 700; background: linear-gradient(180deg, #ffe9b0, #ffb86b); border: 0; }
   #hudBar.nocol .hc, #hudBar.nobg .hc:not(.hbd) { display: none; }
   /* the first start: choose a username */
-  #settingsBox .num { width: 48px; text-align: right; color: #8fa3bd; font-size: 13px; font-variant-numeric: tabular-nums; }
-  #settingsBox .note { flex: 1; color: #6f8098; font-size: 12px; }
-  #settingsBox button { font: inherit; cursor: pointer; border-radius: 8px; padding: 7px 12px; color: #8fa3bd; background: none; border: 1px solid #263246; }
-  #settingsBox button:hover:not(:disabled) { border-color: #5aa8ff; }
-  #settingsBox button:disabled { opacity: .45; cursor: default; }
-  #settingsClose { margin-top: 14px; }
   #coopBox { position: fixed; inset: 0; z-index: 30; display: none; align-items: center; justify-content: center; background: rgba(4, 6, 12, .7); }
   #coopBox.show { display: flex; }
   #coopBox .card { position: static; width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; padding: 20px 22px; }
@@ -411,27 +482,27 @@
   /* cursor skins: a card per skin with a live preview; locked ones dimmed, with the achievement that unlocks them */
   #skinBox { position: fixed; inset: 0; z-index: 37; display: none; align-items: center; justify-content: center; background: rgba(4, 6, 12, .8); }
   #skinBox.show { display: flex; }
-  #skinBox .card { position: static; width: min(900px, calc(100vw - 32px)); max-height: calc(100vh / var(--ui, 1) - 32px); overflow-y: auto; box-sizing: border-box; padding: 20px 24px; zoom: var(--ui, 1); }
+  #skinBox .card { position: static; width: min(860px, calc(100vw - 32px)); max-height: calc(100vh / var(--ui, 1) - 32px); overflow-y: auto; box-sizing: border-box; padding: 16px 22px; zoom: var(--ui, 1); }
   #skinBox h2 { margin: 0 0 2px; color: #fff; font-size: 22px; }
   #skinBox p { margin: 0 0 12px; color: #8fa3bd; font-size: 13px; }
-  #skinList { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 9px; }
-  #skinList .skin { position: relative; display: flex; flex-direction: column; align-items: center; padding: 10px 10px 11px; border-radius: 12px; font: inherit; text-align: center; cursor: default;
+  #skinList { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }   /* (five across, small enough that all the skins fit without scrolling) */
+  #skinList .skin { position: relative; display: flex; flex-direction: column; align-items: center; padding: 8px 7px 9px; border-radius: 12px; font: inherit; text-align: center; cursor: default;
     color: #6f8098; background: #0c111c; border: 1px solid #222d40; }
-  #skinList .skin canvas { width: 104px; height: 104px; border-radius: 10px; background: radial-gradient(circle, #0d1426 0%, #05070e 75%); }
-  #skinList .skin b { margin-top: 7px; color: #c5d1e0; font-size: 14px; }
-  #skinList .skin em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tc); filter: brightness(1.3); }
-  #skinList .skin span { margin-top: 5px; font-size: 11.5px; line-height: 1.35; color: #6f8098; }
+  #skinList .skin canvas { width: 68px; height: 68px; border-radius: 10px; background: radial-gradient(circle, #0d1426 0%, #05070e 75%); }
+  #skinList .skin b { margin-top: 5px; color: #c5d1e0; font-size: 13px; }
+  #skinList .skin em { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--tc); filter: brightness(1.3); }
+  #skinList .skin span { margin-top: 4px; font-size: 11px; line-height: 1.3; color: #6f8098; }
   #skinList .skin span strong { color: #aab8cf; font-weight: 600; }
   #skinList .skin i { display: block; width: 80%; height: 3px; margin-top: 6px; border-radius: 2px; background: linear-gradient(90deg, #5aa8ff var(--p), #222d40 var(--p)); }
   #skinList .skin.open { cursor: pointer; border-color: color-mix(in srgb, var(--tc) 45%, #222d40); }
   #skinList .skin.open:hover { background: #121a2a; }
   #skinList .skin.on { border-color: #ffd447; background: linear-gradient(180deg, rgba(255, 212, 71, .09), #0c111c); }
   #skinList .skin.on span:not(.fx) { color: #ffd447; }
-  #skinList .skin span.fx { margin-top: 6px; padding: 5px 7px; border-radius: 8px; color: #e8d6a8; background: rgba(228, 174, 57, .08); border: 1px solid rgba(228, 174, 57, .3); }
+  #skinList .skin span.fx { margin-top: 5px; padding: 4px 6px; font-size: 10.5px; line-height: 1.25; border-radius: 8px; color: #e8d6a8; background: rgba(228, 174, 57, .08); border: 1px solid rgba(228, 174, 57, .3); }
   #skinList .skin span.fx strong { color: #ffd98a; }
   #skinList .skin.locked canvas { opacity: .42; }
-  #skinList .skin .lock { position: absolute; top: 14px; right: 14px; width: 18px; height: 18px; color: #6f8098; }
-  #skinBox .cbtns { display: flex; justify-content: flex-end; margin-top: 14px; }
+  #skinList .skin .lock { position: absolute; top: 10px; right: 10px; width: 15px; height: 15px; color: #6f8098; }
+  #skinBox .cbtns { display: flex; justify-content: flex-end; margin-top: 10px; }
   /* cloud backup: sign in / create an account, then each world's backup state */
   #cloudBox { position: fixed; inset: 0; z-index: 38; display: none; align-items: center; justify-content: center; background: rgba(4, 6, 12, .8); }
   #cloudBox.show { display: flex; }
@@ -676,9 +747,13 @@
   body.desktop .desk { display: inline-block !important; }
   body.desktop .srow.desk { display: flex !important; }
   body.desktop h3.desk, body.desktop div.note.desk { display: block !important; }
-  #dispRow button.on { color: #ffd447; border-color: #a8862c; }
-  #settingsBox #dispRow button { width: auto; flex: 1; white-space: nowrap; }
-  body:not(.playing) #setTutRow { display: none; }   /* (replaying the tutorial needs a world) */
+  body.desktop #settingsBox .sr.desk { display: flex !important; }
+  /* the HUD editor opened from the main menu: the menu steps aside and the HUD windows show over its sky, as a sample */
+  body.hudSample #title { display: none !important; }
+  body.hudSample #menuSky { z-index: 0; }
+  body.hudedit.hudSample #hud, body.hudedit.hudSample #mini { display: block !important; }
+  body.hudedit.hudSample #panel { display: flex !important; }
+  body.hudedit.hudSample #meter.on { display: flex !important; }
   /* the main menu's own sky (the galaxy is only built once you enter a world) and the loading screen */
   #menuSky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; display: none; }
   #title { background: radial-gradient(ellipse at center, rgba(4, 6, 12, .62), rgba(4, 6, 12, .22) 75%) !important; backdrop-filter: none !important; }
@@ -830,6 +905,8 @@
 <div id="padPtr"></div>
 <div id="winbar"><span class="t">One Billion Stars</span><div class="b"><button id="wbMin" title="Minimize">&#8211;</button><button id="wbMax" title="Maximize">&#9744;</button><button id="wbClose" title="Close">&#10005;</button></div></div>
 <canvas id="c"></canvas>
+<canvas id="post"></canvas>
+<div id="scanFx"></div>
 <div id="joy"><i id="joyBase"></i><i id="joyKnob"></i></div>
 
 <div id="hud" class="box">
@@ -1041,82 +1118,102 @@
       </div>
       <div id="mNote" class="note"></div>
     </div>
-    <div id="mKeys">
-      <h2>Controls</h2>
-      <div class="keys">
-        <h3>Collecting</h3>
-        <span><kbd>Hover</kbd></span><span>Your cursor collects every star in its circle</span>
-        <h3>Camera</h3>
-        <span><kbd>Right-drag</kbd> or <kbd>WASD</kbd></span><span>Move around (hold <kbd>Shift</kbd> to go faster)</span>
-        <span><kbd>Scroll</kbd></span><span>Zoom in and out</span>
-        <span class="infonly"><kbd>K</kbd></span><span class="infonly">Open the skill tree</span>
-        <span class="lin nochal"><kbd>H</kbd></span><span class="lin nochal">Jump to the Fleet Hangar</span>
-        <span class="lin nochal"><kbd>Q</kbd></span><span class="lin nochal">Unlock the next sector</span>
-        <span class="lin nochal"><kbd>E</kbd></span><span class="lin nochal">Unlock the next sector and go there</span>
-        <span class="lin nochal"><kbd>Shift</kbd> + <kbd>Q</kbd> / <kbd>E</kbd></span><span class="lin nochal">Unlock up to ten sectors at once (or hold <kbd>Shift</kbd> and click Unlock)</span>
-        <h3>Helpers</h3>
-        <span><kbd>Left-drag</kbd></span><span>Draw a box to select helpers</span>
-        <span><kbd>Click</kbd></span><span>Send the selected helpers there</span>
-        <span><kbd>Quick right-click</kbd></span><span>Deselect</span>
-        <span><kbd>1</kbd> – <kbd>5</kbd></span><span>Select all sweepers / probes / hunters / stations / everything</span>
-        <span><kbd>R</kbd></span><span>Send every helper to the cursor</span>
-        <span class="lin nochal"><kbd>Click the hangar</kbd></span><span class="lin nochal">Build and upgrade helpers</span>
-        <h3>Minimap</h3>
-        <span><kbd>Click</kbd></span><span>Jump there (or send selected helpers)</span>
-        <span><kbd>Scroll</kbd> / <kbd>Right-drag</kbd></span><span>Zoom it / move it</span>
-        <h3>Other</h3>
-        <span><kbd>U</kbd></span><span>Hide or show the upgrades</span>
-        <span><kbd>M</kbd></span><span>Stardust meter: what each effect and helper earns</span>
-        <span><kbd>T</kbd> / <kbd>Enter</kbd></span><span>Team window / chat (in co-op)</span>
-        <span><kbd>Esc</kbd></span><span>This menu</span>
-      </div>
-      <div class="keys" id="padKeys">
-        <h3>Controller (Steam Deck, gamepad)</h3>
-        <span><kbd>Left stick</kbd></span><span>Move your cursor: it collects in the galaxy and points at buttons everywhere else</span>
-        <span><kbd>A</kbd></span><span>Click (hold and move: draw a box to select helpers)</span>
-        <span><kbd>B</kbd></span><span>Deselect helpers, or go back</span>
-        <span><kbd>D-pad</kbd></span><span>Jump from button to button</span>
-        <span><kbd>Right stick</kbd></span><span>Move the camera, or scroll a list (click it to go faster)</span>
-        <span><kbd>LT</kbd> / <kbd>RT</kbd></span><span>Zoom out / in (the minimap too, when you point at it)</span>
-        <span><kbd>LB</kbd> / <kbd>RB</kbd></span><span>Previous / next tab (in the hangar: helper pages)</span>
-        <span><kbd>X</kbd></span><span>Select all your helpers</span>
-        <span><kbd>Y</kbd></span><span>Hide or show the upgrades</span>
-        <span class="lin nochal"><kbd>View</kbd></span><span class="lin nochal">Jump to the Fleet Hangar</span>
-        <span><kbd>Start</kbd></span><span>This menu</span>
-        <h3>Touch</h3>
-        <span><kbd>Drag one finger</kbd></span><span>A joystick appears where you touch: drag that way to move your cursor and collect</span>
-        <span><kbd>Two fingers</kbd></span><span>Move the camera; pinch to zoom</span>
-        <span><kbd>Tap</kbd></span><span>Click</span>
-      </div>
-      <p class="lin note">Dark sectors are locked: unlock them with stardust. If you ever run out of stars to collect, the nearest one opens for free.</p>
-      <div class="mbtns"><button id="mBack">Back</button></div>
-    </div>
   </div>
 </div>
 <div id="settingsBox">
   <div class="card box">
-    <h2>Settings</h2>
-    <h3>Player</h3>
-    <div class="srow"><label for="setName">Username</label><input id="setName" class="txt" maxlength="16" aria-label="Username" readonly><span class="note" id="setNameNote"></span></div>
-    <h3>Sound</h3>
-    <div class="srow"><button id="btnSfx" class="plain">Sound: on</button><input id="volSfx" type="range" min="0" max="100" aria-label="Sound volume"><span id="volSfxN" class="num"></span></div>
-    <div class="srow"><button id="btnMusic" class="plain">Music: on</button><input id="volMusic" type="range" min="0" max="100" aria-label="Music volume"><span id="volMusicN" class="num"></span></div>
-    <div class="srow"><button id="btnPip" class="plain">Pip’s voice: on</button><span class="note">Pip, the tutorial robot, babbles when it talks (at the sound volume).</span></div>
-    <h3 class="desk">Window</h3>
-    <div class="srow desk" id="dispRow"><button data-disp="fullscreen" class="plain">Fullscreen</button><button data-disp="windowed" class="plain">Windowed</button><button data-disp="borderless" class="plain">Borderless window</button></div>
-    <div class="note desk" id="dispNote">F11 switches between fullscreen and windowed.</div>
-    <h3>Picture</h3>
-    <div class="srow"><label for="setBright">Brightness</label><input id="setBright" type="range" min="50" max="200" step="5"><span id="setBrightN" class="num"></span></div>
-    <div class="srow"><button id="setHdr" class="plain">HDR output: off</button><span id="setHdrNote" class="note"></span></div>
-    <div class="srow"><button id="detail" class="plain">Stars: detailed</button><span class="note">Simple stars are faster on slow computers.</span></div>
-    <div class="srow"><label for="setFx">Effects</label><input id="setFx" type="range" min="0" max="100" step="5"><span id="setFxN" class="num"></span></div>
-    <div class="note" style="margin:-4px 0 10px">How strongly sparks, engine trails, glows and the odd shooting star show, from off to full. Nothing flashes.</div>
-    <h3>Interface</h3>
-    <div class="srow"><label for="setUi">UI scale</label><input id="setUi" type="range" min="60" max="200" step="5"><span id="setUiN" class="num"></span></div>
-    <div class="note">The interface and the view already adjust to your screen size by themselves; this is on top of that.</div>
-    <div class="srow" style="margin-top:10px"><button id="setHud" class="plain">Edit HUD…</button><span class="note" id="setHudNote">Resize each window and choose its colours.</span></div>
-    <div class="srow" id="setTutRow" style="margin-top:10px"><button id="setTut" class="plain">Replay tutorial</button><span class="note">Walks you through the basics again, in this world.</span></div>
-    <button id="settingsClose" class="plain">Close</button>
+    <nav class="snav">
+      <h2>Settings</h2>
+      <button class="stab" data-tab="game"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.3 5.7.7-4.2 3.9 1.1 5.7L12 16.3l-5.1 2.8 1.1-5.7-4.2-3.9 5.7-.7z"/></svg>Game</button>
+      <button class="stab" data-tab="sound"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9.2a4 4 0 010 5.6M18 6.7a7.5 7.5 0 010 10.6"/></svg>Sound</button>
+      <button class="stab" data-tab="display"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg>Display</button>
+      <button class="stab" data-tab="controls"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M8 14h8"/></svg>Controls</button>
+      <button class="stab" data-tab="pad"><svg viewBox="0 0 24 24"><path d="M7.5 8h9a4.5 4.5 0 014.4 5.4l-.6 3a2.3 2.3 0 01-4 1l-1.8-1.9h-5l-1.8 1.9a2.3 2.3 0 01-4-1l-.6-3A4.5 4.5 0 017.5 8z"/><path d="M8 10.5v3M6.5 12h3M15.5 11h.01M17 13h.01"/></svg>Controller</button>
+      <div class="sfill"></div>
+      <button id="settingsClose" class="sdone">Done</button>
+    </nav>
+    <div class="spages">
+      <section class="spage" data-page="game">
+        <div class="sph"><h3>Game</h3><p>Your name, the windows on screen, and Pip’s tutorial.</p></div>
+        <div class="sgrp">
+          <div class="sr"><div class="sl"><b>Username</b><small id="setNameNote"></small></div><div class="sc"><input id="setName" class="txt" maxlength="16" aria-label="Username" readonly></div></div>
+        </div>
+        <h4>Interface</h4>
+        <div class="sgrp">
+          <div class="sr"><div class="sl"><b>UI scale</b><small>The interface already fits your screen by itself; this is on top of that.</small></div><div class="sc wide"><input id="setUi" type="range" min="60" max="200" step="5" aria-label="UI scale"><span id="setUiN" class="num"></span></div></div>
+          <div class="sr"><div class="sl"><b>HUD</b><small id="setHudNote">Move and resize each window, and choose its colours.</small></div><div class="sc"><button id="setHud" class="sbtn">Edit HUD…</button></div></div>
+          <div class="sr"><div class="sl"><b>Stardust meter</b><small id="setMeterNote">What each effect and helper earns, in a small window.</small></div><div class="sc"><button id="setMeter" class="sw" role="switch" aria-label="Stardust meter"></button></div></div>
+        </div>
+        <h4>Tutorial</h4>
+        <div class="sgrp">
+          <div class="sr" id="setTutRow"><div class="sl"><b>Replay the tutorial</b><small id="setTutNote"></small></div><div class="sc"><button id="setTut" class="sbtn">Replay now</button></div></div>
+        </div>
+      </section>
+      <section class="spage" data-page="sound">
+        <div class="sph"><h3>Sound</h3><p>Every sound and every note of music is made live by the game.</p></div>
+        <div class="sgrp">
+          <div class="sr"><div class="sl"><b>Sound effects</b></div><div class="sc wide"><input id="volSfx" type="range" min="0" max="100" aria-label="Sound volume"><span id="volSfxN" class="num"></span><button id="btnSfx" class="sw" role="switch" aria-label="Sound effects"></button></div></div>
+          <div class="sr"><div class="sl"><b>Music</b></div><div class="sc wide"><input id="volMusic" type="range" min="0" max="100" aria-label="Music volume"><span id="volMusicN" class="num"></span><button id="btnMusic" class="sw" role="switch" aria-label="Music"></button></div></div>
+          <div class="sr"><div class="sl"><b>Music track</b><small id="trackNote"></small></div><div class="sc"><button id="btnTrack" class="sbtn">Next track</button></div></div>
+          <div class="sr"><div class="sl"><b>Pip’s voice</b><small>Pip, the tutorial robot, babbles when it talks (at the sound volume).</small></div><div class="sc"><button id="btnPip" class="sw" role="switch" aria-label="Pip’s voice"></button></div></div>
+        </div>
+      </section>
+      <section class="spage" data-page="display">
+        <div class="sph"><h3>Display</h3><p>How the galaxy looks. Nothing in the game flashes.</p></div>
+        <div class="sgrp">
+          <div class="sr desk"><div class="sl"><b>Window</b><small id="dispNote">F11 switches between fullscreen and windowed.</small></div><div class="sc"><div class="seg" id="dispRow"><button data-disp="fullscreen">Fullscreen</button><button data-disp="windowed">Windowed</button><button data-disp="borderless">Borderless</button></div></div></div>
+          <div class="sr"><div class="sl"><b>Brightness</b></div><div class="sc wide"><input id="setBright" type="range" min="50" max="200" step="5" aria-label="Brightness"><span id="setBrightN" class="num"></span></div></div>
+          <div class="sr"><div class="sl"><b>HDR output</b><small id="setHdrNote"></small></div><div class="sc"><button id="setHdr" class="sw" role="switch" aria-label="HDR output"></button></div></div>
+          <div class="sr"><div class="sl"><b>Stars</b><small>Simple stars are faster on slow computers.</small></div><div class="sc"><div class="seg" id="detail"><button data-det="auto">Detailed</button><button data-det="low">Simple</button></div></div></div>
+          <div class="sr"><div class="sl"><b>Effects</b><small>How strongly sparks, engine trails, glows and the odd shooting star show.</small></div><div class="sc wide"><input id="setFx" type="range" min="0" max="100" step="5" aria-label="Effects"><span id="setFxN" class="num"></span></div></div>
+        </div>
+        <h4>Old-screen looks</h4>
+        <div class="sgrp">
+          <div class="sr"><div class="sl"><b>CRT effect</b><small>A curved old TV screen, with a soft glow.</small></div><div class="sc"><button id="setCrt" class="sw" role="switch" aria-label="CRT effect"></button></div></div>
+          <div class="sr"><div class="sl"><b>Scanlines</b><small>Fine dark lines across the whole screen.</small></div><div class="sc"><button id="setScan" class="sw" role="switch" aria-label="Scanlines"></button></div></div>
+          <div class="sr"><div class="sl"><b>Chromatic aberration</b><small>Red and blue drift apart toward the edges.</small></div><div class="sc"><button id="setChroma" class="sw" role="switch" aria-label="Chromatic aberration"></button></div></div>
+        </div>
+        <p class="snote" id="setRetroNote">Old-screen looks, just for fun. Steady pictures: nothing flickers or rolls.</p>
+      </section>
+      <section class="spage" data-page="controls">
+        <div class="sph"><h3>Controls</h3><p>Click a key to change it, then press the new one. <b>Esc</b> cancels, <b>Backspace</b> leaves it empty.</p></div>
+        <div class="kgrid" id="keyGrid"></div>
+        <div class="kfoot"><button id="keyReset" class="sbtn">Reset to defaults</button><span id="keyNote" class="snote"></span></div>
+        <div class="mhead"><h4>Mouse</h4><span class="mswap" title="The right button selects and sends helpers; the left one moves the camera and deselects"><label for="setSwapMouse">Swap left and right buttons</label><button id="setSwapMouse" class="sw" role="switch" aria-label="Swap left and right mouse buttons"></button></span></div>
+        <div class="sgrp mlist">
+          <div><span class="mk"><kbd>Hover</kbd></span><span>Collect stars</span></div>
+          <div><span class="mk"><kbd data-m="Right-drag|Left-drag">Right-drag</kbd></span><span>Move the camera</span></div>
+          <div><span class="mk"><kbd>Scroll</kbd></span><span>Zoom in and out</span></div>
+          <div><span class="mk"><kbd data-m="Left-drag|Right-drag">Left-drag</kbd></span><span>Select helpers (draw a box)</span></div>
+          <div><span class="mk"><kbd data-m="Click|Right-click">Click</kbd></span><span>Send selected helpers there</span></div>
+          <div><span class="mk"><kbd data-m="Quick right-click|Quick left-click">Quick right-click</kbd></span><span>Deselect helpers</span></div>
+          <div><span class="mk"><kbd data-m="Click the hangar|Right-click hangar">Click the hangar</kbd></span><span>Build and upgrade helpers</span></div>
+          <div><span class="mk"><kbd>Minimap</kbd></span><span data-m="Click: go there · scroll: zoom|Right-click: go there · scroll: zoom">Click: go there · scroll: zoom</span></div>
+        </div>
+      </section>
+      <section class="spage" data-page="pad">
+        <div class="sph"><h3>Controller and touch</h3><p>A gamepad or a Steam Deck plays the whole game, and so does a touch screen.</p></div>
+        <div class="sgrp mlist one">
+          <div><span class="mk"><kbd>Left stick</kbd></span><span>Move your cursor: it collects in the galaxy and points at buttons everywhere else</span></div>
+          <div><span class="mk"><kbd>A</kbd></span><span>Click (hold and move: draw a box to select helpers)</span></div>
+          <div><span class="mk"><kbd>B</kbd></span><span>Deselect helpers, or go back</span></div>
+          <div><span class="mk"><kbd>D-pad</kbd></span><span>Jump from button to button</span></div>
+          <div><span class="mk"><kbd>Right stick</kbd></span><span>Move the camera, or scroll a list (click it to go faster)</span></div>
+          <div><span class="mk"><kbd>LT</kbd> / <kbd>RT</kbd></span><span>Zoom out / in (the minimap too, when you point at it)</span></div>
+          <div><span class="mk"><kbd>LB</kbd> / <kbd>RB</kbd></span><span>Previous / next tab (in the hangar: helper pages)</span></div>
+          <div><span class="mk"><kbd>X</kbd></span><span>Select all your helpers</span></div>
+          <div><span class="mk"><kbd>Y</kbd></span><span>Hide or show the upgrades</span></div>
+          <div><span class="mk"><kbd>View</kbd></span><span>Jump to the Fleet Hangar</span></div>
+          <div><span class="mk"><kbd>Start</kbd></span><span>The menu</span></div>
+        </div>
+        <h4>Touch</h4>
+        <div class="sgrp mlist one">
+          <div><span class="mk"><kbd>Drag one finger</kbd></span><span>A joystick appears where you touch: drag that way to move your cursor and collect</span></div>
+          <div><span class="mk"><kbd>Two fingers</kbd></span><span>Move the camera; pinch to zoom</span></div>
+          <div><span class="mk"><kbd>Tap</kbd></span><span>Click</span></div>
+        </div>
+      </section>
+    </div>
   </div>
 </div>
 
@@ -2747,7 +2844,8 @@ function stepDrones(dt) {
 const pref = { ui: 100, bright: 100, hdr: false };   // (and fxv: visual effects strength, see below)
 try { Object.assign(pref, JSON.parse(localStorage.getItem('obs-settings') || '{}')); } catch (e) {}
 pref.ui = Math.min(200, Math.max(60, +pref.ui || (window.steam && window.steam.deck ? 130 : 100)));   // (on a Steam Deck's small screen the interface starts bigger)
-if (window.steam && window.steam.deck) document.body.classList.add('deck');   // (the Controls page then lists the controller first) pref.bright = Math.min(400, Math.max(50, +pref.bright || 100)); pref.hdr = !!pref.hdr;
+if (window.steam && window.steam.deck) document.body.classList.add('deck');   // (Esc menu > Controls then opens the controller's page)
+pref.bright = Math.min(400, Math.max(50, +pref.bright || 100)); pref.hdr = !!pref.hdr; pref.swapMouse = !!pref.swapMouse;   // swapMouse: the mouse buttons swapped, see mBtn
 // effects: pref.fxv = how strongly they show, 0 (off) to 100% (full); the old setting (fx: 0 off, 1 reduced, 2 full) carries over
 if (pref.fxv === undefined) pref.fxv = [0, 50, 100][+pref.fx] ?? 100;
 pref.fxv = Math.min(100, Math.max(0, Math.round(+pref.fxv) || 0)); delete pref.fx;
@@ -2766,10 +2864,163 @@ if (pref.hdr && hdrCan) {
   } catch (e) { hdrOn = !!ctx; }
 }
 if (!ctx) ctx = cv.getContext('2d');
+// ---- screen effects (Settings > Picture; CRT on unless switched off, the others off unless chosen): CRT (a gently curved screen with dark rounded corners,
+// a vignette and a faint pattern of red, green and blue phosphor stripes), chromatic aberration (red and blue a few
+// pixels apart, more toward the edges) and scanlines (fine dark lines over the whole window). All steady: nothing
+// flickers or rolls. CRT and chromatic aberration redraw the finished picture of the galaxy through WebGL onto a second
+// canvas on top (#post; clicks pass through it); the menus and windows stay sharp. Scanlines are a see-through layer
+// over everything (#scanFx). With HDR output the galaxy's picture can't go through WebGL, so only scanlines work then.
+pref.crt = pref.crtSet ? !!pref.crt : true; pref.scan = !!pref.scan; pref.chroma = !!pref.chroma;   // (CRT is on until the player switches it themselves)
+const CRT_K = 0.1, CHROMA = 0.002;   // how curved the CRT screen is; how far apart the colours get at the edges
+const post = { gl: null, cv: null, tex: null, u: null, on: false, shown: false, failed: false };
+const postWant = () => (pref.crt || pref.chroma) && !hdrOn && !post.failed;
+// a point on the screen (view units, like mx/my) -> the point of the galaxy's picture shown there: the curved CRT screen
+// shows the picture bent, so the cursor and clicks go where things appear (the shader does the same sum)
+function crtWarp(x, y) {
+  if (!pref.crt || !post.shown) return [x, y];
+  const cx = x / W * 2 - 1, cy = y / H * 2 - 1, f = (1 + CRT_K * (cx * cx + cy * cy)) / (1 + CRT_K);
+  return [(cx * f + 1) / 2 * W, (cy * f + 1) / 2 * H];
+}
+function postInit() {
+  const c = document.getElementById('post'), gl = c.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
+  if (!gl) { post.failed = true; return false; }
+  const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  try {
+    const pr = gl.createProgram();
+    gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p; varying vec2 v; void main() { v = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }'));
+    gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D t; uniform vec2 res; uniform float k, ca, crt; varying vec2 v;
+void main() {
+  vec2 c = v * 2.0 - 1.0; float r2 = dot(c, c);
+  vec2 w = c * (1.0 + k * r2) / (1.0 + k);          // the curved screen (k = 0: flat)
+  vec2 uv = w * 0.5 + 0.5, d = w * ca;               // chromatic aberration: red one way, blue the other, more toward the edges
+  vec3 col = vec3(texture2D(t, uv + d).r, texture2D(t, uv).g, texture2D(t, uv - d).b);
+  if (crt > 0.5) {
+    vec2 px = 1.5 / res;                              // a soft glow: the picture's light spreading a little
+    vec3 glow = texture2D(t, uv + vec2(px.x, 0.0)).rgb + texture2D(t, uv - vec2(px.x, 0.0)).rgb + texture2D(t, uv + vec2(0.0, px.y)).rgb + texture2D(t, uv - vec2(0.0, px.y)).rgb;
+    col += glow * 0.06;
+    float m = mod(floor(gl_FragCoord.x), 3.0);       // phosphor stripes, one pixel each
+    vec3 mask = m < 0.5 ? vec3(1.14, 0.9, 0.9) : m < 1.5 ? vec3(0.9, 1.14, 0.9) : vec3(0.9, 0.9, 1.14);
+    col *= mask * (1.0 - 0.45 * pow(r2 * 0.5, 1.4)) * 1.02;   // and a vignette
+    vec2 e = clamp((1.0 - abs(w)) * res * 0.5, 0.0, 1.0);    // outside the curved screen: black, with a smooth edge
+    col *= e.x * e.y;
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`));
+    gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+    gl.useProgram(pr);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const ap = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
+    post.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, post.tex);
+    for (const [p, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, p, v);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    post.u = { res: gl.getUniformLocation(pr, 'res'), k: gl.getUniformLocation(pr, 'k'), ca: gl.getUniformLocation(pr, 'ca'), crt: gl.getUniformLocation(pr, 'crt') };
+  } catch (e) { console.warn('screen effects unavailable:', e.message); post.failed = true; return false; }
+  c.addEventListener('webglcontextlost', ev => { ev.preventDefault(); post.failed = true; postShow(false); });   // (the graphics driver reset: the effects switch off)
+  post.gl = gl; post.cv = c; return true;
+}
+function postShow(on) { if (post.shown === on) return; post.shown = on; document.getElementById('post').style.display = on ? 'block' : 'none'; }
+// each frame of play, after the galaxy is drawn: the finished picture through the effects
+function postFrame() {
+  if (!postWant()) { postShow(false); return; }
+  if (!post.gl && !postInit()) { postShow(false); refreshSettings(); return; }
+  const gl = post.gl, c = post.cv;
+  if (c.width !== cv.width || c.height !== cv.height) { c.width = cv.width; c.height = cv.height; }
+  gl.viewport(0, 0, c.width, c.height);
+  try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, cv); } catch (e) { post.failed = true; postShow(false); return; }
+  gl.uniform2f(post.u.res, c.width, c.height); gl.uniform1f(post.u.k, pref.crt ? CRT_K : 0); gl.uniform1f(post.u.ca, pref.chroma ? CHROMA : 0); gl.uniform1f(post.u.crt, pref.crt ? 1 : 0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  postShow(true);
+}
+function screenFx() { document.body.classList.toggle('scan', pref.scan); if (!postWant()) postShow(false); }   // (scanlines at once; the others with the next frame)
+screenFx();
 // W and H are the view size in "1080p units": every window shows the same amount of galaxy as a 1920x1080 one
 // (same area; a wider window shows more to the sides and less up and down). VS = real pixels per such unit.
 let W = 0, H = 0, dpr = 1, VS = 1, mx = 0, my = 0, inside = false, dragging = false;
-const keys = new Set();
+const keys = new Set();   // the keys held down, by their place on the keyboard (KeyboardEvent.code)
+// ---- key bindings: every keyboard shortcut can be changed in Settings > Controls, two keys per action. Kept on this
+// computer as obs-keys = { action: [key, key] } (only the changed ones). Keys are matched by their place on the keyboard,
+// so W A S D stay together on any layout, and shown by what they type on this keyboard when the browser can tell.
+const KEY_ACTS = [
+  { k: 'up', grp: 'Camera', name: 'Move up', def: ['KeyW', 'ArrowUp'] },
+  { k: 'left', grp: 'Camera', name: 'Move left', def: ['KeyA', 'ArrowLeft'] },
+  { k: 'down', grp: 'Camera', name: 'Move down', def: ['KeyS', 'ArrowDown'] },
+  { k: 'right', grp: 'Camera', name: 'Move right', def: ['KeyD', 'ArrowRight'] },
+  { k: 'fast', grp: 'Camera', name: 'Faster', tag: 'hold', tip: 'Hold to move faster. With Unlock: up to ten sectors at once', def: ['ShiftLeft', 'ShiftRight'] },
+  { k: 'hangar', grp: 'Sectors', name: 'Jump to the Fleet Hangar', def: ['KeyH', ''] },
+  { k: 'unlock', grp: 'Sectors', name: 'Unlock the next sector', def: ['KeyQ', ''] },
+  { k: 'unlockGo', grp: 'Sectors', name: 'Unlock it and go there', def: ['KeyE', ''] },
+  { k: 'skills', grp: 'Sectors', name: 'Skill tree', tag: 'Infinite', def: ['KeyK', ''] },
+  { k: 'sel1', grp: 'Helpers', name: 'Select all sweepers', def: ['Digit1', 'Numpad1'] },
+  { k: 'sel2', grp: 'Helpers', name: 'Select all probes', def: ['Digit2', 'Numpad2'] },
+  { k: 'sel3', grp: 'Helpers', name: 'Select all hunters', def: ['Digit3', 'Numpad3'] },
+  { k: 'sel4', grp: 'Helpers', name: 'Select all stations', def: ['Digit4', 'Numpad4'] },
+  { k: 'sel5', grp: 'Helpers', name: 'Select every helper', def: ['Digit5', 'Numpad5'] },
+  { k: 'gather', grp: 'Helpers', name: 'All helpers to the cursor', def: ['KeyR', ''] },
+  { k: 'panel', grp: 'Windows', name: 'Hide or show the upgrades', def: ['KeyU', ''] },
+  { k: 'meter', grp: 'Windows', name: 'Stardust meter', def: ['KeyM', ''] },
+  { k: 'team', grp: 'Windows', name: 'Team window', tag: 'co-op', def: ['KeyT', ''] },
+  { k: 'chat', grp: 'Windows', name: 'Chat', tag: 'co-op', def: ['Enter', 'NumpadEnter'] },
+];
+// keys that can't be given to an action: Esc (menus, going back), F11 (fullscreen), Tab, F12, and the ones Windows keeps;
+// while waiting for a key, Backspace / Delete leave the slot empty
+const KEY_FIXED = ['Escape', 'F11', 'Tab', 'F12', 'MetaLeft', 'MetaRight', 'OSLeft', 'OSRight', 'ContextMenu', 'Backspace', 'Delete'];
+let keyB = {}, keyLayout = null;
+function keyLoad() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('obs-keys') || '{}') || {}; } catch (e) {}
+  keyB = {};
+  for (const a of KEY_ACTS) { const v = s[a.k]; keyB[a.k] = Array.isArray(v) && v.length === 2 && v.every(c => typeof c === 'string' && !KEY_FIXED.includes(c)) ? v.slice() : a.def.slice(); }
+}
+keyLoad();
+function keySave() {
+  const o = {};
+  for (const a of KEY_ACTS) if (keyB[a.k].join() !== a.def.join()) o[a.k] = keyB[a.k];
+  try { if (Object.keys(o).length) localStorage.setItem('obs-keys', JSON.stringify(o)); else localStorage.removeItem('obs-keys'); } catch (e) {}
+}
+const KEY_FROM = { ' ': 'Space', shift: 'ShiftLeft', control: 'ControlLeft', alt: 'AltLeft', enter: 'Enter', escape: 'Escape', tab: 'Tab', backspace: 'Backspace', delete: 'Delete',
+  arrowup: 'ArrowUp', arrowdown: 'ArrowDown', arrowleft: 'ArrowLeft', arrowright: 'ArrowRight' };
+function codeOf(e) {   // where the key is (worked out from what it types, for a made-up key press that only says that)
+  if (e.code) return e.code;
+  const k = (e.key || '').toLowerCase();
+  if (/^[a-z]$/.test(k)) return 'Key' + k.toUpperCase();
+  if (/^[0-9]$/.test(k)) return 'Digit' + k;
+  return KEY_FROM[k] || e.key || '';
+}
+const keyActOf = c => { if (c) for (const a of KEY_ACTS) if (keyB[a.k].includes(c)) return a.k; return null; };
+const held = a => keyB[a].some(c => c && keys.has(c));
+const KEY_NAMES = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift', ControlLeft: 'Left Ctrl',
+  ControlRight: 'Right Ctrl', AltLeft: 'Left Alt', AltRight: 'Right Alt', Space: 'Space', Enter: 'Enter', NumpadEnter: 'Num Enter', CapsLock: 'Caps Lock',
+  PageUp: 'Page Up', PageDown: 'Page Down', Insert: 'Insert', Home: 'Home', End: 'End', NumpadAdd: 'Num +', NumpadSubtract: 'Num −', NumpadMultiply: 'Num *',
+  NumpadDivide: 'Num /', NumpadDecimal: 'Num .', Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';',
+  Quote: '\'', Comma: ',', Period: '.', Slash: '/', IntlBackslash: '<' };
+function keyName(c) {
+  if (!c) return '';
+  if (keyLayout && /^(Key|Digit)|^(Backquote|Minus|Equal|Bracket|Backslash|Semicolon|Quote|Comma|Period|Slash|IntlBackslash)/.test(c) && keyLayout.has(c)) {
+    const v = keyLayout.get(c); if (v && v.trim()) return v.toUpperCase();
+  }
+  if (KEY_NAMES[c]) return KEY_NAMES[c];
+  const m = /^(?:Key|Digit)(.)$/.exec(c) || /^Numpad(\d)$/.exec(c);
+  return m ? (c.startsWith('Numpad') ? 'Num ' : '') + m[1] : c;
+}
+const keyLabel = a => keyName(keyB[a][0] || keyB[a][1]) || 'no key';
+function keyMoveName() {   // the four camera keys in one go: WASD (or ZQSD, or ↑←↓→ ...)
+  const n = ['up', 'left', 'down', 'right'].map(a => keyName(keyB[a][0] || keyB[a][1]) || '?');
+  return n.every(s => s.length === 1) ? n.join('') : n.join(' ');
+}
+// texts that name a key say [[action]] (or [[move]]); a text about a key that has been left empty isn't shown
+const keyText = s => s.replace(/\[\[(\w+)\]\]/g, (m, a) => a === 'move' ? keyMoveName() : a === 'rdrag' ? (pref.swapMouse ? 'Left-drag' : 'Right-drag') : keyLabel(a));
+const keyTextOk = s => [...s.matchAll(/\[\[(\w+)\]\]/g)].every(m => m[1] === 'move' || m[1] === 'rdrag' || keyB[m[1]].some(Boolean));
+function keyTitles() {   // the tooltips that name a key
+  for (const [id, t, a] of [['btnSkill', 'Skill tree', 'skills'], ['btnTeam', 'Team window', 'team'], ['panelShow', 'Show the upgrades', 'panel'], ['panelHide', 'Hide the upgrades', 'panel']]) {
+    const el = $(id); if (el) el.title = keyB[a].some(Boolean) ? t + ' (' + keyLabel(a) + ')' : t;
+  }
+}
+try { if (navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => { keyLayout = m; keyTitles(); }).catch(() => {}); } catch (e) {}
 function resize() {
   VS = Math.sqrt(innerWidth * innerHeight / (1920 * 1080)) || 1;
   dpr = (window.devicePixelRatio || 1) * VS; W = innerWidth / VS; H = innerHeight / VS;
@@ -2790,26 +3041,33 @@ function orderMove(list, wx, wy) {
     d.ty = Math.min(WORLD - 1, Math.max(1, wy + (Math.random() - 0.5) * spread));
   }
 }
+// Settings > Controls can swap the mouse buttons (pref.swapMouse): then the left button moves the camera and deselects, and
+// the right one selects and sends helpers. Only a real mouse's: a controller's and a touch screen's made-up clicks stay as they are
+const mBtn = e => !pref.swapMouse || !e.isTrusted || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) || (e.button !== 0 && e.button !== 2) ? e.button : 2 - e.button;
+const mL = () => pref.swapMouse ? 'right' : 'left', mR = () => pref.swapMouse ? 'left' : 'right';   // the buttons' names, as set
 // right button: hold and drag to move the camera; a quick click (short, hardly moved) deselects your helpers instead
 let rClick = null, rightDeselects = 0;
 cv.addEventListener('mousemove', e => {
-  if (dragging) { camX -= (e.clientX / VS - mx) / zoom; camY -= (e.clientY / VS - my) / zoom; }
-  if (rClick) rClick.moved += Math.abs(e.clientX / VS - mx) + Math.abs(e.clientY / VS - my);
-  mx = e.clientX / VS; my = e.clientY / VS; inside = true;
+  const [px, py] = crtWarp(e.clientX / VS, e.clientY / VS);   // (the CRT effect's curved screen: where things appear)
+  if (dragging) { camX -= (px - mx) / zoom; camY -= (py - my) / zoom; }
+  if (rClick) rClick.moved += Math.abs(px - mx) + Math.abs(py - my);
+  mx = px; my = py; inside = true;
   if (selStart && Math.hypot(mx - selStart.x, my - selStart.y) > 6) boxing = true;
 });
 cv.addEventListener('mouseleave', () => { inside = false; });
 cv.addEventListener('mousedown', e => {
-  if (e.button) { dragging = true; e.preventDefault(); if (e.button === 2) rClick = { at: performance.now(), moved: 0 }; }
-  else { selStart = { x: e.clientX / VS, y: e.clientY / VS }; boxing = false; }
+  const b = mBtn(e);
+  if (b) { dragging = true; e.preventDefault(); if (b === 2) rClick = { at: performance.now(), moved: 0 }; }
+  else { const [px, py] = crtWarp(e.clientX / VS, e.clientY / VS); selStart = { x: px, y: py }; boxing = false; }
 });
 addEventListener('mouseup', e => {
   dragging = false;
-  if (e.button === 2 && rClick) {
+  const b = mBtn(e);
+  if (b === 2 && rClick) {
     const quick = performance.now() - rClick.at < 300 && rClick.moved < 6; rClick = null;
     if (quick && drones.some(d => d.sel)) { for (const d of drones) d.sel = false; rightDeselects++; sfx('order'); renderMini(); }
   }
-  if (!selStart || e.button) return;
+  if (!selStart || b) return;
   if (boxing) {           // drag: select every probe inside the box
     const ax = toWorldX(Math.min(selStart.x, mx)), bx = toWorldX(Math.max(selStart.x, mx));
     const ay = toWorldY(Math.min(selStart.y, my)), by = toWorldY(Math.max(selStart.y, my));
@@ -2896,36 +3154,40 @@ for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, e => {
   if (joy && joy.id === e.pointerId) { joy = null; joyShow(); }
   if (tap && tap.id === e.pointerId) {
     const q = tap; tap = null;
-    if (t === 'pointerup' && performance.now() - q.at < 350 && joyOn()) touchTap(e.clientX / VS, e.clientY / VS);
+    if (t === 'pointerup' && performance.now() - q.at < 350 && joyOn()) touchTap(...crtWarp(e.clientX / VS, e.clientY / VS));
   }
 });
 addEventListener('keydown', e => {
-  const k = e.key.toLowerCase();
-  if ($('hangarBox').classList.contains('show')) {   // inside the hangar: arrows look through the helpers, Esc leaves
-    if (k === 'arrowleft' || k === 'a') hgStep(-1); else if (k === 'arrowright' || k === 'd') hgStep(1); else if (k === 'escape') $('hangarBox').classList.remove('show');
+  const k = e.key.toLowerCase(), c = codeOf(e), a = keyActOf(c);   // (a: the action that key is set to, in Settings > Controls)
+  if ($('hangarBox').classList.contains('show')) {   // inside the hangar: the arrows (or the left / right keys) look through the helpers, Esc leaves
+    if (k === 'arrowleft' || a === 'left') hgStep(-1); else if (k === 'arrowright' || a === 'right') hgStep(1); else if (k === 'escape') $('hangarBox').classList.remove('show');
     return;
   }
-  // Enter opens the co-op chat (unless a box or button already has the keyboard)
-  if (k === 'enter' && $('chat').classList.contains('on') && !/^(INPUT|BUTTON|TEXTAREA)$/.test(e.target.tagName || '')) { e.preventDefault(); $('chatIn').focus(); return; }
-  keys.add(k);
-  if (k === 'shift' && started && !e.repeat) refreshUI();   // (the Unlock button turns into ×10 at once)
-  if (k === 'u' && started) setPanelHidden(!document.body.classList.contains('panelHidden'));
-  if (k === 'm' && started) setMeter(!mtOn);
-  if (k === 't' && started && $('btnTeam').classList.contains('on')) showPlayers();
-  if (k === 'k' && started && INF()) { if (skShown()) skClose(); else skOpen(); }   // the skill tree (Infinite galaxies)
-  if (k === 'h' && started && hangarReg >= 0) { camX = secMidX(hangarReg); camY = secMidY(hangarReg); }
-  if ((k === 'q' || k === 'e') && !e.repeat) unlockKey(k === 'e', e.shiftKey);   // unlock a sector (E: and go there); Shift: up to ten
-  if (k === 'r' && inside) orderMove(drones, toWorldX(mx), toWorldY(my));
+  // the chat key (Enter) opens the co-op chat (unless a box or button already has the keyboard)
+  if (a === 'chat' && $('chat').classList.contains('on') && !/^(INPUT|BUTTON|TEXTAREA)$/.test(e.target.tagName || '')) { e.preventDefault(); $('chatIn').focus(); return; }
+  keys.add(c);
+  if (a) keyDo(a, e);
   if (k === 'escape' && started && $('cacheBox').classList.contains('show')) { cacheClose(); return; }
   if (k === 'escape' && started) {   // Esc closes whatever window is open; with none open it opens (or closes) the menu
     const open = ['playersBox', 'coopBox', 'settingsBox', 'cacheStats'].filter(id => $(id).classList.contains('show'));
     for (const id of open) $(id).classList.remove('show');
-    if (!open.length) { if ($('menuBox').classList.contains('keys')) $('menuBox').classList.remove('keys'); else toggleMenu(); }   // from Controls, Esc goes back a page
+    if (!open.length) toggleMenu();
   }
-  // number keys select a whole helper type: 1 sweepers, 2 probes, 3 hunters, 4 stations, 5 everything
-  if (started && '12345'.includes(k) && k.length === 1) selectKind([1, 0, 2, 3, -1][+k - 1]);
 });
-addEventListener('keyup', e => { const k = e.key.toLowerCase(); keys.delete(k); if (k === 'shift' && started) refreshUI(); });
+function keyDo(a, e) {   // what each key does (e: the key press; a controller's button gives none)
+  const rep = e && e.repeat;
+  if (a === 'fast' && started && !rep) refreshUI();   // (the Unlock button turns into ×10 at once)
+  if (a === 'panel' && started) setPanelHidden(!document.body.classList.contains('panelHidden'));
+  if (a === 'meter' && started) setMeter(!mtOn);
+  if (a === 'team' && started && $('btnTeam').classList.contains('on')) showPlayers();
+  if (a === 'skills' && started && INF()) { if (skShown()) skClose(); else skOpen(); }   // the skill tree (Infinite galaxies)
+  if (a === 'hangar' && started && hangarReg >= 0) { camX = secMidX(hangarReg); camY = secMidY(hangarReg); }
+  if ((a === 'unlock' || a === 'unlockGo') && !rep) unlockKey(a === 'unlockGo', held('fast'));   // unlock a sector (and go there); held Faster: up to ten
+  if (a === 'gather' && inside) orderMove(drones, toWorldX(mx), toWorldY(my));
+  // a whole helper type: sweepers, probes, hunters, stations, everything
+  if (started && /^sel[1-5]$/.test(a)) selectKind([1, 0, 2, 3, -1][+a[3] - 1]);
+}
+addEventListener('keyup', e => { const c = codeOf(e); keys.delete(c); if (keyActOf(c) === 'fast' && started) refreshUI(); });
 addEventListener('blur', () => { keys.clear(); if (started) refreshUI(); });
 
 // ---- controller: a gamepad (on a Steam Deck, its own controls) plays the whole game. The left stick moves a pointer over
@@ -3051,7 +3313,7 @@ function padTick(dt) {
   if (started && !hangarIn) {
     if (hit(2)) selectKind(-1);                                                            // X: every helper
     if (hit(3)) setPanelHidden(!document.body.classList.contains('panelHidden'));          // Y: the upgrades
-    if (hit(8)) padKey('h');                                                               // View: the Fleet Hangar
+    if (hit(8)) keyDo('hangar');                                                           // View: the Fleet Hangar
   }
   if (hit(4) || hit(5)) {   // LB / RB: the tab to the left / right (in the hangar: the helper pages)
     const dir = hit(4) ? -1 : 1;
@@ -3123,8 +3385,9 @@ mini.addEventListener('wheel', e => {
   renderMini();
 }, { passive: false });
 mini.addEventListener('mousedown', e => {
-  if (!e.button) { mStart = mCur = miniPos(e); mBoxing = false; e.preventDefault(); }
-  else if (e.button === 2) { mPan = { x: e.clientX, y: e.clientY }; e.preventDefault(); }
+  const b = mBtn(e);
+  if (!b) { mStart = mCur = miniPos(e); mBoxing = false; e.preventDefault(); }
+  else if (b === 2) { mPan = { x: e.clientX, y: e.clientY }; e.preventDefault(); }
 });
 mini.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('mousemove', e => {
@@ -3139,8 +3402,9 @@ addEventListener('mousemove', e => {
   if (mBoxing) renderMini();
 });
 addEventListener('mouseup', e => {
-  if (e.button === 2) mPan = null;
-  if (!mStart || e.button) return;
+  const b = mBtn(e);
+  if (b === 2) mPan = null;
+  if (!mStart || b) return;
   if (mBoxing) {
     const ax = Math.min(mStart.x, mCur.x), bx = Math.max(mStart.x, mCur.x), ay = Math.min(mStart.y, mCur.y), by = Math.max(mStart.y, mCur.y);
     for (const d of drones) d.sel = d.x >= ax && d.x <= bx && d.y >= ay && d.y <= by;
@@ -3282,14 +3546,14 @@ function refreshUI() {
   unlTarget = nearestLocked(camX, camY, true);
   const ub = $('unlock');
   ub.style.display = unlTarget < 0 || CHAL() ? 'none' : '';
-  if (unlTarget >= 0 && LIN() && keys.has('shift')) {   // Shift held: the button buys up to ten, as many as you can afford
+  if (unlTarget >= 0 && LIN() && held('fast')) {   // Faster (Shift) held: the button buys up to ten, as many as you can afford
     const p = unlockPlan();
     if (p.n) ub.textContent = 'Unlock ×' + p.n + (p.n < p.max ? ' of ' + p.max : '') + ' · ' + fmtPrice(p.c) + ' stardust';   // (×2 of 10: you can afford two)
     else ub.textContent = 'Unlock ×' + p.max + ' · ' + fmtPrice(p.cMax) + ' stardust';
     ub.classList.toggle('no', !p.n);
   }
   if (demoCap()) { ub.style.display = ''; ub.textContent = 'More sectors in the full game'; ub.classList.add('no'); }   // (the demo: clicking it says what the full game has)
-  else if (unlTarget >= 0 && !(LIN() && keys.has('shift'))) { ub.textContent = 'Unlock sector ' + sectorName(unlTarget) + ' · ' + fmtPrice(unlockCost()) + ' stardust'; ub.classList.toggle('no', points < unlockCost()); }
+  else if (unlTarget >= 0 && !(LIN() && held('fast'))) { ub.textContent = 'Unlock sector ' + sectorName(unlTarget) + ' · ' + fmtPrice(unlockCost()) + ' stardust'; ub.classList.toggle('no', points < unlockCost()); }
   const totals = [null,
     Math.round(found[1] * 50 * cometMult).toLocaleString('en-US') + ' stars’ worth',
     pct(100 * discB(2)) + ' attack speed',
@@ -3674,13 +3938,12 @@ async function load() {
   return true;
 }
 // ---------------------------------------------------------------- audio (all generated, no sound files)
-let actx = null, sfxGain, musGain, padBus, bellBus, nextChord = 0, nextBell = 0, chordN = 0;
-const audioPref = { sfx: true, music: true, sfxVol: 60, musVol: 60, pip: true };   // volumes are 0-100; pip = Pip's babbling voice
+let actx = null, sfxGain, musGain;
+const audioPref = { sfx: true, music: true, sfxVol: 60, musVol: 60, pip: true, track: 0 };   // volumes are 0-100; pip = Pip's babbling voice; track = the in-game track playing (or next)
 try { Object.assign(audioPref, JSON.parse(localStorage.getItem('tms-audio') || '{}')); } catch (e) {}
+function swSet(id, on) { const b = $(id); b.classList.toggle('on', !!on); b.setAttribute('aria-checked', on ? 'true' : 'false'); }   // a switch in Settings
 function applyAudioPref() {
-  $('btnSfx').textContent = 'Sound: ' + (audioPref.sfx ? 'on' : 'off');
-  $('btnMusic').textContent = 'Music: ' + (audioPref.music ? 'on' : 'off');
-  $('btnPip').textContent = 'Pip’s voice: ' + (audioPref.pip ? 'on' : 'off');
+  swSet('btnSfx', audioPref.sfx); swSet('btnMusic', audioPref.music); swSet('btnPip', audioPref.pip);
   $('volSfx').value = audioPref.sfxVol; $('volSfx').disabled = !audioPref.sfx;
   $('volMusic').value = audioPref.musVol; $('volMusic').disabled = !audioPref.music;
   try { localStorage.setItem('tms-audio', JSON.stringify(audioPref)); } catch (e) {}
@@ -3701,13 +3964,7 @@ function initAudio() {   // must run from a click, browsers block sound before t
   // two scores, each on its own bus so they can crossfade: the in-game music and the main menu's theme
   gameMus = actx.createGain(); gameMus.gain.value = started ? 1 : 0; gameMus.connect(musGain);
   menuMus = actx.createGain(); menuMus.gain.value = started ? 0 : 1; menuMus.connect(musGain);
-  padBus = actx.createBiquadFilter(); padBus.type = 'lowpass'; padBus.frequency.value = 650; padBus.connect(gameMus);
-  bellBus = actx.createGain(); bellBus.connect(gameMus);
-  const delay = actx.createDelay(1), fb = actx.createGain();
-  delay.delayTime.value = 0.43; fb.gain.value = 0.4;
-  bellBus.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(gameMus);
-  nextChord = actx.currentTime + 0.2; nextBell = actx.currentTime + 6;
-  menuRig = menuInstruments(actx, menuMus); menuBar = 0; menuNext = actx.currentTime + 0.3;
+  menuRig = musicRig(actx, menuMus); menuBar = 0; menuNext = actx.currentTime + 0.3;
   musState = started;
   applyAudioPref();
   setInterval(musicTick, 500); musicTick();
@@ -3786,11 +4043,13 @@ function pipBlip(t, f, dur, formant) {
   car.start(t); mod.start(t); car.stop(t + dur + 0.02); mod.stop(t + dur + 0.02);
   pipVoice.push(car, mod);
 }
-// ---- the main menu's theme: the trailer's melody in a calm, drumless arrangement (D minor, 100 BPM). A soft arpeggio,
+// ---- the music, all made live from notes (no sound files): the main menu's theme, and in a galaxy five tracks that
+// take turns, a few minutes each. Every piece is a function of its bar number, so it can be played live (a bar or so
+// ahead) or rendered to a file.
+// The main menu's theme: the trailer's melody in a calm, drumless arrangement (D minor, 100 BPM). A soft arpeggio,
 // warm chords and a round bass over Dm Dm Bb Bb F F C C; in the first 8 bars the theme plays slowly on bells, in the
 // next 8 the arpeggio climbs an octave and a few scattered bells answer instead; then it loops (38.4 s), never stopping.
-// Built as a function of the bar number so it can be played live (a few bars ahead) or rendered to a file.
-let gameMus, menuMus, menuRig = null, menuBar = 0, menuNext = 0, musState = false;
+let gameMus, menuMus, menuRig = null, menuBar = 0, menuNext = 0, musState = false, gTrack = null;
 const MENU_BAR = 2.4, MENU_LOOP = 16;
 const MENU_THEME = [   // the trailer's theme: per bar, [8th, note, 8ths]; here each 8th lasts a whole beat (half speed)
   [[0, 74, 3], [3, 69, 1], [4, 74, 2], [6, 76, 1], [7, 77, 1]],
@@ -3798,36 +4057,99 @@ const MENU_THEME = [   // the trailer's theme: per bar, [8th, note, 8ths]; here 
   [[0, 72, 3], [3, 69, 1], [4, 72, 2], [6, 77, 1], [7, 76, 1]],
   [[0, 76, 4], [4, 72, 2], [6, 74, 2]]];
 const MENU_CH = [[[50, 53, 57, 62], 38], [[46, 50, 53, 58], 34], [[45, 48, 53, 57], 41], [[48, 52, 55, 60], 36]];   // Dm Bb F C
-function menuInstruments(ctx, dest) {   // the menu's own little mixer and instruments (with an echo and a soft reverb)
-  const mtof = m => 440 * Math.pow(2, (m - 69) / 12), SR = ctx.sampleRate;
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const scaleStep = (m, k, sc) => { for (let s = Math.sign(k), i = Math.abs(k); i > 0; i--) do m += s; while (!sc.includes(m % 12)); return m; };   // k steps along a scale (its pitch classes)
+// the music's own little mixer and instruments, with an echo and a soft reverb (o: echo time and feedback, reverb
+// amount and length; the menu theme uses the defaults)
+function musicRig(ctx, dest, opt = {}) {
+  const SR = ctx.sampleRate, eT = opt.echo || 0.45, eF = opt.fb || 0.35, rM = opt.rev || 0.35, room = opt.room || 2.6;
   const out = ctx.createGain(); out.gain.value = 0.85; out.connect(dest);   // (about as loud as the in-game music)
-  const rev = ctx.createConvolver(), rl = Math.floor(SR * 2.6), ir = ctx.createBuffer(2, rl, SR); let s = 5;
+  const rev = ctx.createConvolver(), rl = Math.floor(SR * room), ir = ctx.createBuffer(2, rl, SR); let s = 5;
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < rl; i++) { s = (s * 16807) % 2147483647; d[i] = (s / 1073741823.5 - 1) * Math.pow(1 - i / rl, 3); } }
-  rev.buffer = ir; const rg = ctx.createGain(); rg.gain.value = 0.35; rev.connect(rg); rg.connect(out);
-  const echo = ctx.createDelay(1), efb = ctx.createGain(), eg = ctx.createGain(); echo.delayTime.value = 0.45; efb.gain.value = 0.35; eg.gain.value = 0.4;
+  rev.buffer = ir; const rg = ctx.createGain(); rg.gain.value = rM; rev.connect(rg); rg.connect(out);
+  const echo = ctx.createDelay(1), efb = ctx.createGain(), eg = ctx.createGain(); echo.delayTime.value = eT; efb.gain.value = eF; eg.gain.value = 0.4;
   echo.connect(efb); efb.connect(echo); echo.connect(eg); eg.connect(out);
-  const send = (node, r, e) => { node.connect(out); if (r) { const g = ctx.createGain(); g.gain.value = r; node.connect(g); g.connect(rev); } if (e) { const g = ctx.createGain(); g.gain.value = e; node.connect(g); g.connect(echo); } };
-  const osc = (type, f, t, dur, det = 0) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det; o.start(t); o.stop(t + dur + 0.05); return o; };
-  const env = (t, a, peak, d) => { const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); return g; };
+  const nb = ctx.createBuffer(1, SR, SR), nd = nb.getChannelData(0);   // a second of white noise (breath, shaker, wind)
+  for (let i = 0; i < SR; i++) { s = (s * 16807) % 2147483647; nd[i] = s / 1073741823.5 - 1; }
+  const pan = (node, p) => { if (!p || !ctx.createStereoPanner) return node; const sp = ctx.createStereoPanner(); sp.pan.value = p; node.connect(sp); return sp; };
+  // (every note's volume starts at 0, so nothing slips out in the instant before its start time)
+  // a note's last node goes to the mix (and some of it to the reverb and the echo); send returns a function that unplugs
+  // the note once it is over (osc and noise call it when they end), so finished notes don't pile up in the mixer
+  const send = (node, r, e, p) => {
+    const all = [node]; node = pan(node, p); all.push(node); node.connect(out);
+    if (r) { const g = ctx.createGain(); g.gain.value = r; node.connect(g); g.connect(rev); all.push(g); }
+    if (e) { const g = ctx.createGain(); g.gain.value = e; node.connect(g); g.connect(echo); all.push(g); }
+    return () => { for (const x of all) x.disconnect(); };
+  };
+  const osc = (type, f, t, dur, det = 0, off) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det; o.start(t); o.stop(t + dur + 0.05); if (off) o.onended = off; return o; };
+  const env = (t, a, peak, d) => { const g = ctx.createGain(); g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); return g; };
+  const noise = (t, dur, off) => { const n = ctx.createBufferSource(); n.buffer = nb; n.loop = true; n.start(t, (t * 0.618) % 1); n.stop(t + dur + 0.05); if (off) n.onended = off; return n; };
+  const fm = (f, ratio, t, dur, i0, i1, k, off) => {   // a sine whose pitch is wobbled by another (FM): bright at first (i0), then mellow (i1)
+    const c = osc('sine', f, t, dur, 0, off), m = osc('sine', f * ratio, t, dur), g = ctx.createGain();
+    g.gain.setValueAtTime(f * i0, t); g.gain.exponentialRampToValueAtTime(f * i1, t + k); m.connect(g); g.connect(c.frequency); return c;
+  };
   return {
-    pad(t, chord, dur) {
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 950;
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + 0.9); g.gain.setValueAtTime(0.03, t + dur); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.4);
-      lp.connect(g); send(g, 0.5, 0);
-      for (const n of chord) for (const d of [-8, 0, 8]) osc('sawtooth', mtof(n), t, dur + 1.5, d).connect(lp);
+    pad(t, chord, dur, v = 1, cut = 950) {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cut;
+      const g = ctx.createGain(), a = 0.03 * v; g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(a, t + 0.9); g.gain.setValueAtTime(a, t + dur); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.4);
+      lp.connect(g); const off = send(g, 0.5, 0);
+      for (const n of chord) for (const d of [-8, 0, 8]) osc('sawtooth', mtof(n), t, dur + 1.5, d, off).connect(lp);
     },
-    pluck(t, m, v = 1) {
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.5; lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(450, t + 0.35);
-      const g = env(t, 0.004, 0.05 * v, 0.4); lp.connect(g); send(g, 0.3, 0.6);
-      osc('triangle', mtof(m), t, 0.45).connect(lp); osc('square', mtof(m), t, 0.45, 5).connect(lp);
+    pluck(t, m, v = 1, p = 0, cut = 1) {
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.5; lp.frequency.setValueAtTime(2200 * cut, t); lp.frequency.exponentialRampToValueAtTime(450 * cut, t + 0.35);
+      const g = env(t, 0.004, 0.05 * v, 0.4); lp.connect(g); const off = send(g, 0.3, 0.6, p);
+      osc('triangle', mtof(m), t, 0.45, 0, off).connect(lp); osc('square', mtof(m), t, 0.45, 5).connect(lp);
     },
-    bell(t, m, dur, v = 1) {
-      const g = env(t, 0.005, 0.06 * v, dur); send(g, 0.6, 0.5); osc('sine', mtof(m), t, dur).connect(g);
-      const g2 = env(t, 0.003, 0.018 * v, dur * 0.35); send(g2, 0.5, 0.3); osc('sine', mtof(m) * 2.76, t, dur * 0.35).connect(g2);
+    bell(t, m, dur, v = 1, p = 0) {
+      const g = env(t, 0.005, 0.06 * v, dur); osc('sine', mtof(m), t, dur, 0, send(g, 0.6, 0.5, p)).connect(g);
+      const g2 = env(t, 0.003, 0.018 * v, dur * 0.35); osc('sine', mtof(m) * 2.76, t, dur * 0.35, 0, send(g2, 0.5, 0.3, p)).connect(g2);
     },
-    bass(t, m, dur) {
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.12, t + 0.15); g.gain.setValueAtTime(0.1, t + dur - 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.4);
-      send(g, 0.1, 0); osc('sine', mtof(m - 12), t, dur + 0.5).connect(g); const g2 = ctx.createGain(); g2.gain.value = 0.25; g2.connect(g); osc('triangle', mtof(m), t, dur + 0.5).connect(g2);
+    bass(t, m, dur, v = 1) {
+      const g = ctx.createGain(); g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.12 * v, t + 0.15); g.gain.setValueAtTime(0.1 * v, t + dur - 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.4);
+      const off = send(g, 0.1, 0); osc('sine', mtof(m - 12), t, dur + 0.5, 0, off).connect(g); const g2 = ctx.createGain(); g2.gain.value = 0.25; g2.connect(g); osc('triangle', mtof(m), t, dur + 0.5).connect(g2);
+    },
+    keys(t, m, dur, v = 1, p = 0) {   // a soft electric piano: a bright touch that mellows
+      const f = mtof(m), g = env(t, 0.006, 0.055 * v, dur); fm(f, 1, t, dur, 1.4, 0.12, 0.6, send(g, 0.4, 0.2, p)).connect(g);
+    },
+    glass(t, m, dur, v = 1, p = 0) {   // a glassy bell
+      const f = mtof(m), g = env(t, 0.003, 0.07 * v, dur); fm(f, 3.5, t, dur, 2, 0.02, dur * 0.5, send(g, 0.6, 0.45, p)).connect(g);
+    },
+    flute(t, m, dur, v = 1, p = 0) {   // a soft, breathy lead, with a slow vibrato on the long notes
+      const f = mtof(m), g = ctx.createGain(), lp = ctx.createBiquadFilter(), end = t + Math.max(0.12, dur);
+      lp.type = 'lowpass'; lp.frequency.value = Math.min(5000, f * 3);
+      g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.06 * v, t + 0.08); g.gain.linearRampToValueAtTime(0.048 * v, end); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.4);
+      lp.connect(g); const off = send(g, 0.55, 0.3, p);
+      const o1 = osc('triangle', f, t, dur + 0.45, 0, off), o2 = osc('sine', f * 2, t, dur + 0.45), h = ctx.createGain(); h.gain.value = 0.15; o1.connect(lp); o2.connect(h); h.connect(lp);
+      if (dur > 0.6) { const l = osc('sine', 4.8, t, dur + 0.45), lg = ctx.createGain(); lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.006, t + 0.7); l.connect(lg); lg.connect(o1.frequency); }
+      const bp = ctx.createBiquadFilter(), bg = env(t, 0.02, 0.012 * v, 0.1); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 3; noise(t, 0.12, send(bg, 0.3, 0, p)).connect(bp); bp.connect(bg);
+    },
+    choir(t, chord, dur, v = 1) {   // a soft "aah" of voices (saws through two vowel formants)
+      const g = ctx.createGain(), a = 0.06 * v; g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(a, t + 2.5); g.gain.setValueAtTime(a, t + dur); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 3);
+      const off = send(g, 0.8, 0);
+      const f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter(), g2 = ctx.createGain(); f1.type = f2.type = 'bandpass';
+      f1.frequency.value = 650; f1.Q.value = 3; f2.frequency.value = 1100; f2.Q.value = 4; g2.gain.value = 0.5; f1.connect(g); f2.connect(g2); g2.connect(g);
+      for (const n of chord) for (const d of [-9, 9]) { const o = osc('sawtooth', mtof(n), t, dur + 3, d, off); o.connect(f1); o.connect(f2); }
+    },
+    shaker(t, v = 1, p = 0) {
+      const hp = ctx.createBiquadFilter(), g = env(t, 0.003, 0.055 * v, 0.09); hp.type = 'highpass'; hp.frequency.value = 6500; noise(t, 0.07, send(g, 0.15, 0, p)).connect(hp); hp.connect(g);
+    },
+    pulse(t, m, v = 1, d = 0.28) {   // a short, round bass note
+      const f = mtof(m), lp = ctx.createBiquadFilter(), g = env(t, 0.006, 0.07 * v, d), sg = ctx.createGain(); lp.type = 'lowpass'; lp.Q.value = 2;
+      lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.18);
+      lp.connect(g); osc('sawtooth', f, t, d + 0.05, 0, send(g, 0.05, 0)).connect(lp); sg.gain.value = 0.6; sg.connect(g); osc('sine', f, t, d + 0.05).connect(sg);
+    },
+    drone(t, notes, dur, v = 1) {   // a low hum that slowly opens and closes
+      const lp = ctx.createBiquadFilter(), g = ctx.createGain(), l = osc('sine', 0.06, t, dur + 4), lg = ctx.createGain(); lp.type = 'lowpass'; lp.frequency.value = 320; lp.Q.value = 1.5;
+      lg.gain.value = 180; l.connect(lg); lg.connect(lp.frequency);
+      g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05 * v, t + 4); g.gain.setValueAtTime(0.05 * v, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 4);
+      lp.connect(g); const off = send(g, 0.4, 0);
+      for (const n of notes) for (const d of [-6, 6]) osc('sawtooth', mtof(n), t, dur + 4, d, off).connect(lp);
+    },
+    wind(t, dur, v = 1) {   // the far-off wind of space: noise through a slowly wandering band
+      const bp = ctx.createBiquadFilter(), g = ctx.createGain(), l = osc('sine', 0.09, t, dur + 4), lg = ctx.createGain();
+      bp.type = 'bandpass'; bp.Q.value = 1.2; bp.frequency.value = 500; lg.gain.value = 250; l.connect(lg); lg.connect(bp.frequency);
+      g.gain.value = 0; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.12 * v, t + dur / 2); g.gain.linearRampToValueAtTime(0.0001, t + dur + 4);
+      noise(t, dur + 4, send(g, 0.6, 0)).connect(bp); bp.connect(g);
     },
   };
 }
@@ -3844,35 +4166,200 @@ function menuBarAt(rig, n, t) {
     const PENTA = [74, 77, 79, 81, 84, 86]; for (let j = 0; j < 2; j++) { const r = ((n * 7 + j * 13) % 11) / 11; rig.bell(t + (1 + j * 2) * beat, PENTA[Math.floor(r * PENTA.length)], 2.4, 0.7); }
   }
 }
-// soundtrack: slow drifting chords with the occasional echoing bell (in the game) or the menu theme (on the title screen)
+
+// -- track 1, "Drift" (the game's first music, as it always was): slow drifting chords, 14 s each, with now and then
+// an echoing bell
 const CHORDS = [[110, 164.81, 196, 246.94], [87.31, 130.81, 164.81, 220], [130.81, 196, 246.94, 329.63], [82.41, 123.47, 146.83, 196]];
+function driftRig(ctx, dest) {
+  const pad = ctx.createBiquadFilter(); pad.type = 'lowpass'; pad.frequency.value = 650; pad.connect(dest);
+  const bell = ctx.createGain(); bell.connect(dest);
+  const delay = ctx.createDelay(1), fb = ctx.createGain(); delay.delayTime.value = 0.43; fb.gain.value = 0.4;
+  bell.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(dest);
+  return { ctx, pad, bell, nextBell: null };
+}
+function driftBar(r, n, t) {
+  const ctx = r.ctx, LEN = 14, FADE = 5;
+  for (const f of CHORDS[n % CHORDS.length]) for (const det of [1, 1.004]) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = f * det;
+    g.gain.value = 0; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + FADE);
+    g.gain.setValueAtTime(0.045, t + LEN); g.gain.linearRampToValueAtTime(0, t + LEN + FADE);
+    o.connect(g); g.connect(r.pad); o.start(t); o.stop(t + LEN + FADE + 0.1); o.onended = () => g.disconnect();
+  }
+  if (r.nextBell == null) r.nextBell = t + 6;
+  for (; r.nextBell < t + LEN; r.nextBell += 3 + Math.random() * 6) {   // a bell every 3 to 9 s
+    const bt = r.nextBell, o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = PENT[(Math.random() * PENT.length) | 0];
+    g.gain.value = 0; g.gain.setValueAtTime(0, bt); g.gain.linearRampToValueAtTime(0.035, bt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, bt + 3);
+    o.connect(g); g.connect(r.bell); o.start(bt); o.stop(bt + 3.05); o.onended = () => g.disconnect();
+  }
+}
+
+// -- track 2, "Warm Nebula": F major, 76 BPM. A soft electric piano and a round bass; a flute sings an eight-bar tune,
+// then a higher answer; a quiet middle where glass bells echo the tune; both again (bells doubling the first, a second
+// flute under the second), and a slow ending on F.
+const WN_BAR = 240 / 76, F_MAJ = [5, 7, 9, 10, 0, 2, 4];
+const WN_CH = [[[53, 57, 60, 64], 41], [[52, 55, 57, 60], 45], [[53, 57, 58, 62], 46], [[52, 55, 60, 62], 48],   // Fmaj7 Am7 Bbmaj7 C(add9)
+               [[53, 57, 60, 62], 50], [[52, 55, 57, 60], 45], [[53, 57, 58, 62], 46], [[52, 55, 60, 62], 48]];  // Dm7 Am7 Bbmaj7 C(add9)
+const WN_A = [[[0, 72, 1.5], [1.5, 69, 1], [2.5, 67, 0.5], [3, 69, 1]], [[0, 64, 3], [3, 67, 1]], [[0, 69, 1.5], [1.5, 70, 0.5], [2, 72, 1], [3, 74, 1]], [[0, 74, 2], [2, 72, 1], [3, 67, 1]],
+              [[0, 72, 1.5], [1.5, 69, 0.5], [2, 67, 1], [3, 69, 1]], [[0, 76, 2], [2, 74, 1], [3, 72, 1]], [[0, 74, 1.5], [1.5, 72, 0.5], [2, 69, 2]], [[0, 65, 1.5], [1.5, 64, 2.5]]];   // per bar: [beat, note, beats]
+const WN_B = [[[0, 77, 1], [1, 76, 0.5], [1.5, 72, 1.5], [3, 69, 1]], [[0, 72, 1.5], [1.5, 76, 0.5], [2, 79, 2]], [[0, 77, 1.5], [1.5, 74, 0.5], [2, 72, 1], [3, 70, 1]], [[0, 72, 2], [2, 74, 2]],
+              [[0, 77, 1], [1, 76, 0.5], [1.5, 74, 1.5], [3, 72, 1]], [[0, 76, 1.5], [1.5, 72, 0.5], [2, 69, 2]], [[0, 70, 1], [1, 69, 0.5], [1.5, 67, 1.5], [3, 69, 1]], [[0, 67, 4]]];
+function nebulaBar(r, n, t) {   // 7 parts of 8 bars: intro, tune, answer, quiet middle, tune, answer, ending
+  const b = WN_BAR / 4, sec = n >> 3, i = n & 7, end = sec === 6, fade = end ? 1 - i / 10 : 1;
+  const [ch, root] = WN_CH[end && i >= 4 ? [2, 3, 0, 0][i - 4] : i];   // (the ending: Bb, C, then F for two bars)
+  const hit = (o, notes, v, d) => notes.forEach((m, k) => r.keys(t + o * b, m, d, v * fade, [-0.35, -0.12, 0.12, 0.35][k]));
+  if (!(end && i === 7)) {   // (the last bar only rings on)
+    r.pad(t, ch, end && i === 6 ? 2 * WN_BAR : WN_BAR, 0.7 * fade, 700);
+    if (sec === 3 || (end && i === 6)) hit(0, ch, 0.8, 6);
+    else { hit(0, ch, 0.85, 5); hit(1.5, ch.slice(1), 0.5, 3); hit(3, ch.slice(1, 3), 0.45, 2.5); }
+    if ((sec > 0 || i >= 4) && !(sec === 3 && i < 4) && !(end && i >= 6)) { r.bass(t, root, 2.5 * b, 0.63); r.bass(t + 2.5 * b, root + 7, 1.5 * b, 0.5); }
+    if (end && i === 6) r.bass(t, root, 6 * b, 0.63);
+  }
+  const mel = sec === 1 || sec === 4 ? WN_A[i] : sec === 2 || sec === 5 ? WN_B[i] : null;
+  if (mel) for (const [o, m, l] of mel) {
+    r.flute(t + o * b, m, l * b * 0.95, 1.15, 0.1);
+    if (sec === 4) r.glass(t + o * b, m + 12, 2.5, 0.45, -0.3);   // bells double the tune, an octave up
+    if (sec === 5 && l >= 1) r.flute(t + o * b, scaleStep(m, -2, F_MAJ), l * b * 0.95, 0.55, -0.25);   // and a second flute sings a third below
+  }
+  if (sec === 3 && i % 2 === 0) WN_A[i].slice(0, 3).forEach(([o, m], k) => r.glass(t + o * b, m + 12, 3, 0.75, k % 2 ? 0.3 : -0.3));   // the quiet middle: bells echo the tune's start
+  if (sec === 0 && i >= 6) r.glass(t + 2 * b, [79, 76][i - 6], 3, 0.55, 0.25);   // two bells announce the tune
+  if (end && i === 6) r.glass(t + 2 * b, 77, 5, 0.55, 0.2);
+}
+
+// -- track 3, "Orbit": E minor, 92 BPM. A rippling arpeggio that slowly opens up, a soft pulsing bass and a shaker,
+// and a glass-bell tune over them; a quiet middle without the arpeggio; at the end the arpeggio closes again.
+const OR_BAR = 240 / 92, E_MIN = [4, 6, 7, 9, 11, 0, 2];
+const OR_CH = [[[52, 55, 59, 62, 66], 40], [[48, 52, 55, 59, 62], 36], [[50, 55, 57, 59, 64], 43], [[50, 54, 57, 59, 62], 42],   // Em9 Cmaj9 G6/9 D/F#, two bars each
+               [[52, 55, 59, 62, 66], 40], [[48, 52, 55, 59, 62], 36], [[48, 52, 55, 57, 59], 45], [[47, 50, 54, 59, 62], 47]];  // Em9 Cmaj9 Am9 Bm7
+const OR_P1 = [0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1], OR_P2 = [0, 2, 1, 3, 2, 4, 3, 5, 4, 2, 3, 1, 2, 0, 1, 3];   // arpeggio orders (5 = the root an octave up)
+const OR_T = [[[0, 71, 3], [3, 74, 1], [4, 78, 4]], [[0, 76, 3], [3, 74, 1], [4, 71, 4]], [[0, 74, 2], [2, 76, 2], [4, 79, 4]], [[0, 78, 3], [3, 76, 1], [4, 74, 3], [7, 69, 1]],
+              [[0, 71, 3], [3, 74, 1], [4, 78, 2], [6, 79, 2]], [[0, 76, 4], [4, 79, 2], [6, 78, 2]], [[0, 76, 3], [3, 72, 1], [4, 71, 4]], [[0, 74, 4], [4, 78, 2], [6, 74, 2]]];   // per two bars: [beat, note, beats]
+function orbitBar(r, n, t) {   // intro 8 bars, groove 16, tune 16, quiet middle 8, tune 16, ending 8
+  const s = OR_BAR / 16, beat = OR_BAR / 4, sec = n < 8 ? 0 : n < 24 ? 1 : n < 40 ? 2 : n < 48 ? 3 : n < 64 ? 4 : 5;
+  const slot = sec === 5 ? [0, 0, 1, 1, 0, 0, 0, 0][n - 64] : (n >> 1) & 7, [ch, root] = OR_CH[slot];
+  if (n % 2 === 0) r.pad(t, ch.slice(0, 4), 2 * OR_BAR * (n === 70 ? 1.5 : 1), sec === 3 ? 0.6 : 0.55, 800);
+  if (!(sec === 3 && n < 44) && n < 70) {   // the arpeggio, in 16ths; its filter opens and closes over the track
+    const P = sec === 2 || sec === 4 ? OR_P2 : OR_P1, tones = [...ch, ch[0] + 12];
+    const cut = [0.4 + 0.3 * n / 8, 0.7 + 0.3 * (n - 8) / 16, 1.05, 0.5 + 0.4 * (n - 44) / 4, 1.15, 1 - 0.6 * (n - 64) / 6][sec];
+    for (let k = 0; k < 16; k++) r.pluck(t + k * s, tones[P[k]] + 12, [1, 0.56, 0.75, 0.56][k % 4], k % 2 ? 0.25 : -0.25, cut);
+  }
+  if ((sec === 1 || sec === 2 || sec === 4) || (sec === 5 && n < 68)) for (let k = 0; k < 8; k++) r.pulse(t + k * 2 * s, root, k % 2 ? 0.6 : 1, 0.5);
+  if (sec === 3 && n % 2 === 0) r.bass(t, root + 12, 2 * OR_BAR, 0.3);
+  if ((sec === 1 && n >= 16) || sec === 2 || sec === 4 || (sec === 5 && n < 66)) {
+    for (const k of [2, 6, 10, 14]) r.shaker(t + k * s, 1, 0.3);
+    for (const k of [7, 15]) r.shaker(t + k * s, 0.4, -0.3);
+  }
+  if ((sec === 2 || sec === 4) && n % 2 === 0) for (const [o, m, l] of OR_T[slot]) {
+    r.glass(t + o * beat, m, l * beat + 1.5, 0.75);
+    if (sec === 4) r.glass(t + o * beat, scaleStep(m, 2, E_MIN), l * beat + 1.5, 0.38, 0.35);   // the second time with a harmony a third up
+  }
+  if (sec === 3 && n % 2 === 0 && n < 44) r.glass(t, OR_T[slot][0][1], 5, 0.6, -0.2);
+  if (n === 70) r.glass(t, 71, 6, 0.5);
+}
+
+// -- track 4, "Deep Field": D minor, slow and dark (4.8 s bars). A low drone and the wind of space, a choir drifting
+// through four chords, a glass bell here and there, and in the middle a slow flute tune.
+const DF_BAR = 4.8;
+const DF_CH = [[50, 53, 57, 60, 64], [46, 50, 53, 57, 64], [43, 50, 53, 57, 58], [45, 52, 55, 60, 64]];   // Dm9 Bbmaj7(#11) Gm(add9) Am7, two bars each
+const DF_T = [[[0, 69, 2], [2, 72, 2], [4, 74, 3], [7, 76, 1]], [[0, 77, 4], [4, 76, 2], [6, 74, 2]], [[0, 74, 3], [3, 72, 1], [4, 70, 2], [6, 69, 2]], [[0, 72, 4], [4, 69, 4]],
+              [[0, 69, 2], [2, 74, 2], [4, 77, 3], [7, 79, 1]], [[0, 81, 4], [4, 79, 2], [6, 77, 2]], [[0, 76, 3], [3, 74, 1], [4, 72, 2], [6, 70, 2]], [[0, 69, 8]]];   // per two bars: [beat, note, beats]
+function deepBar(r, n, t) {   // drone and wind 8 bars, + choir 16, + the tune 16, then it thins out over 8
+  const beat = DF_BAR / 4, slot = (n >> 1) & 3, ch = DF_CH[slot];
+  if (n % 4 === 0) { r.drone(t, [38, 45], 4 * DF_BAR, n >= 44 ? 0.4 : 0.58); r.wind(t, 4 * DF_BAR, n < 8 || n >= 40 ? 1 : 0.7); }
+  if (n % 2 === 0 && n >= 8 && n < 44) r.choir(t, ch.slice(1), 2 * DF_BAR - 0.3, n < 12 ? 0.6 : 1);
+  if (n >= 24 && n < 40 && n % 2 === 0) for (const [o, m, l] of DF_T[(n - 24) >> 1]) { r.flute(t + o * beat, m, l * beat * 0.97, 0.9, 0.1); if (o === 0) r.glass(t, m + 12, 6, 0.3, -0.3); }
+  const h = Math.imul(n + 1, 2654435761) >>> 0;   // a bell here and there, from the chord, the same every time
+  if ((n < 24 || n >= 40) && n >= 2 && n < 46 && h % 3 !== 0) r.glass(t + ((h >>> 4) % 4) * beat, ch[(h >>> 8) % 5] + 12 + 12 * ((h >>> 12) % 2), 7, 0.55, ((h >>> 16) % 7) / 7.5 - 0.4);
+  if (n === 46) r.glass(t, 74, 9, 0.6);
+}
+
+// -- track 5, "Starlight Waltz": G major, 3/4 at 80 BPM. A music box plays a sixteen-bar tune over a soft waltz, a flute
+// answers in E minor; they take turns, joined by a second voice, until a slow ending.
+const WZ_BAR = 2.25, G_MAJ = [7, 9, 11, 0, 2, 4, 6];
+const WZ_CH = [[[55, 59, 62], 43], [[55, 59, 64], 40], [[55, 60, 64], 36], [[54, 57, 62], 38], [[54, 59, 62], 35], [[54, 57, 60], 38], [[57, 60, 64], 45]];   // G Em C D Bm D7 Am
+const WZ_A_CH = [0, 1, 2, 3, 0, 4, 2, 5, 0, 1, 6, 3, 1, 2, 3, 0], WZ_B_CH = [1, 2, 0, 3, 1, 2, 6, 3];
+const WZ_A = [[[0, 74, 2], [2, 71, 1]], [[0, 79, 2], [2, 78, 1]], [[0, 76, 2], [2, 72, 1]], [[0, 74, 1], [1, 76, 1], [2, 78, 1]],
+              [[0, 79, 2], [2, 83, 1]], [[0, 78, 2], [2, 74, 1]], [[0, 76, 1], [1, 74, 1], [2, 72, 1]], [[0, 69, 3]],
+              [[0, 74, 2], [2, 71, 1]], [[0, 79, 2], [2, 78, 1]], [[0, 72, 2], [2, 76, 1]], [[0, 78, 2], [2, 81, 1]],
+              [[0, 79, 2], [2, 76, 1]], [[0, 76, 1], [1, 74, 1], [2, 72, 1]], [[0, 71, 1], [1, 72, 1], [2, 69, 1]], [[0, 67, 3]]];   // per bar: [beat, note, beats]
+const WZ_B = [[[0, 71, 1], [1, 74, 1], [2, 79, 1]], [[0, 79, 2], [2, 76, 1]], [[0, 74, 1], [1, 79, 1], [2, 83, 1]], [[0, 81, 3]],
+              [[0, 83, 2], [2, 79, 1]], [[0, 81, 1], [1, 79, 1], [2, 76, 1]], [[0, 76, 2], [2, 72, 1]], [[0, 78, 3]]];
+function waltzBar(r, n, t) {   // intro 4, tune 16, answer 8, tune 16, answer 8, tune 16, ending 4
+  const beat = WZ_BAR / 3, part = n < 4 ? 0 : n < 20 ? 1 : n < 28 ? 2 : n < 44 ? 3 : n < 52 ? 4 : n < 68 ? 5 : 6;
+  const i = part === 1 ? n - 4 : part === 2 ? n - 20 : part === 3 ? n - 28 : part === 4 ? n - 44 : part === 5 ? n - 52 : part === 0 ? n : n - 68;
+  const tune = part % 2 === 1, ci = part === 0 ? WZ_A_CH[i] : part === 6 ? [2, 3, 0, 0][i] : tune ? WZ_A_CH[i] : WZ_B_CH[i], [ch, root] = WZ_CH[ci];
+  if (!(part === 6 && i === 3)) {   // the waltz: a bass note, then the chord twice
+    const last = part === 6 && i === 2;
+    r.pulse(t, root, 1, last ? 3 : 1.2);
+    if (last) ch.forEach((m, k) => r.keys(t + beat, m, 5, 0.63, [-0.3, 0, 0.3][k]));
+    else for (const o of [1, 2]) ch.forEach((m, k) => r.keys(t + o * beat, m, 1.6, o === 1 ? 0.53 : 0.43, [-0.3, 0, 0.3][k]));
+    if (part >= 2) r.pad(t, ch, last ? 2 * WZ_BAR : WZ_BAR, 0.35, 800);
+  }
+  const box = (m, o, v) => r.bell(t + o * beat, m + 12, 1.8, v, 0.15);
+  if (part === 1 || part === 3) for (const [o, m] of WZ_A[i]) box(m, o, 1.05);
+  if (part === 3) r.flute(t, ch[1] + 12, 2.9 * beat, 0.35, -0.25);   // a second voice holds a note of each chord
+  if (part === 2) for (const [o, m, l] of WZ_B[i]) r.flute(t + o * beat, m, l * beat * 0.95, 0.85, 0.1);
+  if (part === 4) for (const [o, m, l] of WZ_B[i]) { box(m, o, 1.05); if (l >= 1) r.flute(t + o * beat, scaleStep(m, -2, G_MAJ), l * beat * 0.95, 0.45, -0.2); }
+  if (part === 5) for (const [o, m, l] of WZ_A[i]) { r.flute(t + o * beat, m, l * beat * 0.95, 0.85, 0.1); if (o === 0) box(m, 0, 0.55); }   // (and the music box rings the first note of each bar, an octave up)
+  if (part === 6 && i === 2) [67, 71, 74, 79].forEach((m, k) => box(m, k * 0.75, 0.8));   // a last little climb on the music box
+}
+
+// -- the tracks take turns in a galaxy: each plays once through (a few minutes), rings out, and the next one begins
+const TRACKS = [
+  { name: 'Drift', bar: 14, bars: 16, gain: 1, rig: driftRig, at: driftBar },
+  { name: 'Warm Nebula', bar: WN_BAR, bars: 56, gain: 1.5, rig: (c, d) => musicRig(c, d, { echo: WN_BAR * 3 / 16 }), at: nebulaBar },
+  { name: 'Orbit', bar: OR_BAR, bars: 72, gain: 2.15, rig: (c, d) => musicRig(c, d, { echo: OR_BAR * 3 / 16, fb: 0.4 }), at: orbitBar },
+  { name: 'Deep Field', bar: DF_BAR, bars: 48, gain: 2.05, rig: (c, d) => musicRig(c, d, { echo: 0.9, fb: 0.4, rev: 0.5, room: 4 }), at: deepBar },
+  { name: 'Starlight Waltz', bar: WZ_BAR, bars: 72, gain: 3.1, rig: (c, d) => musicRig(c, d, { echo: WZ_BAR / 6 }), at: waltzBar },
+];
+const saveAudioPref = () => { try { localStorage.setItem('tms-audio', JSON.stringify(audioPref)); } catch (e) {} };
+function trackStart(k, t) {
+  const d = TRACKS[k], bus = actx.createGain(); bus.gain.value = d.gain; bus.connect(gameMus);
+  gTrack = { k, d, bus, rig: d.rig(actx, bus), bar: 0, next: t };
+  refreshTrackNote();
+}
+function trackStop(fade) {   // fade the track out, then let it go
+  if (!gTrack) return;
+  const bus = gTrack.bus, now = actx.currentTime;
+  bus.gain.cancelScheduledValues(now); bus.gain.setTargetAtTime(0, now, fade / 4); setTimeout(() => bus.disconnect(), fade * 1000 + 6000);
+  gTrack = null;
+}
+function nextTrack() {   // Settings > Next track: the next one now (or, on the title screen, when a galaxy opens)
+  audioPref.track = ((audioPref.track | 0) + 1) % TRACKS.length; saveAudioPref();
+  if (actx && gTrack) { trackStop(1.6); trackStart(audioPref.track, actx.currentTime + 1.2); }
+  refreshTrackNote();
+}
+function refreshTrackNote() {
+  const k = (audioPref.track | 0) % TRACKS.length;
+  $('trackNote').textContent = started && gTrack ? 'Now playing: ' + TRACKS[k].name + ' (' + (k + 1) + ' of ' + TRACKS.length + '). The tracks take turns, a few minutes each.'
+    : 'In a galaxy, ' + TRACKS.length + ' tracks take turns, a few minutes each. Next up: ' + TRACKS[k].name + '.';
+}
 function musicTick() {
   if (!actx || actx.state !== 'running') return;
-  const now = actx.currentTime, LEN = 14, FADE = 5;
+  const now = actx.currentTime;
   if (musState !== started) {   // going into a world or back to the menu: crossfade the two scores over a few seconds
     musState = started;
     gameMus.gain.cancelScheduledValues(now); gameMus.gain.setTargetAtTime(started ? 1 : 0, now, started ? 1.2 : 0.6);
     menuMus.gain.cancelScheduledValues(now); menuMus.gain.setTargetAtTime(started ? 0 : 1, now, started ? 0.6 : 1.2);
-    if (started) { nextChord = now + 0.2; nextBell = now + 6; } else { menuNext = now + 0.3; }
+    if (!started) { menuNext = now + 0.3; trackStop(3); refreshTrackNote(); }
   }
   if (!started) {   // the menu: keep two bars scheduled ahead
+    if (menuNext < now - MENU_BAR) { const miss = Math.floor((now - menuNext) / MENU_BAR); menuBar += miss; menuNext += miss * MENU_BAR; }   // (after a long stall, skip the bars missed rather than pile them up)
     while (menuNext < now + 2 * MENU_BAR) { menuBarAt(menuRig, menuBar++, Math.max(menuNext, now)); menuNext += MENU_BAR; }
     return;
   }
-  while (nextChord < now + 1) {
-    const t = Math.max(nextChord, now);
-    for (const f of CHORDS[chordN++ % CHORDS.length]) for (const det of [1, 1.004]) {
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.frequency.value = f * det;
-      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + FADE);
-      g.gain.setValueAtTime(0.045, t + LEN); g.gain.linearRampToValueAtTime(0, t + LEN + FADE);
-      o.connect(g); g.connect(padBus); o.start(t); o.stop(t + LEN + FADE + 0.1);
+  if (!gTrack) trackStart((audioPref.track | 0) % TRACKS.length, now + 0.2);
+  const g = gTrack, d = g.d;
+  if (g.next < now - d.bar) { const miss = Math.floor((now - g.next) / d.bar); g.bar += miss; g.next += miss * d.bar; }
+  while (g.next < now + 1.2) {
+    if (g.bar >= d.bars) {   // this track is over: it rings out, and after a breath the next one begins
+      const bus = g.bus; setTimeout(() => bus.disconnect(), 16000);
+      audioPref.track = (g.k + 1) % TRACKS.length; saveAudioPref();
+      trackStart(audioPref.track, g.next + 1.5);
+      break;
     }
-    nextChord += LEN;
-  }
-  while (nextBell < now + 1) {
-    tone(PENT[(Math.random() * PENT.length) | 0], Math.max(nextBell, now), 3, 0.035, 'sine', bellBus);
-    nextBell += 3 + Math.random() * 6;
+    d.at(g.rig, g.bar++, Math.max(g.next, now)); g.next += d.bar;
   }
 }
 // hidden window: the music goes quiet, but the sound system stays on so a chat message can still be heard
@@ -4185,7 +4672,7 @@ function nameRefresh(account) {
 // The skin only changes the look of the circle; the charge ring, Capacitor pips and Supernova gold stay the same.
 // Kept on this computer (like the achievements), so it is the same in every galaxy.
 const SKIN_KEY = 'obs3-skin', TAU = Math.PI * 2;
-const SKIN_TIER = [['Default', '#8fa3bd'], ['Common', '#4b69ff'], ['Uncommon', '#8847ff'], ['Rare', '#d32ce6'], ['Epic', '#eb4b4b'], ['Legendary', '#e4ae39'], ['Mythic', '#ff4d8d']];
+const SKIN_TIER = [['Default', '#8fa3bd'], ['Common', '#4b69ff'], ['Uncommon', '#8847ff'], ['Rare', '#d32ce6'], ['Epic', '#eb4b4b'], ['Legendary', '#e4ae39'], ['Mythic', '#ff4d8d'], ['Supporter Pack', '#2fe0c0']];
 const rgba = (c, a) => 'rgba(' + c + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
 function skFill(g, x, y, R, c, a) {   // the circle's fill: faint in the middle, brighter toward the edge (like the original)
   const gr = g.createRadialGradient(x, y, R * 0.2, x, y, R);
@@ -4209,6 +4696,7 @@ function skTicks(g, x, y, R, col) {   // the original's fine tick marks, longer 
   g.stroke();
 }
 function skDot(g, x, y, r, col) { g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+const skHsla = (h, s, l, a) => 'hsla(' + (((h % 360) + 360) % 360).toFixed(1) + ',' + s + '%,' + l + '%,' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
 function skStar4(g, x, y, r, col) {   // a small four-pointed sparkle
   g.fillStyle = col; g.beginPath();
   g.moveTo(x, y - r); g.quadraticCurveTo(x, y, x + r, y); g.quadraticCurveTo(x, y, x, y + r); g.quadraticCurveTo(x, y, x - r, y); g.quadraticCurveTo(x, y, x, y - r); g.fill();
@@ -4453,9 +4941,194 @@ const SKINS = [
     const cg = g.createConicGradient(t * 0.35, x, y), C = ['215,150,255', '255,170,225', '255,215,140', '170,110,255', '215,150,255'];   // the rim: violet, rose and gold, turning
     C.forEach((c, k) => cg.addColorStop(k / 4, rgba(c, 0.85))); g.strokeStyle = cg; g.lineWidth = 2.2; g.beginPath(); g.arc(x, y, R, 0, TAU); g.stroke();
   } },
+  // ---- the Supporter Pack (a DLC on Steam; see supporterOwned): skins that only look different, with no effect of their
+  // own. Every movement in them is slow and smooth, nothing blinks or flashes. (Added at the end, so the other skins keep
+  // their numbers for co-op; a player on an older version sees these as Classic.)
+  // ---- Supporter Pack: Prism Crown: a cut crystal
+  { id: 'prism', name: 'Prism Crown', c: '200,235,255', tier: 7, dlc: 'supporter', draw(g, x, y, R, t, f) {
+    const L = t * 0.5;   // where the light comes from (a full sweep about every 12 s)
+    const halo = g.createConicGradient(t * 0.25, x, y); for (let k = 0; k <= 6; k++) halo.addColorStop(k / 6, skHsla(k * 60, 95, 70, 0.2));
+    g.strokeStyle = halo; g.lineWidth = Math.min(12, R * 0.16); g.beginPath(); g.arc(x, y, R + Math.min(6, R * 0.08), 0, TAU); g.stroke();
+    const ice = g.createRadialGradient(x, y, 0, x, y, R); ice.addColorStop(0, rgba('235,248,255', 0.05 + 0.22 * f)); ice.addColorStop(1, rgba('170,215,255', 0.15 + 0.3 * f));
+    g.fillStyle = ice; g.beginPath(); g.arc(x, y, R, 0, TAU); g.fill();
+    if (R > 14) {
+      const N = 16, r0 = R * 0.78, rot = t * 0.05, P = (r, a) => [x + Math.cos(a) * r, y + Math.sin(a) * r];
+      const sheen = a => Math.pow(Math.max(0, Math.cos(a - L)), 4) + 0.45 * Math.pow(Math.max(0, Math.cos(a - L - Math.PI)), 6);
+      for (let k = 0; k < N; k++) {   // each facet: an outer triangle and an inner one, lit by how close they face the light
+        const a0 = rot + k * TAU / N, a1 = a0 + TAU / N, am = (a0 + a1) / 2, s = sheen(am), hue = am * 57.3 * 2 + t * 25;
+        for (const [pts, lift] of [[[P(R, a0), P(R, a1), P(r0, am)], 1], [[P(r0, a0), P(r0, a1), P(R, am)], 0.6]]) {
+          g.fillStyle = skHsla(hue + lift * 40, 95, 72 + 14 * s, 0.2 + 0.55 * s * lift);
+          g.beginPath(); g.moveTo(...pts[0]); g.lineTo(...pts[1]); g.lineTo(...pts[2]); g.closePath(); g.fill();
+        }
+      }
+      for (let k = 0; k < 16; k++) {   // the star facets between the table and the rim, each throwing a little colour ("fire")
+        const a = rot + k * TAU / 16, b = a + TAU / 16, s = sheen(a + TAU / 32 + Math.PI / 3);
+        g.fillStyle = skHsla(a * 57.3 * 3 - t * 30, 95, 70, 0.05 + 0.3 * s);
+        g.beginPath(); g.moveTo(...P(R * 0.38, k % 2 ? b : a)); g.lineTo(...P(r0, a)); g.lineTo(...P(r0, b)); g.closePath(); g.fill();
+      }
+      g.strokeStyle = 'rgba(235,248,255,.28)'; g.lineWidth = 1; g.beginPath();   // the facet edges, the table and the star facets
+      for (let k = 0; k < N; k++) { const a0 = rot + k * TAU / N, am = a0 + TAU / N / 2; g.moveTo(...P(R, a0)); g.lineTo(...P(r0, am)); g.lineTo(...P(R, a0 + TAU / N)); }
+      for (let k = 0; k <= 8; k++) { const a = rot + k * TAU / 8; k ? g.lineTo(...P(R * 0.38, a)) : g.moveTo(...P(R * 0.38, a)); }
+      for (let k = 0; k < 8; k++) { const a = rot + k * TAU / 8; g.moveTo(...P(R * 0.38, a)); g.lineTo(...P(r0, a + TAU / 16)); g.moveTo(...P(R * 0.38, a)); g.lineTo(...P(r0, a - TAU / 16)); }
+      g.stroke();
+      skRing(g, x, y, r0, 'rgba(220,240,255,.3)', 1);
+      const tb = g.createConicGradient(-t * 0.3, x, y); for (let k = 0; k <= 6; k++) tb.addColorStop(k / 6, skHsla(k * 60, 90, 75, 0.07));
+      g.fillStyle = tb; g.beginPath(); for (let k = 0; k < 8; k++) { const [px, py] = P(R * 0.38, rot + k * TAU / 8); k ? g.lineTo(px, py) : g.moveTo(px, py); } g.closePath(); g.fill();
+      const [gx, gy] = P(R * 0.98, L);   // the glint where the light hits, with a little split of colour beside it
+      skGlow(g, gx, gy, 0, Math.min(16, R * 0.2), '235,248,255', 0.45); skStar4(g, gx, gy, Math.min(13, R * 0.17), 'rgba(255,255,255,.95)');
+      skStar4(g, gx + Math.min(6, R * 0.07), gy + Math.min(5, R * 0.06), Math.min(5, R * 0.06), skHsla(t * 40, 95, 75, 0.85));
+      g.save(); g.translate(x, y); g.rotate(-t * 0.2); skStar4(g, 0, 0, Math.min(9, R * 0.12), 'rgba(245,250,255,.6)'); g.restore();
+    }
+    skRing(g, x, y, R, 'rgba(235,248,255,.85)', 1.8);
+  } },
+  // ---- Supporter Pack: Astrolabe: gold clockwork
+  { id: 'astrolabe', name: 'Astrolabe', c: '255,210,110', tier: 7, dlc: 'supporter', draw(g, x, y, R, t, f) {
+    skGlow(g, x, y, R, R + 10, '255,200,100', 0.12 + 0.1 * f);
+    const sky = g.createRadialGradient(x, y, 0, x, y, R); sky.addColorStop(0, rgba('25,30,80', 0.2 + 0.2 * f)); sky.addColorStop(1, rgba('45,60,150', 0.26 + 0.3 * f));
+    g.fillStyle = sky; g.beginPath(); g.arc(x, y, R, 0, TAU); g.fill();
+    const gold = (rot, a) => { const cg = g.createConicGradient(rot, x, y);
+      [['255,240,185', 1], ['190,125,35', 0.75], ['255,220,130', 1], ['165,105,25', 0.75], ['255,240,185', 1]].forEach(([c, m], k) => cg.addColorStop(k / 4, rgba(c, a * m))); return cg; };
+    if (R > 14) {
+      const bw = Math.min(16, R * 0.1);   // the engraved band
+      g.strokeStyle = gold(t * 0.3, 0.55); g.lineWidth = bw; g.beginPath(); g.arc(x, y, R - bw / 2, 0, TAU); g.stroke();
+      g.save(); g.translate(x, y); g.rotate(t * 0.04); g.strokeStyle = 'rgba(70,40,5,.6)'; g.lineWidth = 1; g.beginPath();
+      for (let k = 0; k < 72; k++) { const a = k * TAU / 72, c = Math.cos(a), s = Math.sin(a), l = k % 6 ? bw * 0.35 : bw * 0.75; g.moveTo(c * (R - 1), s * (R - 1)); g.lineTo(c * (R - 1 - l), s * (R - 1 - l)); }
+      g.stroke(); g.restore();
+      skRing(g, x, y, R - bw, 'rgba(255,215,120,.7)', 1.2);
+      const mr = R * 0.7;   // a dashed ring turning the other way, with eight little signs on it
+      skRing(g, x, y, mr, 'rgba(255,215,120,.4)', 1, [R * 0.03, R * 0.04], -t * R * 0.08);
+      g.save(); g.translate(x, y); g.rotate(-t * 0.08); g.strokeStyle = 'rgba(255,220,140,.7)'; g.lineWidth = 1.1;
+      for (let k = 0; k < 8; k++) { const a = k * TAU / 8, px = Math.cos(a) * mr, py = Math.sin(a) * mr, s = Math.min(5, R * 0.05); g.beginPath();
+        if (k % 4 === 0) g.arc(px, py, s, 0, TAU); else if (k % 4 === 1) { g.moveTo(px, py - s); g.lineTo(px + s, py + s * 0.8); g.lineTo(px - s, py + s * 0.8); g.closePath(); }
+        else if (k % 4 === 2) g.rect(px - s * 0.8, py - s * 0.8, s * 1.6, s * 1.6); else { g.arc(px, py, s, 0.6, TAU - 0.6); }
+        g.stroke(); }
+      g.restore();
+      g.save(); g.translate(x, y); g.rotate(t * 0.12);   // the rete: six curved gold blades, each with a pearl at its tip
+      for (let k = 0; k < 6; k++) { g.save(); g.rotate(k * TAU / 6); const r1 = R * 0.16, r2 = R * (k % 2 ? 0.5 : 0.62), w = R * 0.05;
+        g.fillStyle = gold(0, 0.6); g.beginPath(); g.moveTo(-w * 0.4, -r1); g.quadraticCurveTo(w * 1.6, -(r1 + r2) / 2, 0, -r2); g.quadraticCurveTo(w * 0.6, -(r1 + r2) / 2, w * 0.4, -r1); g.closePath(); g.fill();
+        skDot(g, 0, -r2, Math.min(3, R * 0.03), 'rgba(255,245,215,.95)'); g.restore(); }
+      g.restore();
+      const pa = t * 0.5, pb = -t * 0.3 + 1;   // a silver moon on the dashed ring, a ruby planet further in
+      skGlow(g, x + Math.cos(pa) * mr, y + Math.sin(pa) * mr, 0, Math.min(10, R * 0.1), '220,230,255', 0.4); skDot(g, x + Math.cos(pa) * mr, y + Math.sin(pa) * mr, Math.min(4, R * 0.04), 'rgba(235,240,255,.95)');
+      skGlow(g, x + Math.cos(pb) * R * 0.42, y + Math.sin(pb) * R * 0.42, 0, Math.min(9, R * 0.09), '255,90,90', 0.4); skDot(g, x + Math.cos(pb) * R * 0.42, y + Math.sin(pb) * R * 0.42, Math.min(3.5, R * 0.035), 'rgba(255,120,110,.95)');
+      g.save(); g.translate(x, y); g.rotate(t * 0.2);   // a little sun in the middle
+      skGlow(g, 0, 0, 0, R * 0.16, '255,210,110', 0.4); g.strokeStyle = 'rgba(255,225,140,.85)'; g.lineWidth = 1.3; g.beginPath();
+      for (let k = 0; k < 8; k++) { const a = k * TAU / 8, l = R * (k % 2 ? 0.1 : 0.15); g.moveTo(Math.cos(a) * R * 0.06, Math.sin(a) * R * 0.06); g.lineTo(Math.cos(a) * l, Math.sin(a) * l); }
+      g.stroke(); skDot(g, 0, 0, R * 0.045, 'rgba(255,235,170,.95)'); g.restore();
+    }
+    g.strokeStyle = gold(t * 0.3, 0.95); g.lineWidth = 2.2; g.beginPath(); g.arc(x, y, R, 0, TAU); g.stroke();
+  } },
+  // ---- Supporter Pack: Dragon's Eye
+  { id: 'dragon', name: 'Dragon’s Eye', c: '255,180,40', tier: 7, dlc: 'supporter', draw(g, x, y, R, t, f) {
+    skGlow(g, x, y, R, R + 12, '255,170,40', 0.14 + 0.12 * f);
+    const iris = g.createRadialGradient(x, y, 0, x, y, R * 0.9);
+    iris.addColorStop(0, rgba('255,240,150', 0.42 + 0.2 * f)); iris.addColorStop(0.4, rgba('240,170,30', 0.36 + 0.2 * f)); iris.addColorStop(0.8, rgba('160,80,10', 0.3 + 0.2 * f)); iris.addColorStop(1, rgba('60,25,0', 0.4));
+    g.fillStyle = iris; g.beginPath(); g.arc(x, y, R * 0.9, 0, TAU); g.fill();
+    if (R > 14) {
+      g.lineWidth = 1; for (let k = 0; k < 56; k++) {   // fibres running out from the pupil, gently wavy
+        const a = k * TAU / 56, l0 = R * 0.18, l1 = R * (0.7 + 0.15 * ((k * 7) % 5) / 4), wv = Math.sin(k * 2.3) * 0.08;
+        g.strokeStyle = k % 2 ? 'rgba(255,230,140,.28)' : 'rgba(110,50,0,.32)'; g.beginPath();
+        g.moveTo(x + Math.cos(a) * l0, y + Math.sin(a) * l0); g.quadraticCurveTo(x + Math.cos(a + wv) * (l0 + l1) / 2, y + Math.sin(a + wv) * (l0 + l1) / 2, x + Math.cos(a) * l1, y + Math.sin(a) * l1); g.stroke();
+      }
+      skRing(g, x, y, R * 0.9, 'rgba(40,15,0,.7)', 2.2);   // the dark edge of the iris
+      const sc = 30, sr = Math.min(R * 0.11, 16), sh = t * 0.35;   // the scales: two staggered rows of rounded plates
+      for (const [rr, off, a0] of [[R * 1.0, 0.5, 0.7], [R * 0.94, 0, 0.85]]) for (let k = 0; k < sc; k++) {
+        const a = (k + off) * TAU / sc, px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr, s = Math.pow(Math.max(0, Math.cos(a - sh)), 6);
+        g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2);
+        const sg = g.createLinearGradient(0, -sr, 0, sr * 0.6); sg.addColorStop(0, rgba('60,110,70', a0)); sg.addColorStop(1, rgba('20,45,30', a0));
+        g.fillStyle = sg; g.beginPath(); g.arc(0, 0, sr * 0.75, Math.PI, TAU); g.lineTo(sr * 0.75, sr * 0.2); g.lineTo(-sr * 0.75, sr * 0.2); g.closePath(); g.fill();
+        g.strokeStyle = rgba('200,255,190', 0.18 + 0.6 * s); g.lineWidth = 1; g.beginPath(); g.arc(0, 0, sr * 0.75, Math.PI, TAU); g.stroke();
+        g.restore();
+      }
+      const ox = Math.cos(t * 0.31) * R * 0.07, oy = Math.sin(t * 0.23) * R * 0.05, pw = R * (0.06 + 0.06 * (0.5 + 0.5 * Math.sin(t * 0.45))), ph = R * 0.6;
+      g.save(); g.translate(x + ox, y + oy);   // the slit pupil, with a faint fiery edge
+      g.beginPath(); g.moveTo(0, -ph / 2); g.quadraticCurveTo(pw * 2, 0, 0, ph / 2); g.quadraticCurveTo(-pw * 2, 0, 0, -ph / 2); g.closePath();
+      g.strokeStyle = 'rgba(255,120,20,.55)'; g.lineWidth = 3; g.stroke(); g.fillStyle = 'rgba(8,2,0,.88)'; g.fill(); g.restore();
+      skGlow(g, x - R * 0.32, y - R * 0.36, 0, R * 0.14, '255,255,240', 0.45); skDot(g, x - R * 0.32, y - R * 0.36, Math.min(4, R * 0.04), 'rgba(255,255,245,.9)');   // the catchlight
+    }
+    skRing(g, x, y, R, 'rgba(255,205,100,.8)', 1.8);
+  } },
+  // ---- Supporter Pack: Rose Window: stained glass
+  { id: 'rosewin', name: 'Rose Window', c: '220,60,90', tier: 7, dlc: 'supporter', draw(g, x, y, R, t, f) {
+    skGlow(g, x, y, R, R + 10, '255,170,120', 0.1 + 0.1 * f);
+    const RUBY = '225,40,75', SAPH = '45,95,235', EMER = '30,175,105', AMBER = '255,170,40', VIOL = '150,70,230';
+    if (R > 14) {
+      const rot = t * 0.04, la = t * 0.3, lx = x + Math.cos(la) * R * 0.45, ly = y + Math.sin(la) * R * 0.45;
+      const lit = (px, py) => Math.exp(-((px - lx) ** 2 + (py - ly) ** 2) / (R * R * 0.18));   // how much sunlight a pane gets
+      const lead = 'rgba(25,18,30,.85)', lw = Math.max(1.2, Math.min(3, R * 0.025));
+      g.save(); g.beginPath(); g.arc(x, y, R, 0, TAU); g.clip();
+      g.fillStyle = rgba('15,10,25', 0.18); g.fillRect(x - R, y - R, R * 2, R * 2);
+      const outer = [RUBY, SAPH, AMBER, SAPH];
+      for (let k = 0; k < 16; k++) {   // sixteen arched panes round the outside
+        const a0 = rot + k * TAU / 16 + 0.02, a1 = rot + (k + 1) * TAU / 16 - 0.02, am = (a0 + a1) / 2, r0 = R * 0.64, r1 = R * 0.94;
+        const L = lit(x + Math.cos(am) * R * 0.8, y + Math.sin(am) * R * 0.8);
+        g.beginPath(); g.arc(x, y, r0, a0, a1); g.lineTo(x + Math.cos(a1) * r1 * 0.94, y + Math.sin(a1) * r1 * 0.94);
+        g.quadraticCurveTo(x + Math.cos(am) * r1 * 1.04, y + Math.sin(am) * r1 * 1.04, x + Math.cos(a0) * r1 * 0.94, y + Math.sin(a0) * r1 * 0.94); g.closePath();
+        g.fillStyle = rgba(outer[k % 4], 0.3 + 0.35 * L + 0.15 * f); g.fill(); g.strokeStyle = lead; g.lineWidth = lw; g.stroke();
+      }
+      for (let k = 0; k < 8; k++) {   // eight pointed petals in the middle ring
+        const a = rot + k * TAU / 8 + TAU / 16, r0 = R * 0.28, r1 = R * 0.62, w = 0.32, pm = (r0 + r1) / 2;
+        const L = lit(x + Math.cos(a) * pm, y + Math.sin(a) * pm);
+        g.beginPath(); g.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+        g.quadraticCurveTo(x + Math.cos(a - w) * pm * 1.1, y + Math.sin(a - w) * pm * 1.1, x + Math.cos(a) * r1, y + Math.sin(a) * r1);
+        g.quadraticCurveTo(x + Math.cos(a + w) * pm * 1.1, y + Math.sin(a + w) * pm * 1.1, x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+        g.fillStyle = rgba(k % 2 ? EMER : VIOL, 0.32 + 0.35 * L + 0.15 * f); g.fill(); g.strokeStyle = lead; g.lineWidth = lw; g.stroke();
+      }
+      const md = g.createRadialGradient(x, y, 0, x, y, R * 0.26); md.addColorStop(0, rgba('255,230,150', 0.6)); md.addColorStop(1, rgba(AMBER, 0.45));   // the middle: amber glass with a ruby star
+      g.fillStyle = md; g.beginPath(); g.arc(x, y, R * 0.26, 0, TAU); g.fill(); g.strokeStyle = lead; g.lineWidth = lw; g.stroke();
+      g.save(); g.translate(x, y); g.rotate(-rot * 2); g.beginPath();
+      for (let k = 0; k < 12; k++) { const r = k % 2 ? R * 0.08 : R * 0.19, a = k * TAU / 12; k ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+      g.closePath(); g.fillStyle = rgba(RUBY, 0.7); g.fill(); g.strokeStyle = lead; g.lineWidth = lw * 0.8; g.stroke(); g.restore();
+      skGlow(g, lx, ly, 0, R * 0.5, '255,245,220', 0.14);   // the sunlight itself, soft
+      g.restore();
+      skRing(g, x, y, R, 'rgba(60,45,40,.85)', Math.max(2.5, Math.min(5, R * 0.05)));   // the stone frame with a gold edge
+    } else { g.fillStyle = rgba(RUBY, 0.08 + 0.3 * f); g.beginPath(); g.arc(x, y, R, 0, TAU); g.fill(); }
+    skRing(g, x, y, R, 'rgba(255,215,140,.75)', 1.4);
+  } },
+  // ---- Supporter Pack: Koi Pond
+  { id: 'koi', name: 'Koi Pond', c: '60,190,200', tier: 7, dlc: 'supporter', draw(g, x, y, R, t, f) {
+    skGlow(g, x, y, R, R + 10, '90,220,220', 0.1 + 0.1 * f);
+    const water = g.createRadialGradient(x, y, 0, x, y, R); water.addColorStop(0, rgba('20,110,130', 0.16 + 0.2 * f)); water.addColorStop(1, rgba('40,180,195', 0.26 + 0.3 * f));
+    g.fillStyle = water; g.beginPath(); g.arc(x, y, R, 0, TAU); g.fill();
+    if (R > 14) {
+      for (let k = 0; k < 3; k++) { const p = (t * 0.12 + k / 3) % 1; skRing(g, x, y, R * (0.12 + 0.8 * p), rgba('210,250,250', 0.16 * Math.sin(p * Math.PI)), 1); }   // ripples spreading out
+      const fish = (a0, body, spot, sp) => {   // one koi following a circle, its body bending with the swim
+        const n = 12, pr = R * 0.47, pts = [];
+        for (let i = 0; i < n; i++) { const a = a0 - i * 0.075, wv = Math.sin(t * 3.2 - i * 0.55) * R * 0.018 * (i / n); pts.push([x + Math.cos(a) * (pr + wv), y + Math.sin(a) * (pr + wv), a]); }
+        const wid = i => R * 0.075 * Math.sin(Math.PI * Math.min(1, (i + 1.2) / (n - 1.5)));
+        const side = sgn => pts.map(([px, py, a], i) => [px + Math.cos(a) * wid(i) * sgn, py + Math.sin(a) * wid(i) * sgn]);
+        const [ex, ey, ea] = pts[n - 1], back = Math.atan2(-Math.cos(ea), Math.sin(ea)), sw = Math.sin(t * 3.2 - n * 0.55) * 0.3, tl = R * 0.14;   // the tail fin: two lobes, swaying
+        const D = (a, l) => [ex + Math.cos(a) * l, ey + Math.sin(a) * l];
+        g.fillStyle = rgba(body, 0.75);
+        for (const s of [-1, 1]) { const a = back + s * 0.5 + sw; g.beginPath(); g.moveTo(ex, ey); g.quadraticCurveTo(...D(a - 0.4, tl * 0.75), ...D(a, tl)); g.quadraticCurveTo(...D(a + 0.4, tl * 0.75), ex, ey); g.fill(); }
+        for (const s of [-1, 1]) { const [px, py, a] = pts[3]; g.save(); g.translate(px + Math.cos(a) * wid(3) * s, py + Math.sin(a) * wid(3) * s); g.rotate(a + s * 0.5 + Math.sin(t * 2 + s) * 0.2); g.fillStyle = rgba(body, 0.6); g.beginPath(); g.ellipse(0, 0, R * 0.05, R * 0.022, 0, 0, TAU); g.fill(); g.restore(); }
+        const L = side(1), Rr = side(-1).reverse();
+        g.beginPath(); L.forEach(([px, py], i) => i ? g.lineTo(px, py) : g.moveTo(px, py)); Rr.forEach(([px, py]) => g.lineTo(px, py)); g.closePath();
+        g.fillStyle = rgba(body, 0.92); g.fill();
+        g.save(); g.clip(); for (const [i, s] of sp) { const [px, py] = pts[i]; skDot(g, px, py, R * 0.05 * s, rgba(spot, 0.9)); } g.restore();
+        const [hx, hy] = pts[0]; skDot(g, hx + Math.cos(a0 + 1.4) * R * 0.03, hy + Math.sin(a0 + 1.4) * R * 0.03, Math.max(1, R * 0.012), 'rgba(20,20,20,.8)');
+      };
+      fish(t * 0.45, '255,250,240', '240,80,40', [[2, 0.9], [5, 1.1], [8, 0.7]]);
+      fish(t * 0.45 + Math.PI, '255,150,40', '255,245,225', [[3, 0.8], [6, 1.0]]);
+      for (const [a, s, lotus] of [[0.6, 1, 1], [2.5, 0.8, 0], [4.3, 0.9, 0]]) {   // lily pads (one with a lotus), drifting very slowly
+        const aa = a + t * 0.02, px = x + Math.cos(aa) * R * 0.8, py = y + Math.sin(aa) * R * 0.8, pr = R * 0.12 * s;
+        g.fillStyle = 'rgba(70,175,95,.8)'; g.beginPath(); g.moveTo(px, py); g.arc(px, py, pr, aa + 0.35, aa + TAU - 0.35); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(160,230,150,.35)'; g.lineWidth = 1; g.beginPath(); g.arc(px, py, pr * 0.95, aa + 0.4, aa + TAU - 0.4); g.stroke();
+        if (lotus) for (let k = 0; k < 6; k++) { const la = k * TAU / 6 + t * 0.05; g.save(); g.translate(px, py); g.rotate(la); g.fillStyle = k % 2 ? 'rgba(255,170,210,.9)' : 'rgba(255,215,235,.9)'; g.beginPath(); g.ellipse(0, -pr * 0.35, pr * 0.16, pr * 0.38, 0, 0, TAU); g.fill(); g.restore(); }
+        if (lotus) skDot(g, px, py, pr * 0.12, 'rgba(255,220,110,.95)');
+      }
+    }
+    skRing(g, x, y, R, 'rgba(190,245,240,.8)', 1.8);
+  } },
 ];
 const SKIN_BY = Object.fromEntries(SKINS.map(s => [s.id, s]));
-const skinOpen = s => s.cache ? mythicHave() : !s.ach || !!ach.got[s.ach];
+// The Supporter Pack: a DLC on Steam, its skins yours when Steam says you own it (the Steam version's window.steam.dlc).
+// Anywhere else they show locked; the demo doesn't list them at all. Asked again each time the skin window opens, so a pack
+// bought while the game runs shows up without a restart.
+let supporterHave = !!(window.steam && window.steam.dlc && window.steam.dlc.supporter);
+const supporterOwned = () => supporterHave;
+const skinListed = s => !(s.dlc && DEMO);
+const skinOpen = s => s.dlc ? supporterOwned() : s.cache ? mythicHave() : !s.ach || !!ach.got[s.ach];
 let skinId = 'classic';
 try { skinId = localStorage.getItem(SKIN_KEY) || 'classic'; } catch (e) {}
 const curSkin = () => { const s = SKIN_BY[skinId]; return s && skinOpen(s) ? s : SKINS[0]; };   // (a skin that isn't unlocked any more falls back to Classic)
@@ -4465,14 +5138,16 @@ const LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0
 let skinRaf = 0;
 function skinRender() {
   if (!$('skinBox').classList.contains('show')) return;
-  const n = SKINS.filter(skinOpen).length, cur = curSkin();
-  $('skinSum').textContent = n + ' of ' + SKINS.length + ' unlocked. Skins are unlocked by achievements, the harder ones giving the fancier skins. The Legendary and Mythic ones also have a cursor effect of their own while you wear them (not in the Challenge). Your skin is kept on this computer and shows in every galaxy.';
-  $('skinList').innerHTML = [...SKINS].sort((a, b) => a.tier - b.tier).map(s => {
+  const base = SKINS.filter(s => !s.dlc), sup = SKINS.filter(s => s.dlc), n = base.filter(skinOpen).length, cur = curSkin();
+  $('skinSum').textContent = n + ' of ' + base.length + ' unlocked. Skins are unlocked by achievements, the harder ones giving the fancier skins. The Legendary and Mythic ones also have a cursor effect of their own while you wear them (not in the Challenge). ' +
+    (DEMO ? '' : supporterOwned() ? 'Thank you for getting the Supporter Pack: its ' + sup.length + ' skins are yours. ' : 'The Supporter Pack, a DLC on Steam, adds ' + sup.length + ' more, just for the look. ') + 'Your skin is kept on this computer and shows in every galaxy.';
+  $('skinList').innerHTML = SKINS.filter(skinListed).sort((a, b) => a.tier - b.tier).map(s => {
     const open = skinOpen(s), a = s.ach && ACH.find(q => q.id === s.ach), tr = SKIN_TIER[s.tier];
     let info;
     if (s.id === cur.id) info = 'Equipped';
     else if (open) info = 'Click to equip';
     else if (DEMO && (s.cache || !achIn(a))) info = 'In the full game';
+    else if (s.dlc) info = 'Part of the <strong>Supporter Pack</strong>, a DLC on Steam that supports the game. Just for the look: no effect' + (window.steam && window.steam.dlcStore ? '. Click to see it in the Steam store' : '');
     else if (s.cache) info = 'Found only in <strong>Stellar Caches</strong>: a 1 in ' + Math.round(1 / MYTHIC_P).toLocaleString('en-US') + ' chance with every cache you open';
     else { info = 'Unlock: <strong>' + a.name + '</strong>. ' + a.desc; if (a.p) { const [v, m] = a.p(); info += `<i style="--p:${(100 * v / m).toFixed(1)}%"></i>`; } }
     return `<button class="skin ${open ? 'open' : 'locked'}${s.id === cur.id ? ' on' : ''}" data-id="${s.id}" style="--tc:${tr[1]}"><canvas width="240" height="240"></canvas>` +
@@ -4490,9 +5165,15 @@ function skinAnim(now) {
   }
   skinRaf = requestAnimationFrame(skinAnim);
 }
-function skinOpenBox() { $('skinBox').classList.add('show'); skinRender(); }
+function skinOpenBox() {
+  if (window.steam && window.steam.dlcCheck) try { supporterHave = !!window.steam.dlcCheck().supporter; } catch (e) {}
+  $('skinBox').classList.add('show'); skinRender();
+}
 const skinClose = () => { $('skinBox').classList.remove('show'); cancelAnimationFrame(skinRaf); };
-$('skinList').onclick = e => { const b = e.target.closest('.skin'); if (b && b.classList.contains('open')) setSkin(b.dataset.id); };
+$('skinList').onclick = e => { const b = e.target.closest('.skin'); if (!b) return;
+  if (b.classList.contains('open')) setSkin(b.dataset.id);
+  else if (SKIN_BY[b.dataset.id].dlc && window.steam && window.steam.dlcStore) window.steam.dlcStore();   // (a locked Supporter skin: the DLC's store page)
+};
 $('skinClose').onclick = skinClose;
 $('skinBox').addEventListener('mousedown', e => { if (e.target === $('skinBox')) skinClose(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && $('skinBox').classList.contains('show')) { skinClose(); e.stopImmediatePropagation(); } }, true);
@@ -5142,8 +5823,8 @@ const hudOn = () => document.body.classList.contains('hudedit');
 const hudDef = k => HUD_EL.find(e => e.k === k);
 $('hudItems').innerHTML = HUD_EL.map(e => `<button data-k="${e.k}">${e.name}</button>`).join('');
 function hudOpen() {
-  if (!started) return;
-  $('settingsBox').classList.remove('show'); $('menuBox').classList.remove('show', 'keys');
+  if (!started) { document.body.classList.add('hudSample'); hudSampleMini(); }   // from the main menu: a sample HUD over its sky
+  $('settingsBox').classList.remove('show'); $('menuBox').classList.remove('show');
   inside = false; document.body.classList.add('hudedit');
   for (const e of HUD_EL) if (e.id) { $(e.id).classList.add('hudEl'); $(e.id).dataset.hudk = e.k; }
   hudPick(hudK);
@@ -5153,6 +5834,23 @@ function hudClose() {
   for (const e of HUD_EL) if (e.id) $(e.id).classList.remove('hudEl', 'hudSel');
   $('hudGrip').style.display = 'none'; $('hudPrevBox').classList.remove('show');
   placeMeter();
+  if (document.body.classList.contains('hudSample')) { document.body.classList.remove('hudSample'); if (!started) openSettings('game'); }   // back to Settings on the main menu
+}
+function hudSampleMini() {   // the main menu has no galaxy yet: a made-up minimap (a real one is drawn over it once you play)
+  const c = $('mini'), g = c.getContext('2d'), n = c.width, m = c.height, k = n / 3;
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, n, m);
+  let r = 7;
+  const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {   // three by three sectors, like the real one: A1 to C3
+    g.fillStyle = 'rgba(12, 17, 28, .9)'; g.fillRect(i * k, j * k, k, k);
+    g.fillStyle = 'rgba(190, 205, 240, .45)';
+    for (let s = 0; s < 22; s++) g.fillRect(i * k + 6 + rnd() * (k - 12), j * k + 14 + rnd() * (k - 20), 1.3, 1.3);
+    g.fillStyle = '#8fa3bd'; g.font = '600 9px Segoe UI, system-ui, sans-serif'; g.textBaseline = 'top'; g.fillText('ABC'[i] + (j + 1), i * k + 4, j * k + 4);
+  }
+  g.strokeStyle = 'rgba(70, 82, 104, .9)'; g.lineWidth = 1;
+  for (let i = 1; i < 3; i++) { g.beginPath(); g.moveTo(i * k + .5, 0); g.lineTo(i * k + .5, m); g.moveTo(0, i * k + .5); g.lineTo(n, i * k + .5); g.stroke(); }
+  g.strokeStyle = 'rgba(255, 212, 71, .6)'; g.strokeRect(k + 1.5, k + 1.5, k - 3, k - 3);   // (the sector you are in)
+  g.restore();
 }
 function hudPick(k) {
   hudK = k; const d = hudDef(k);
@@ -5384,7 +6082,7 @@ function setupTitle() {
   $('btnWorlds').onclick = () => titleView('worlds');
   $('worldsBack').onclick = () => titleView('main');
   $('btnAch').onclick = achOpen; $('btnLb').onclick = lbOpen;
-  $('btnTitleSettings').onclick = () => { $('settingsBox').classList.add('show'); refreshSettings(); };
+  $('btnTitleSettings').onclick = () => openSettings();
   $('newCancel').onclick = () => titleView('main');
   for (const b of document.querySelectorAll('#newBox .modes button')) b.onclick = () => { if (b.disabled) return; newMode = b.dataset.mode; refreshModes(); };
   $('newCreate').onclick = () => createWorld($('newName').value, newMode !== 'linear' && !openUnlocked() ? 'linear' : newMode);
@@ -5398,13 +6096,13 @@ function setupTitle() {
 const LOAD_TIPS = [
   ['Every sector you clear leaves a <b>Stellar Cache</b> with a random, permanent reward.'],
   ['<b>Fortune Finder</b> makes the rarer Stellar Cache rewards turn up more often.'],
-  ['<b>Right-drag</b> or <b>WASD</b> moves the camera; <b>scroll</b> to zoom.', '', 0, 'The <b>right stick</b> moves the camera; the <b>triggers</b> zoom.'],
-  ['Press <b>1</b> to <b>5</b> to select a whole kind of helper at once.', '', 1, 'Press <b>X</b> to select all your helpers at once.'],
-  ['Press <b>H</b> to jump to the Fleet Hangar.', 'lin', 1, 'Press <b>View</b> to jump to the Fleet Hangar.'],
-  ['<b>Q</b> unlocks the next sector; <b>E</b> unlocks it and takes you there.', 'lin', 1, ''],
+  ['<b>[[rdrag]]</b> or <b>[[move]]</b> moves the camera; <b>scroll</b> to zoom.', '', 0, 'The <b>right stick</b> moves the camera; the <b>triggers</b> zoom.'],
+  ['Press <b>[[sel1]]</b> to <b>[[sel5]]</b> to select a whole kind of helper at once.', '', 1, 'Press <b>X</b> to select all your helpers at once.'],
+  ['Press <b>[[hangar]]</b> to jump to the Fleet Hangar.', 'lin', 1, 'Press <b>View</b> to jump to the Fleet Hangar.'],
+  ['<b>[[unlock]]</b> unlocks the next sector; <b>[[unlockGo]]</b> unlocks it and takes you there.', 'lin', 1, ''],
   ['Run out of stars to collect and the nearest sector opens <b>for free</b>.', 'lin'],
   ['Rare discoveries hide among the stars. <b>Hunters</b> track them down for you.', '', 1],
-  ['Press <b>M</b> for the stardust meter: what each effect and helper earns.', '', 0, ''],
+  ['Press <b>[[meter]]</b> for the stardust meter: what each effect and helper earns.', '', 0, ''],
   ['There are exactly <b>1,000,000,000</b> stars, and every single one can be collected.'],
   ['<b>Autopilot</b> decides how helpers pick their stars: click it to switch between <b>Top to bottom</b> and <b>Most effective</b>.', '', 1],
   ['Press <b>Esc</b> any time for the menu and settings.', '', 0, 'Press <b>Start</b> any time for the menu and settings.'],
@@ -5434,7 +6132,8 @@ function loadShow(name, info, lin, chal, warn) {
   $('ldName').textContent = name; $('ldInfo').textContent = info || '';
   $('ldFill').style.transition = 'none'; loadSet('Getting ready', 0); void $('ldFill').offsetWidth; $('ldFill').style.transition = '';
   const tips = LOAD_TIPS.filter(t => (lin || t[1] !== 'lin') && !(chal && t[2]))   // (tips marked 1 are about helpers or buying sectors: not in Challenge)
-    .map(t => padUI() && t[3] !== undefined ? [t[3]] : t).filter(t => t[0]);      // (with a controller: its own words, or left out)
+    .map(t => padUI() && t[3] !== undefined ? [t[3]] : t).filter(t => t[0])       // (with a controller: its own words, or left out)
+    .filter(t => keyTextOk(t[0])).map(t => [keyText(t[0])]);                      // (the keys as set in Settings > Controls)
   loadTipI = (Math.random() * tips.length) | 0; $('ldTip').innerHTML = tips[loadTipI][0]; $('ldTip').style.opacity = 1;
   clearInterval(loadTipTimer);
   loadTipTimer = setInterval(() => { $('ldTip').style.opacity = 0; setTimeout(() => { loadTipI = (loadTipI + 1) % tips.length; $('ldTip').innerHTML = tips[loadTipI][0]; $('ldTip').style.opacity = 1; }, 600); }, 6000);
@@ -5506,12 +6205,13 @@ function exitToMenu() {
 }
 $('endNew').onclick = exitToMenu;
 $('endStore').onclick = () => { if (window.steam && window.steam.store) window.steam.store(); };
-$('detail').onclick = () => setDetail(detailPref === 'low' ? 'auto' : 'low');
+$('detail').onclick = e => { const b = e.target.closest('[data-det]'); if (b) setDetail(b.dataset.det); };
 $('btnSfx').onclick = () => { audioPref.sfx = !audioPref.sfx; applyAudioPref(); };
 $('btnMusic').onclick = () => { audioPref.music = !audioPref.music; applyAudioPref(); };
 $('volSfx').oninput = e => { audioPref.sfxVol = +e.target.value; applyAudioPref(); };
 $('volSfx').onchange = () => { sfxLast.buy = -9; sfx('buy'); };   // play a sample at the new volume
 $('volMusic').oninput = e => { audioPref.musVol = +e.target.value; applyAudioPref(); };
+$('btnTrack').onclick = nextTrack;
 applyAudioPref();
 $('reset').onclick = exitToMenu;
 setInterval(save, 30000);
@@ -6029,7 +6729,7 @@ function overHangar(sx, sy) { const h = hangarScreen(); return !cine && !!h && M
 let lowDetail = false, detailPref = 'auto', slowT = 0, wasDetailed = true, lagAsked = false;
 function setDetail(p) {
   detailPref = p; lowDetail = p === 'low'; slowT = 0;
-  $('detail').textContent = 'Stars: ' + (p === 'low' ? 'simple' : 'detailed');
+  for (const b of $('detail').children) b.classList.toggle('on', b.dataset.det === (p === 'low' ? 'low' : 'auto'));
   pref.stars = p; savePref();
 }
 setDetail(pref.stars === 'low' ? 'low' : 'auto');
@@ -7016,7 +7716,7 @@ function frame(now) {
   lastFrameAt = performance.now();
   let dt = tickGap(now - last); last = now;
   padTick(Math.min(dt, 0.1));   // the controller (see 'controller')
-  if (!started) { if (!msky.on) render(now / 1000); return; }   // menu: it has its own sky (the galaxy isn't built yet)
+  if (!started) { postShow(false); if (!msky.on) render(now / 1000); return; }   // menu: it has its own sky (the galaxy isn't built yet)
   const fdt = Math.min(dt, 0.1);
   joyTick(fdt);   // the touch joystick
   if (!won) playTime += dt;
@@ -7024,11 +7724,11 @@ function frame(now) {
   if ($('hangarBox').classList.contains('show')) renderHangar();
 
   // camera
-  const sp = 900 / zoom * fdt * (keys.has('shift') ? 6 : 1);
-  if (keys.has('a') || keys.has('arrowleft')) camX -= sp;
-  if (keys.has('d') || keys.has('arrowright')) camX += sp;
-  if (keys.has('w') || keys.has('arrowup')) camY -= sp;
-  if (keys.has('s') || keys.has('arrowdown')) camY += sp;
+  const sp = 900 / zoom * fdt * (held('fast') ? 6 : 1);
+  if (held('left')) camX -= sp;
+  if (held('right')) camX += sp;
+  if (held('up')) camY -= sp;
+  if (held('down')) camY += sp;
   camX = Math.min(WORLD, Math.max(0, camX)); camY = Math.min(WORLD, Math.max(0, camY));
 
   // cursor collection
@@ -7138,7 +7838,7 @@ function frame(now) {
 
   if (!won && collected >= N) { won = true; galaxyDone(); }
 
-  render(now / 1000);
+  render(now / 1000); postFrame();
   // more than 3 seconds of frames slower than ~28 fps with detailed stars on: Pip asks whether to switch to simple stars
   // (once each time the game is started; he waits until he isn't busy with something else)
   if (wasDetailed && !lagAsked) {
@@ -7922,7 +8622,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
 
 recalc();
 buildUI();
-$('unlock').onclick = e => { if (LIN() && (e.shiftKey || keys.has('shift'))) unlockKey(false, true); else buyUnlock(); };   // Shift-click: up to ten
+$('unlock').onclick = e => { if (LIN() && (e.shiftKey || held('fast'))) unlockKey(false, true); else buyUnlock(); };   // Shift-click (or Faster held): up to ten
 $('secBuyBtn').onclick = () => buyUnlock(+$('secBuyBtn').dataset.r);
 // the buy button under the name of the locked sector you are in (b = where that name is drawn, or null)
 function placeSecBuy(b) {
@@ -7961,29 +8661,128 @@ $('chatIn').addEventListener('keydown', e => {
 $('chatIn').addEventListener('keyup', e => e.stopPropagation());
 $('chatIn').addEventListener('focus', () => { $('chat').classList.add('open'); $('chatLog').scrollTop = $('chatLog').scrollHeight; });
 $('chatIn').addEventListener('blur', () => $('chat').classList.remove('open'));
-// ---- settings window
+// ---- settings window: five tabs (Game, Sound, Display, Controls, Controller), the same on the main menu and in a galaxy
+let setTab = 'game', keyWait = null, tutReplay = false;   // keyWait: { a, i } while Controls waits for a key; tutReplay: armed on the main menu
+function settingsTab(t) {
+  setTab = t; keyWait = null;
+  for (const b of document.querySelectorAll('#settingsBox .stab')) b.classList.toggle('on', b.dataset.tab === t);
+  for (const p of document.querySelectorAll('#settingsBox .spage')) p.classList.toggle('on', p.dataset.page === t);
+  document.querySelector('#settingsBox .spages').scrollTop = 0;
+  refreshSettings();
+}
+function openSettings(t) { $('settingsBox').classList.add('show'); settingsTab(t || setTab); }
+function closeSettings() { keyWait = null; $('settingsBox').classList.remove('show'); }
+const rangeFill = el => el.style.setProperty('--p', ((+el.value - +el.min) / (+el.max - +el.min) * 100).toFixed(1) + '%');   // the filled part of a slider
 function refreshSettings() {
-  $('setHud').disabled = !started; $('setHudNote').textContent = started ? 'Resize each window and choose its colours.' : 'Open a galaxy first: the HUD is edited while you play.';
-  $('volSfxN').textContent = audioPref.sfx ? audioPref.sfxVol + '%' : 'off'; $('volMusicN').textContent = audioPref.music ? audioPref.musVol + '%' : 'off';
+  $('setHudNote').textContent = started ? 'Move and resize each window, and choose its colours.' : 'Move and resize each window, and choose its colours (on a sample HUD).';
+  $('volSfxN').textContent = audioPref.sfx ? audioPref.sfxVol + '%' : 'off'; $('volMusicN').textContent = audioPref.music ? audioPref.musVol + '%' : 'off'; refreshTrackNote();
   $('setBright').max = hdrOn ? 400 : 200; $('setBright').value = Math.min(pref.bright, hdrOn ? 400 : 200); $('setBrightN').textContent = $('setBright').value + '%';
   $('setUi').value = pref.ui; $('setUiN').textContent = pref.ui + '%';
   $('setFx').value = pref.fxv; $('setFxN').textContent = pref.fxv ? pref.fxv + '%' : 'off';
-  $('setTut').disabled = !started || !tutKey; $('setTutRow').style.display = started && CHAL() ? 'none' : '';   // (Challenge has no tutorial)
+  swSet('setCrt', pref.crt); swSet('setScan', pref.scan); swSet('setChroma', pref.chroma);
+  $('setCrt').disabled = $('setChroma').disabled = hdrOn || post.failed;
+  $('setRetroNote').textContent = hdrOn ? 'The CRT effect and chromatic aberration don’t work with HDR output (scanlines do).'
+    : post.failed ? 'This computer can’t show the CRT effect or chromatic aberration (scanlines work).'
+    : 'Old-screen looks, just for fun. Steady pictures: nothing flickers or rolls.';
+  swSet('setMeter', mtOn);
+  swSet('setSwapMouse', pref.swapMouse);   // the mouse buttons, and the Controls page's list naming them as set
+  for (const el of document.querySelectorAll('#settingsBox [data-m]')) el.textContent = el.dataset.m.split('|')[pref.swapMouse ? 1 : 0];
+  $('setMeterNote').textContent = 'What each effect and helper earns, in a small window' + (keyB.meter.some(Boolean) ? ' (key ' + keyLabel('meter') + ').' : '.');
+  // the tutorial: in a world it starts again now; on the main menu it is set to start in the next galaxy you open
+  if (started) {
+    $('setTut').textContent = 'Replay now'; $('setTut').classList.remove('on'); $('setTut').disabled = !tutKey || CHAL();
+    $('setTutNote').textContent = CHAL() ? 'Challenge worlds have no tutorial.' : 'Pip walks you through the basics again, in this world.';
+  } else {
+    $('setTut').textContent = tutReplay ? 'Set ✓' : 'Replay next time'; $('setTut').classList.toggle('on', tutReplay); $('setTut').disabled = false;
+    $('setTutNote').textContent = tutReplay ? 'Pip walks you through the basics in the next galaxy you open (click again to cancel).' : 'Pip walks you through the basics again, in the next galaxy you open.';
+  }
   const screenHdr = matchMedia('(dynamic-range: high)').matches;
-  $('setHdr').textContent = 'HDR output: ' + (pref.hdr ? 'on' : 'off'); $('setHdr').disabled = !hdrCan;
+  swSet('setHdr', pref.hdr); $('setHdr').disabled = !hdrCan;
   $('setHdrNote').textContent = !hdrCan ? 'Only available in the desktop version of the game.'
     : pref.hdr !== hdrOn ? 'Restart the game to apply.'
     : hdrOn ? (screenHdr ? 'On: brightness above 100% goes beyond normal white (up to 400%).' : 'On, but this screen is not in HDR mode. Switch HDR on in the Windows display settings.')
     : (screenHdr ? 'Your screen is in HDR mode. Turn this on to let stars shine brighter than white.' : 'Your screen is not in HDR mode right now.');
+  for (const r of document.querySelectorAll('#settingsBox input[type=range]')) rangeFill(r);
+  keyRender();
 }
-$('btnSettings').onclick = () => { $('settingsBox').classList.add('show'); refreshSettings(); };
-$('settingsClose').onclick = () => $('settingsBox').classList.remove('show');
-$('settingsBox').addEventListener('mousedown', e => { if (e.target === $('settingsBox')) $('settingsBox').classList.remove('show'); });
+// Controls: each action has two key slots; click one, then press the new key. A key that another action had moves
+// over, and that action gets this slot's old key instead (so no key ever does two things)
+function keyRender() {
+  const g = $('keyGrid');
+  if (!g.dataset.built) {
+    g.dataset.built = 1;
+    let h = '';
+    for (const col of [['Camera', 'Sectors'], ['Helpers', 'Windows']]) {
+      h += '<div class="kcol">';
+      for (const grp of col) {
+        h += '<h4>' + grp + '</h4><div class="sgrp">';
+        for (const a of KEY_ACTS.filter(x => x.grp === grp))
+          h += `<div class="kr"${a.tip ? ` title="${a.tip}"` : ''}><span>${a.name}${a.tag ? '<i>' + a.tag + '</i>' : ''}</span><button class="kc" data-a="${a.k}" data-i="0"></button><button class="kc" data-a="${a.k}" data-i="1"></button></div>`;
+        if (grp === 'Windows') h += '<div class="kr"><span>Menu, or back</span><button class="kc fixed" disabled>Esc</button><span class="kc"></span></div>';
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    g.innerHTML = h;
+    g.firstElementChild.appendChild(document.querySelector('#settingsBox .kfoot'));   // Reset and the note go under Sectors
+  }
+  for (const b of g.querySelectorAll('.kc[data-a]')) {
+    const a = b.dataset.a, i = +b.dataset.i, c = keyB[a][i], w = !!keyWait && keyWait.a === a && keyWait.i === i;
+    b.textContent = w ? 'Press a key…' : c ? keyName(c) : '—';
+    b.classList.toggle('wait', w); b.classList.toggle('none', !c && !w);
+  }
+  $('keyReset').disabled = KEY_ACTS.every(a => keyB[a.k].join() === a.def.join());
+}
+function keySet(a, i, c) {
+  const act = KEY_ACTS.find(x => x.k === a), old = keyB[a][i];
+  let note = '';
+  if (c) for (const o of KEY_ACTS) for (let j = 0; j < 2; j++) if (keyB[o.k][j] === c && !(o.k === a && j === i)) {
+    keyB[o.k][j] = old;
+    if (o.k !== a) note = `<b>${keyName(c)}</b> was on “${o.name}”, which now has ${old ? '<b>' + keyName(old) + '</b>' : 'nothing there'}.`;
+  }
+  keyB[a][i] = c; keyWait = null; keySave(); keyTitles();
+  $('keyNote').innerHTML = note || (c ? `“${act.name}”: <b>${keyName(c)}</b>.` : `“${act.name}”: that slot is empty now.`);
+  refreshSettings();
+}
+$('keyGrid').onclick = e => {
+  const b = e.target.closest('.kc[data-a]'); if (!b) return;
+  const a = b.dataset.a, i = +b.dataset.i;
+  keyWait = keyWait && keyWait.a === a && keyWait.i === i ? null : { a, i };
+  $('keyNote').textContent = keyWait ? 'Press the new key for “' + KEY_ACTS.find(x => x.k === a).name + '”.' : '';
+  keyRender();
+};
+let keyUpEat = null;   // the key just set: its release does nothing (Space would click the button again)
+addEventListener('keydown', e => {   // waiting for a key: it is taken here, before the game sees it
+  if (!keyWait) return;
+  if (!$('settingsBox').classList.contains('show')) { keyWait = null; return; }
+  e.preventDefault(); e.stopImmediatePropagation();
+  const c = codeOf(e);
+  if (c === 'Escape') { keyWait = null; $('keyNote').textContent = ''; keyRender(); return; }
+  if (c === 'Backspace' || c === 'Delete') { keyUpEat = c; keySet(keyWait.a, keyWait.i, ''); return; }
+  if (KEY_FIXED.includes(c)) { $('keyNote').innerHTML = '<b>' + keyName(c) + '</b> can’t be used: the game or Windows needs it. Pick another key.'; return; }
+  keyUpEat = c; keySet(keyWait.a, keyWait.i, c);
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}, true);
+addEventListener('keyup', e => { if (keyUpEat && codeOf(e) === keyUpEat) { keyUpEat = null; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+addEventListener('mousedown', e => { if (keyWait && !(e.target.closest && e.target.closest('.kc'))) { keyWait = null; $('keyNote').textContent = ''; keyRender(); } }, true);
+$('keyReset').onclick = () => ask('Reset every key?', 'All the keyboard shortcuts go back to how they started.', 'Reset', () => {
+  for (const a of KEY_ACTS) keyB[a.k] = a.def.slice();
+  keySave(); keyTitles(); $('keyNote').textContent = 'Every key is back to how it started.'; refreshSettings();
+});
+keyTitles();
+document.querySelector('#settingsBox .snav').addEventListener('click', e => { const b = e.target.closest('.stab'); if (b) settingsTab(b.dataset.tab); });
+$('settingsBox').addEventListener('input', e => { if (e.target.type === 'range') rangeFill(e.target); });
+$('setMeter').onclick = () => { setMeter(!mtOn); refreshSettings(); };
+$('setSwapMouse').onclick = () => { pref.swapMouse = !pref.swapMouse; savePref(); rClick = selStart = mStart = mPan = null; boxing = mBoxing = dragging = false; refreshSettings(); };
+$('btnSettings').onclick = () => openSettings();
+$('settingsClose').onclick = closeSettings;
+$('settingsBox').addEventListener('mousedown', e => { if (e.target === $('settingsBox')) closeSettings(); });
 $('setBright').oninput = e => { pref.bright = +e.target.value; savePref(); refreshSettings(); };
 $('setUi').oninput = e => { $('setUiN').textContent = e.target.value + '%'; };            // shown while dragging…
 $('setUi').onchange = e => { pref.ui = +e.target.value; savePref(); resize(); refreshSettings(); };   // …applied on release, so the slider does not move under the mouse
 $('setHdr').onclick = () => { pref.hdr = !pref.hdr; savePref(); refreshSettings(); };
 $('setFx').oninput = e => { pref.fxv = +e.target.value; savePref(); refreshSettings(); };   // 0 = off … 100% = full
+for (const [id, k] of [['setCrt', 'crt'], ['setScan', 'scan'], ['setChroma', 'chroma']]) $(id).onclick = () => { pref[k] = !pref[k]; if (k === 'crt') pref.crtSet = true; savePref(); screenFx(); refreshSettings(); };
 // ---- the Esc menu: resume, team, co-op, settings, and save & exit (or disconnect, for a guest)
 function toggleMenu(show) {
   const box = $('menuBox'), on = show === undefined ? !box.classList.contains('show') : show;
@@ -7996,13 +8795,12 @@ function toggleMenu(show) {
     $('mExit').textContent = guest ? (net.conn ? 'Disconnect' : 'Back to menu') : 'Save & exit to menu';
     $('mNote').textContent = guest ? 'Your progress in this galaxy is kept by the host.' : 'Your world also saves itself every 30 seconds.';
   }
-  box.classList.toggle('show', on); box.classList.remove('keys');   // always opens on the main page
+  box.classList.toggle('show', on);
 }
-$('mControls').onclick = () => $('menuBox').classList.add('keys');
+$('mControls').onclick = () => { toggleMenu(false); openSettings(padUI() ? 'pad' : 'controls'); };   // Settings > Controls (with a controller: its page)
 $('mAch').onclick = achOpen;
 $('mLb').onclick = lbOpen;
 $('mMeter').onclick = () => { setMeter(!mtOn); $('mMeter').textContent = 'Stardust meter: ' + (mtOn ? 'shown' : 'hidden'); };
-$('mBack').onclick = () => $('menuBox').classList.remove('keys');
 const fromMenu = f => () => { toggleMenu(false); f(); };
 $('mResume').onclick = () => toggleMenu(false);
 $('mTeam').onclick = fromMenu(() => showPlayers());
@@ -8010,7 +8808,10 @@ $('mCoop').onclick = fromMenu(() => $('btnCoop').click());
 $('mSettings').onclick = fromMenu(() => $('btnSettings').click());
 $('mExit').onclick = fromMenu(() => (net.role === 'guest' && net.ready ? $('btnLeave') : $('reset')).click());
 $('menuBox').addEventListener('mousedown', e => { if (e.target === $('menuBox')) toggleMenu(false); });   // click beside it: back to the game
-$('setTut').onclick = () => { if (!started || !tutKey || CHAL()) return; tutStart(0); $('settingsBox').classList.remove('show'); };
+$('setTut').onclick = () => {   // (on the main menu: on or off for the next galaxy)
+  if (!started) { tutReplay = !tutReplay; refreshSettings(); return; }
+  if (!tutKey || CHAL()) return; tutStart(0); closeSettings();
+};
 
 // ---------------------------------------------------------------- tutorial
 // A short guided start: each step asks for one thing and moves on by itself once it is done. A new world asks whether you
@@ -8050,7 +8851,7 @@ function demoFeatures() {
     '<b>All nine cursor effects</b>, from Supernova and Chain Lightning to the Singularity and the Big Bang',
     '<b>The whole fleet</b>: probes, hunters and stations alongside your sweepers',
     '<b>Infinite galaxies</b>, with a skill tree that carries over, and the <b>Challenge</b>',
-    '<b>All ' + ACH.length + ' achievements and ' + SKINS.length + ' cursor skins</b>, plus the online leaderboard and cloud backup',
+    '<b>All ' + ACH.length + ' achievements and ' + SKINS.filter(s => !s.dlc).length + ' cursor skins</b>, plus the online leaderboard and cloud backup',
   ];
 }
 const demoClose = () => $('demoBox').classList.remove('show');
@@ -8066,7 +8867,7 @@ const hangarOpen = () => $('hangarBox').classList.contains('show');
 const clickTab = t => { const b = document.querySelector('#tabs button[data-tab=' + t + ']'); if (b && tab !== t) b.click(); };
 const have = c => `<i>${fmt(Math.floor(Math.min(points, c)))} / ${fmtPrice(c)}</i>`;
 const tutSweeper = () => drones.find(d => d.kind === 1 && !d.launch) || drones.find(d => !d.launch);   // the helper the "steer it" steps are about
-const movingKeys = () => pad.cam || ['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].some(k => keys.has(k));
+const movingKeys = () => pad.cam || ['up', 'left', 'down', 'right'].some(held);
 // the camera glides somewhere (used to show the hangar); moving it yourself takes over at once
 function panTo(x, y, z, dur) { camPan = { x0: camX, y0: camY, z0: zoom, x1: x, y1: y, z1: Math.min(2.5, Math.max(minZoom, z)), t: 0, dur, lx: camX, ly: camY }; }
 function stepPan(dt) {
@@ -8121,7 +8922,7 @@ function tutBuild() {
     { text: () => { const d = tutFirstUp(); return d && points < cost(d) ? 'Nice! Stars give you <b>stardust</b>. Collect a little more for this upgrade. ' + have(cost(d)) : 'Nice! Stars give you <b>stardust</b>. Spend some on this upgrade.'; },
       start: () => { setPanelHidden(false); clickTab('cursor'); tutS.base = upCount('cursor'); }, done: () => upCount('cursor') > tutS.base,
       hi: () => { const d = tutFirstUp(); return d ? rows[d.id].b : null; } },
-    { text: () => (padUI() ? 'Now have a look around: the <b>right stick</b> moves, and the <b>triggers</b> zoom.' : 'Now have a look around: <b>right-drag</b> (or WASD) to move, and <b>scroll</b> to zoom.'),
+    { text: () => (padUI() ? 'Now have a look around: the <b>right stick</b> moves, and the <b>triggers</b> zoom.' : 'Now have a look around: <b>' + mR() + '-drag</b> (or ' + keyMoveName() + ') to move, and <b>scroll</b> to zoom.'),
       start: () => { tutS.moved = 0; tutS.px = camX; tutS.py = camY; tutS.pz = zoom; },
       tick: () => { tutS.moved += Math.hypot(camX - tutS.px, camY - tutS.py) * zoom + Math.abs(Math.log(zoom / tutS.pz)) * 600; tutS.px = camX; tutS.py = camY; tutS.pz = zoom; },
       done: () => tutS.moved > 900 },
@@ -8172,13 +8973,13 @@ function tutBuild() {
     else if (!dragging && !boxing && !movingKeys()) { const k = 1 - Math.exp(-4 * dt); camX += (d.x - camX) * k; camY += (d.y - camY) * k; }
   };
   S.push(
-    { text: () => (padUI() ? 'This is your Sweeper! To steer it, point next to it, <b>hold A</b> and move to draw a box around it. (Pressing <b>X</b> selects all your helpers, too.)' : 'This is your Sweeper! To steer it, <b>hold the left mouse button</b> and drag a box around it. (Pressing <b>1</b> selects all your Sweepers, too.)'),
+    { text: () => (padUI() ? 'This is your Sweeper! To steer it, point next to it, <b>hold A</b> and move to draw a box around it. (Pressing <b>X</b> selects all your helpers, too.)' : 'This is your Sweeper! To steer it, <b>hold the ' + mL() + ' mouse button</b> and drag a box around it. (Pressing <b>1</b> selects all your Sweepers, too.)'),
       start: () => { const d = tutSweeper(); if (d) panTo(d.x, d.y, 1.4, 1.4); }, tick: follow,
       done: () => drones.some(d => d.sel), world: () => 'sweeper' },
-    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Selected! Now point at an empty spot and press <b>A</b> to send it there. The minimap works too.' : 'Selected! Now <b>click an empty spot</b> to send it there. Clicking on the minimap works too.')
+    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Selected! Now point at an empty spot and press <b>A</b> to send it there. The minimap works too.' : (pref.swapMouse ? 'Selected! Now <b>right-click an empty spot</b> to send it there. Right-clicking on the minimap works too.' : 'Selected! Now <b>click an empty spot</b> to send it there. Clicking on the minimap works too.'))
         : 'Oops, it’s not selected any more. Drag a box around it again.',
       start: () => { tutS.o = moveOrders; }, tick: follow, done: () => moveOrders > tutS.o, world: () => 'sweeper' },
-    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Now press <b>B</b> to deselect it.' : 'Now give a <b>quick right-click</b> to deselect it. (Holding the right button still moves the camera, just like before.)')
+    { text: () => drones.some(d => d.sel) ? (padUI() ? 'Now press <b>B</b> to deselect it.' : 'Now give a <b>quick ' + mR() + '-click</b> to deselect it. (Holding the ' + mR() + ' button still moves the camera, just like before.)')
         : 'Zoom! Helpers warp to where you send them and get to work by themselves. <b>Select it again</b> and I’ll show you how to let go.',
       start: () => { tutS.r = rightDeselects; },
       tick: dt => { const d = tutSweeper(); if (d && !d.forced) follow(dt); },   // once it has arrived, keep it in view again
@@ -8398,6 +9199,7 @@ function tutMaybe(key, fresh, guest) {
   tutKey = key;
   // Challenge has no tutorial: instead, the first time in each Challenge world a window lists what is different from Linear
   if (CHAL()) { if (!tutData.chal[key]) { tutData.chal[key] = true; tutStore(); setTimeout(() => { if (started) $('chalBox').classList.add('show'); }, 600); } return; }
+  if (tutReplay) { tutReplay = false; tutStart(0); return; }   // (asked for in Settings on the main menu)
   const st = tutData.w[key];
   if (typeof st === 'number' && !fresh) tutStart(st);
   else if (fresh || (guest && !tutData.asked[key])) tutAsk();
@@ -8445,7 +9247,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && $('quitBox').classL
 // on the main menu Esc closes Settings, or goes back from the Galaxies / New world page
 addEventListener('keydown', e => {
   if (e.key !== 'Escape' || started) return;
-  if ($('settingsBox').classList.contains('show')) $('settingsBox').classList.remove('show');
+  if ($('settingsBox').classList.contains('show')) closeSettings();
   else if ($('title').dataset.view !== 'main' && !$('saveList').classList.contains('busy')) titleView('main');
 });
 if (window.desktop) {
