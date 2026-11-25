@@ -1251,6 +1251,111 @@
   #infWin #infToTree, #skBox #skNext { color: #fff; background: linear-gradient(180deg, #8d68e6, #5a39a8); border: 1px solid rgba(205, 180, 255, .6);
     box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 -1px 0 rgba(0, 0, 0, .2) inset, 0 6px 20px rgba(130, 90, 230, .35); }
   #infWin #infToTree:hover, #skBox #skNext:hover { background: linear-gradient(180deg, #9b78f2, #6644b8); box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 8px 26px rgba(150, 110, 250, .45); }
+
+  /* ---- the upgrade list (side panel and Fleet Hangar): price pills, level bars, switches */
+  #tabs { padding: 6px 6px 6px; gap: 4px; border-bottom-color: var(--bq-line2); }
+  #tabs button[data-tab] { border-radius: 9px; padding: 8px 0; box-shadow: none; }
+  #tabs button[data-tab]:hover { background: rgba(255, 255, 255, .04); }
+  #tabs button[data-tab].on { color: #fff; box-shadow: 0 0 0 1px rgba(120, 175, 255, .38) inset, 0 6px 16px -8px rgba(80, 140, 255, .7);
+    background: linear-gradient(180deg, rgba(100, 160, 255, .22), rgba(100, 160, 255, .07)); text-shadow: 0 0 12px rgba(120, 180, 255, .45); }
+  #tabs #panelHide { border-left: 0; border-radius: 9px; width: 34px; }
+  #list { padding: 10px 9px; }
+
+  /* a group heading: a small label with a fading line, and its one-line description */
+  #list .grp { margin: 16px 3px 8px; padding-top: 0; border-top: 0; }
+  #list .grp:first-child, #list .maxrow + .grp { margin-top: 4px; }
+  #list .grp b { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #a9c2e4; }
+  #list .grp b::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(132, 162, 224, .35), transparent); }
+  #list .grp span { display: block; margin-top: 3px; color: var(--bq-faint); font-size: 11.5px; }
+
+  /* the row */
+  #list .up, #hgUps .up { padding: 10px 12px 12px; margin-bottom: 7px; border-radius: 12px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015)); border: 1px solid var(--bq-line2); }
+  #list .up .t, #hgUps .up .t { align-items: center; gap: 8px; font-size: 14px; letter-spacing: .01em; }
+  #list .up .d, #hgUps .up .d { margin-top: 2px; color: #93a6bf; line-height: 1.35; }
+  #list .up .e, #hgUps .up .e { align-items: center; gap: 8px; margin-top: 8px; }
+  #list .up .eff, #hgUps .up .eff { color: #cfe0f5; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  /* the level: a small pill, and a thin bar along the bottom of the row */
+  #list .up .lv:not(:empty), #hgUps .up .lv:not(:empty) { flex: none; padding: 1px 7px; border-radius: 999px; font-size: 11px; color: #a7b8cf;
+    background: rgba(255, 255, 255, .055); border: 1px solid rgba(132, 162, 224, .14); font-variant-numeric: tabular-nums; }
+  #list .up::after, #hgUps .up::after { content: ''; position: absolute; left: 12px; bottom: 5px; height: 2px; border-radius: 2px;
+    width: calc(var(--p, 0) * (100% - 24px)); background: linear-gradient(90deg, #4f9bff, #3fe0c5); box-shadow: 0 0 6px rgba(63, 224, 197, .4); opacity: .85; }
+  #list .up::before, #hgUps .up::before { content: ''; position: absolute; left: 12px; right: 12px; bottom: 5px; height: 2px; border-radius: 2px;
+    background: rgba(255, 255, 255, .05); display: var(--track, none); }
+
+  /* the price: a pill with a stardust star; solid gold when you can buy it now */
+  #list .up .cost, #hgUps .up .cost { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: #2a1d00; background: var(--bq-gold);
+    box-shadow: 0 0 0 1px rgba(255, 220, 140, .5) inset, 0 3px 10px -3px rgba(255, 190, 80, .55); }
+  #list .up .cost::before, #hgUps .up .cost::before { content: ''; width: 10px; height: 10px; flex: none; background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 0 6.1 3.9 10 5 6.1 6.1 5 10 3.9 6.1 0 5 3.9 3.9z'/%3E%3C/svg%3E") center / contain no-repeat; }
+  #list .up:hover:not(.no) .cost, #hgUps .up:hover:not(.no) .cost { filter: brightness(1.06); box-shadow: 0 0 0 1px rgba(255, 230, 160, .7) inset, 0 4px 14px -3px rgba(255, 200, 90, .75); }
+
+  /* not enough stardust yet: the row stays readable, only the price waits */
+  #list .up.no, #hgUps .up.no { opacity: 1; }
+  #list .up.no .t, #hgUps .up.no .t { color: #c9d3e0; }
+  #list .up.no .d, #list .up.no .eff, #hgUps .up.no .d, #hgUps .up.no .eff { opacity: .7; }
+  #list .up.no .cost, #hgUps .up.no .cost { color: #e9c66a; background: rgba(255, 212, 71, .07); box-shadow: 0 0 0 1px rgba(255, 212, 71, .22) inset; }
+  /* locked until more sectors are open */
+  #list .up.lock, #hgUps .up.lock { opacity: .6; }
+  #list .up.lock .cost, #hgUps .up.lock .cost { color: #93a6bf; background: rgba(255, 255, 255, .04); box-shadow: 0 0 0 1px rgba(132, 162, 224, .18) inset; font-weight: 600; }
+  #list .up.lock .cost::before, #hgUps .up.lock .cost::before {
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='1.5' y='4.5' width='7' height='5' rx='1'/%3E%3Cpath d='M3 4.5V3a2 2 0 0 1 4 0v1.5' fill='none' stroke='black' stroke-width='1.3'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+  /* maxed: a green pill with a tick, and a full green bar */
+  #list .up.max, #hgUps .up.max { opacity: .85; border-color: rgba(90, 210, 160, .22); background: linear-gradient(180deg, rgba(90, 210, 160, .06), rgba(90, 210, 160, .015)); }
+  #list .up.max .cost, #hgUps .up.max .cost { color: #8ff0c4; background: rgba(90, 210, 160, .1); box-shadow: 0 0 0 1px rgba(90, 210, 160, .3) inset; }
+  #list .up.max .cost::before, #hgUps .up.max .cost::before {
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2 4 7.6 8.6 2.4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+  #list .up.max::after, #hgUps .up.max::after { background: linear-gradient(90deg, #3fd99a, #8ff0c4); }
+
+  /* on/off upgrades (Autopilot, Deep Scanner…): the state is a little switch */
+  #list .up.sw, #hgUps .up.sw { border-color: rgba(90, 210, 160, .28); }
+  #list .up.sw .eff, #hgUps .up.sw .eff { display: inline-flex; align-items: center; gap: 7px; color: #8ff0c4; font-weight: 700; }
+  #list .up.sw .eff::before, #hgUps .up.sw .eff::before { content: ''; width: 26px; height: 14px; border-radius: 999px; flex: none;
+    background: radial-gradient(circle at 19px 7px, #fff 0 5px, transparent 5.5px), linear-gradient(180deg, #3fd99a, #22a874); box-shadow: 0 0 8px rgba(63, 217, 154, .45); }
+  #list .up.swoff .eff, #hgUps .up.swoff .eff { color: #ffb84a; }
+  #list .up.swoff .eff::before, #hgUps .up.swoff .eff::before { background: radial-gradient(circle at 7px 7px, #c9d3e0 0 5px, transparent 5.5px), rgba(255, 255, 255, .1); box-shadow: 0 0 0 1px rgba(132, 162, 224, .25) inset; }
+  #list .up.sw .cost, #hgUps .up.sw .cost { color: #a7b8cf; background: transparent; box-shadow: 0 0 0 1px rgba(132, 162, 224, .22) inset; font-weight: 600; }
+  #list .up.sw .cost::before, #hgUps .up.sw .cost::before { display: none; }
+  #list .up.sw::after, #hgUps .up.sw::after { display: none; }
+
+  /* an effect's own upgrades, hung under it */
+  #list .up.sub, #hgUps .up.sub { padding: 8px 11px 11px; border-radius: 10px; background: rgba(255, 255, 255, .025); }
+  #list .up.sub::before { display: block; left: -10px; right: auto; top: -8px; bottom: 50%; width: 7px; height: auto; border-radius: 0 0 0 5px;
+    background: none; border-left: 1px solid rgba(132, 162, 224, .3); border-bottom: 1px solid rgba(132, 162, 224, .3); }
+  #list .up.sub, #hgUps .up.sub { overflow: visible; }
+  #list .up.sub .t { font-size: 13px; }
+
+  /* the small things around the rows */
+  #list .hint { border-style: dashed; border-color: rgba(132, 162, 224, .2); border-radius: 12px; color: var(--bq-dim); background: rgba(255, 255, 255, .02); }
+  #list .maxrow { margin-bottom: 8px; }
+  /* a locked row's long "Needs … sectors" goes under the effect instead of squeezing it */
+  #list .up.lock .e, #hgUps .up.lock .e { flex-wrap: wrap; row-gap: 6px; }
+  #list .up.lock .cost, #hgUps .up.lock .cost { margin-left: auto; }
+  /* pointing at a row you can buy */
+  #list .up:hover:not(.no):not(.max), #hgUps .up:hover:not(.no):not(.max) { background: linear-gradient(180deg, rgba(110, 165, 255, .15), rgba(110, 165, 255, .05));
+    border-color: rgba(120, 175, 255, .55); box-shadow: 0 4px 18px rgba(40, 100, 230, .2); }
+  /* each upgrade's icon, in a small tile of its colour, beside the name and description */
+  #list .up, #hgUps .up { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 11px; align-items: start; }
+  #list .up > .t, #list .up > .d, #list .up > .e, #hgUps .up > .t, #hgUps .up > .d, #hgUps .up > .e { grid-column: 2; }
+  .up > .uic { grid-column: 1; grid-row: 1 / span 3; width: 32px; height: 32px; margin-top: 1px; border-radius: 9px; display: grid; place-items: center;
+    background: color-mix(in srgb, currentColor 13%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent) inset; }
+  .up > .uic svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .up.sub > .uic { width: 28px; height: 28px; border-radius: 8px; }
+  .up.sub > .uic svg { width: 19px; height: 19px; }
+  #list .up.sub, #hgUps .up.sub { grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; }
+  .up:hover:not(.no):not(.max) > .uic { background: color-mix(in srgb, currentColor 22%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 50%, transparent) inset, 0 0 12px color-mix(in srgb, currentColor 30%, transparent); }
+  /* the level bar runs under the text, not under the icon */
+  #list .up::after, #hgUps .up::after { left: 55px; width: calc(var(--p, 0) * (100% - 67px)); }
+  #list .up::before, #hgUps .up::before { left: 55px; }
+  #list .up.sub::after { left: 50px; width: calc(var(--p, 0) * (100% - 61px)); }
+  /* the effect and price line runs the full width, under the icon too, so it stays on one line */
+  #list .up > .e, #hgUps .up > .e { grid-column: 1 / -1; }
+  .up > .uic { grid-row: 1 / span 2; }
+  #list .up::after, #hgUps .up::after { left: 12px; width: calc(var(--p, 0) * (100% - 24px)); }
+  #list .up::before, #hgUps .up::before { left: 12px; }
+  #list .up.sub::after { left: 11px; width: calc(var(--p, 0) * (100% - 22px)); }
 </style>
 </head>
 <body>
@@ -1279,7 +1384,7 @@
 
 <div id="panel" class="box">
   <div id="tabs">
-    <button data-tab="cursor" class="on">Cursor</button>
+    <button data-tab="cursor" class="on">Upgrades</button>
     <button data-tab="drones">Fleet</button>
     <button data-tab="relics">Discoveries</button>
     <button id="panelHide" title="Hide the upgrades (U)">&#8250;</button>
@@ -1755,7 +1860,7 @@ const fullDisc = () => mode === 'linear' || mode === 'infinite';   // discoverie
 // No leaderboard, cloud backup or imports, and co-op only with other demo players. Clearing both sectors ends the demo.
 const DEMO = true, DEMO_SEC = 2;
 // the game's version: the date of the build it changed in (set by tools/stamp-version.js, with a fingerprint of this file)
-const GAME_VERSION = '2026.11.23.2', GAME_BUILD = 'dc9431fcf3';
+const GAME_VERSION = '2026.11.25', GAME_BUILD = '12c9a5925b';
 const demoCap = () => DEMO && nUnlocked >= DEMO_SEC;   // no more sectors in the demo
 // ---- Infinite galaxies: what carries over from one galaxy to the next (kept in the world's save, with the host in co-op).
 // n: which galaxy this is; gp: Galaxy Points not spent yet; earned: all ever earned; sk: skills learned; time: play time of
@@ -3815,6 +3920,74 @@ addEventListener('mouseup', e => {
 // ---------------------------------------------------------------- UI
 const $ = id => document.getElementById(id);
 let tab = 'cursor';
+// An icon for every upgrade: line drawings on a 24x24 grid, drawn in the row's colour (currentColor). An effect's own
+// upgrades (Supernova Chance…) are the effect's icon, a little smaller, with a badge saying what kind of upgrade it is.
+const UPICONS = (() => {
+  const P = {   // the main upgrades
+    radius: '<circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="9.5" stroke-dasharray="2.2 2.6"/>',
+    speed: '<path d="M4 6l6 6-6 6M11 6l6 6-6 6"/><path d="M20 6v12"/>',
+    value: '<path d="M6.5 4h11l3.5 5-9 11L3 9z"/><path d="M3 9h18M9.5 4L12 9l2.5-5M12 9v11"/>',
+    hangar: '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><rect x="8.5" y="10" width="7" height="4.5" rx="1"/>',
+    zoom: '<path d="M3 12l12-5 2.2 5L5.2 17z"/><path d="M15 7l3.3-1.4 2.2 5-3.3 1.4"/><path d="M10 15.5L7.5 21M11.5 15l3 6"/>',
+    crit: '<circle cx="12" cy="12" r="2.6"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.4 3.4M15.6 15.6L19 19M19 5l-3.4 3.4M8.4 15.6L5 19"/>',
+    comet: '<circle cx="16" cy="8" r="3.6"/><path d="M13.2 10.8L4 20M13.6 13.4L8.5 18.5M10.6 8.4L5.5 13.5"/>',
+    echo: '<circle cx="12" cy="12" r="2.4"/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M4.8 4.8a10.2 10.2 0 0 0 0 14.4M19.2 4.8a10.2 10.2 0 0 1 0 14.4"/>',
+    chain: '<path d="M13.5 2L5 13.5h6L9.5 22 19 9.5h-6.2z"/>',
+    shot: '<circle cx="16.5" cy="12" r="4.2"/><path d="M2 12h7.5M4 7.8h6.3M4 16.2h6.3"/>',
+    battery: '<rect x="2.5" y="7" width="16.5" height="10" rx="2"/><path d="M21.5 10.5v3"/><path d="M11.8 8.8L9 12.4h3.2l-2.4 3.3"/>',
+    meteor: '<circle cx="8.5" cy="15.5" r="4.3"/><path d="M11.6 12.4L20 4M13.2 15.8L20.5 8.5M8.2 10.8L15.5 3.5"/><path d="M7 14.2l1.5 1.5"/>',
+    rush: '<path d="M3 18l5.5-5.5 4 3L20 8"/><path d="M15 8h5v5"/><path d="M5 5.5v3M3.5 7h3"/>',
+    vortex: '<path d="M11 12a1 1 0 0 0 2 0 3 3 0 0 0-6 0 5 5 0 0 0 10 0 7 7 0 0 0-14 0"/><path d="M17 12a5 5 0 0 1-.4 2"/>',
+    radar: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6.4-6.4"/><circle cx="15.8" cy="15.2" r="1.1" fill="currentColor" stroke="none"/>',
+    carto: '<path d="M3.5 10c0-3.4 3.8-5 8.5-5s8.5 1.6 8.5 5v9.5h-17z"/><path d="M3.5 13h17"/><rect x="10.3" y="11.4" width="3.4" height="4" rx=".7"/>',
+    insight: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><path d="M12 8.6l.95 2.45L15.4 12l-2.45.95L12 15.4l-.95-2.45L8.6 12l2.45-.95z"/>',
+    core: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8c3.2-4.6 9.6-3 9 1.7M12 14.2c-3.2 4.6-9.6 3-9-1.7"/><path d="M14.2 12c4.6 3.2 3 9.6-1.7 9M9.8 12C5.2 8.8 6.8 2.4 11.5 3"/>',
+    bigbang: '<path d="M12 2l1.9 5.1 4.9-2.3-1.9 5 5.1 1.8-5.1 1.9 2.2 5-5.1-1.9L12 22l-1.9-5.4-5 2 1.9-5L2 12l5.1-1.8-2-5 5 2z"/>',
+    forge: '<path d="M3.5 8.5h12.5a3 3 0 0 0 3-3h1.5v3a5 5 0 0 1-5 5H14l1 4H8l1-4H7a3.5 3.5 0 0 1-3.5-3.5z"/><path d="M6 20.5h12"/><path d="M8 3.5l1 1.5M12 2.5v2"/>',
+    // the fleet
+    build: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.5v2.9M12 18.6v2.9M2.5 12h2.9M18.6 12h2.9M5.3 5.3l2 2M16.7 16.7l2 2M18.7 5.3l-2 2M7.3 16.7l-2 2"/>',
+    sweepers: '<path d="M12 3l5 11.5-5-3-5 3z"/><path d="M4 18.5c5 3 11 3 16 0"/>',
+    swSpeed: '<path d="M12 2.5l5 11-5-3-5 3z"/><path d="M9.8 15.5L8.6 21M14.2 15.5l1.2 5.5M12 15v6.5"/>',
+    swRadius: '<path d="M2.5 8c3 9.5 16 9.5 19 0"/><path d="M6.5 7.5c2 5.5 9 5.5 11 0"/><path d="M12 3l1.8 3.6h-3.6z"/>',
+    dValue: '<path d="M3 7.2L12 3l9 4.2v9.6L12 21l-9-4.2z"/><path d="M3 7.2l9 4.2 9-4.2M12 11.4V21M7.5 5.1l9 4.2"/>',
+    auto: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.5v6.3M4.6 16.3l5.5-3.2M19.4 16.3l-5.5-3.2"/>',
+    dFleet: '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="M12 17l4.2-5.2"/><path d="M6.2 11.4l1.1 1M12 6.6v1.6M17.8 11.4l-1.1 1"/><circle cx="12" cy="17" r="1.2"/>',
+    fleetRad: '<circle cx="12" cy="12" r="8" stroke-dasharray="3 2.2"/><circle cx="12" cy="4" r="1.8"/><circle cx="5.1" cy="16" r="1.8"/><circle cx="18.9" cy="16" r="1.8"/><circle cx="12" cy="12" r="1.2"/>',
+    squad: '<path d="M12 3.5l3.2 5.5H8.8zM6 13l3.2 5.5H2.8zM18 13l3.2 5.5h-6.4z"/>',
+    drones: '<circle cx="12" cy="12" r="3.6"/><path d="M2.5 8.5v7M21.5 8.5v7M2.5 12h5.9M15.6 12h5.9M12 8.4V3.5"/><circle cx="12" cy="3" r=".9"/>',
+    dSpeed: '<path d="M12 2.5c3.2 2.2 4.3 6.2 4.3 9.5L12 15.2 7.7 12c0-3.3 1.1-7.3 4.3-9.5z"/><circle cx="12" cy="8.8" r="1.5"/><path d="M10 17.5l-1 4M14 17.5l1 4M12 17.5v4"/>',
+    dRadius: '<rect x="9.8" y="9.8" width="4.4" height="4.4" rx="1"/><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="9.6" stroke-dasharray="2.2 2.6"/>',
+    dAtk: '<circle cx="12" cy="12" r="6.8"/><circle cx="12" cy="12" r="1.4"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+    dCrit: '<rect x="9" y="9" width="6" height="6" rx="1.3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.6 2.6M19 19l-2.6-2.6M19 5l-2.6 2.6M5 19l2.6-2.6"/>',
+    hunters: '<path d="M2.5 12L21 4l-5.5 8 5.5 8z"/><path d="M8 12h7.5"/>',
+    huSpeed: '<path d="M12 2c1.2 4.2 6.5 6.4 6.5 12.2a6.5 6.5 0 0 1-13 0c0-3.4 2.2-5.6 3.3-6.6 0 2.2 1 3.6 2.4 3.6 0-3.3-1.3-6.2.8-9.2z"/>',
+    huTime: '<circle cx="12" cy="13.5" r="7.8"/><path d="M12 13.5V9.2M9.6 2.5h4.8M12 2.5v3.2M18.6 6.9l1.6-1.6"/>',
+    huBounty: '<circle cx="12" cy="12" r="9"/><path d="M12 6.8l1.55 3.2 3.5.45-2.6 2.4.7 3.5L12 14.6l-3.15 1.75.7-3.5-2.6-2.4 3.5-.45z"/>',
+    stations: '<rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1"/><path d="M2.5 6.5l3-3 4.2 4.2-3 3zM21.5 17.5l-3 3-4.2-4.2 3-3zM8.4 8.4l1.4 1.4M15.6 15.6l-1.4-1.4"/>',
+    stSpeed: '<path d="M2 12h4l2.2-5.5 3.3 11 3.2-13 3 7.5H22"/>',
+    stRadius: '<circle cx="12" cy="18.5" r="1.6"/><path d="M8 14.6a5.6 5.6 0 0 1 8 0M5 11.6a9.8 9.8 0 0 1 14 0M2 8.6a14 14 0 0 1 20 0"/>',
+  };
+  // badges for an effect's own upgrades, in the bottom-right corner
+  const B = {
+    pct: '<path d="M22 14.5l-7 7.5"/><circle cx="15.6" cy="15.4" r="1.4"/><circle cx="21.2" cy="21" r="1.4"/>',
+    more: '<path d="M18.5 14v9M14 18.5h9"/>',
+    up: '<path d="M18.5 23v-8.5M14.8 18l3.7-3.7 3.7 3.7"/>',
+    reach: '<path d="M14.5 22.5l8-8M18 14.5h4.5V19M14.5 18v4.5H19"/>',
+    time: '<circle cx="18.5" cy="18.5" r="4.4"/><path d="M18.5 16.3v2.4l1.7 1.1"/>',
+    wave: '<path d="M15.5 15a4.6 4.6 0 0 1 0 7M19.3 13.5a7.4 7.4 0 0 1 0 10"/>',
+  };
+  const SUB = { critCh: ['crit', 'pct'], critShock: ['crit', 'wave'], echoCh: ['echo', 'pct'], chainCh: ['chain', 'pct'], chainN: ['chain', 'more'],
+    shotCh: ['shot', 'pct'], shotReach: ['shot', 'reach'], shotSize: ['shot', 'up'], shotTwin: ['shot', 'more'], batteryN: ['battery', 'more'], batteryX: ['battery', 'up'],
+    meteorRate: ['meteor', 'pct'], meteorN: ['meteor', 'more'], rushCh: ['rush', 'pct'], rushPow: ['rush', 'up'], rushDur: ['rush', 'time'],
+    vortexRate: ['vortex', 'pct'], vortexDur: ['vortex', 'time'], vortexSize: ['vortex', 'reach'], bangSize: ['bigbang', 'reach'], bangRate: ['bigbang', 'pct'] };
+  // colours: the cursor's own stats blue, stardust gold, each attack effect its own, the fleet teal
+  const COL = { radius: '#7cb6ff', speed: '#7cb6ff', zoom: '#7cb6ff', hangar: '#3fe0c5', value: '#ffd36a', comet: '#ffd36a', carto: '#ffd36a', insight: '#ffd36a', core: '#ffd36a', forge: '#ffd36a',
+    crit: '#ffb45e', echo: '#6fb4ff', chain: '#8ce8ff', shot: '#ff8fd0', battery: '#8ff08a', meteor: '#ff8a5c', rush: '#ffe066', vortex: '#b98cff', bigbang: '#ff6b6b', radar: '#5ff0c8' };
+  const out = {};
+  for (const id in P) out[id] = { svg: P[id], col: COL[id] || '#3fe0c5' };
+  for (const id in SUB) { const [p, b] = SUB[id]; out[id] = { svg: '<g transform="scale(.74)" stroke-width="2.4">' + P[p] + '</g>' + B[b], col: COL[p] }; }
+  return out;
+})();
 const rows = {};
 function buildUI() {
   const list = $('list'); list.innerHTML = ''; $('hgUps').innerHTML = '';
@@ -3841,7 +4014,8 @@ function buildUI() {
     }
     const b = document.createElement('button');
     b.className = d.sub ? 'up sub' : 'up'; b.dataset.tab = d.tab;
-    b.innerHTML = `<div class="t"><span>${d.name}</span><span class="lv"></span></div><div class="d">${steps(d) > 1 && d.stepDesc ? d.stepDesc() : d.desc}</div>` +
+    const ic = UPICONS[d.id];
+    b.innerHTML = (ic ? `<i class="uic" style="color:${ic.col}"><svg viewBox="0 0 24 24">${ic.svg}</svg></i>` : '') + `<div class="t"><span>${d.name}</span><span class="lv"></span></div><div class="d">${steps(d) > 1 && d.stepDesc ? d.stepDesc() : d.desc}</div>` +
       `<div class="e"><span class="eff"></span><span class="cost"></span></div>`;
     b.onclick = () => buy(d);
     (inHangar ? $('hgUps') : list).appendChild(b);   // fleet upgrades live inside the Fleet Hangar
@@ -3920,6 +4094,9 @@ function refreshUI() {
     r.cost.textContent = lock ? (DEMO && d.sec > DEMO_SEC ? 'In the full game' : 'Needs ' + d.sec + ' sectors unlocked') : sw ? (isAp ? 'Click: ' + AP_MODES[(apMode + 1) % 3] : swOff ? 'Click to turn on' : 'Click to turn off') : maxed ? (d.max === 1 ? 'Unlocked' : 'MAX') : fmtPrice(cost(d));
     r.b.classList.toggle('max', maxed && !sw); r.b.classList.toggle('sw', sw); r.b.classList.toggle('swoff', sw && swOff);
     r.b.classList.toggle('no', lock || (!maxed && points < cost(d)));
+    r.b.classList.toggle('lock', !!lock);   // (locked by sectors, not just short of stardust: a padlock pill)
+    r.b.style.setProperty('--p', d.max > 1 ? Math.min(1, l / d.max).toFixed(3) : 0);   // the level bar along the bottom of the row
+    r.b.style.setProperty('--track', d.max > 1 && !d.sub ? 'block' : 'none');
     if (d.tab === 'drones' && LIN()) r.b.style.display = d.group === HG[hgPage].group && visible(d) ? '' : 'none';
     else if (!visible(d)) r.b.style.display = 'none';
     if (d.head && rows['grp' + d.id] && !visible(d)) rows['grp' + d.id].style.display = 'none';
@@ -6558,6 +6735,7 @@ const LOAD_TIPS = [
   ['Rare discoveries hide among the stars. <b>Hunters</b> track them down for you.', '', 1],
   ['Press <b>[[meter]]</b> for the stardust meter: what each effect and helper earns.', '', 0, ''],
   ['Press <b>[[ui]]</b> to hide the interface and just watch the galaxy. <b>Esc</b> brings it back.', '', 0, '<b>Click the left stick</b> to hide the interface and just watch the galaxy.'],
+  ['Every key can be changed: <b>Settings → Controls</b>. You can even swap the left and right mouse buttons.', '', 0, 'Settings → <b>Controller</b> lists what every button does.'],
   ['There are exactly <b>1,000,000,000</b> stars, and every single one can be collected.'],
   ['<b>Autopilot</b> decides how helpers pick their stars: click it to switch between <b>Top to bottom</b> and <b>Most effective</b>.', '', 1],
   ['Press <b>Esc</b> any time for the menu and settings.', '', 0, 'Press <b>Start</b> any time for the menu and settings.'],
@@ -9302,6 +9480,7 @@ if (!tutData.fin || typeof tutData.fin !== 'object') tutData.fin = {};     // wo
 if (!tutData.disc || typeof tutData.disc !== 'object') tutData.disc = {};   // worlds where Pip has explained discoveries
 if (!tutData.cache || typeof tutData.cache !== 'object') tutData.cache = {};   // ...and Stellar Caches
 if (!tutData.chal || typeof tutData.chal !== 'object') tutData.chal = {};   // Challenge worlds whose welcome window has been shown
+if (!tutData.prize || typeof tutData.prize !== 'object') tutData.prize = {};   // worlds where Pip gave the Stellar Cache for finishing the tour
 const chalClose = () => $('chalBox').classList.remove('show');
 $('chalGo').onclick = chalClose;
 $('chalBox').addEventListener('mousedown', e => { if (e.target === $('chalBox')) chalClose(); });
@@ -9459,9 +9638,30 @@ function tutBuild() {
       start: () => { tutS.r = rightDeselects; },
       tick: dt => { const d = tutSweeper(); if (d && !d.forced) follow(dt); },   // once it has arrived, keep it in view again
       done: () => rightDeselects > tutS.r, world: () => 'sweeper' });
-  S.push({ text: () => 'Every sector you clear leaves a <b>Stellar Cache</b> with a reward. ' + (chal ? 'Remember: clear every star you have and the next sector opens. ' : lin ? 'And if you ever run out of stars, the nearest sector opens <b>for free</b>. ' : '') +
+  // the controls: Pip sends you to Settings > Controls (or Controller); after that the tour is done, and the first time in a
+  // world that earns a Stellar Cache (see the last step)
+  const setOpen = () => $('settingsBox').classList.contains('show'), ctlTab = () => padUI() ? 'pad' : 'controls', ctlName = () => padUI() ? 'Controller' : 'Controls';
+  const prizeOk = () => !tutData.prize[tutKey];
+  const tabBtn = () => document.querySelector('#settingsBox .stab[data-tab=' + ctlTab() + ']');
+  S.push(
+    { text: () => 'One more thing! Every key can be changed to suit you. Open <b>Settings</b> and have a look' + (prizeOk() ? ': it’s the last stop before your <b>Stellar Cache</b>!' : '.'),
+      start: () => setPanelHidden(false), done: setOpen, hi: () => $('btnSettings') },
+    { text: () => setOpen() ? 'Now click the <b>' + ctlName() + '</b> tab.' : 'Open <b>Settings</b> again and click the <b>' + ctlName() + '</b> tab.',
+      start: () => setPanelHidden(false), done: () => setOpen() && setTab === ctlTab(), hi: () => setOpen() ? tabBtn() : $('btnSettings'), left: true },
+    { text: () => (ctlTab() === 'pad'
+        ? 'This is what every button does. Keyboard keys can be changed under <b>Controls</b>. Press <b>Done</b> when you’re ready.'
+        : 'This is every key in the game: <b>click one</b> to change it, and you can even <b>swap the mouse buttons</b>. Press <b>Done</b> when you’re ready.'),
+      done: () => !setOpen() });
+  S.push({ text: () => (tutS.prize ? 'For finishing the tour, here’s a <b>Stellar Cache</b>! Click <b>Open Stellar Cache</b> whenever you like. Every sector you clear leaves one too. '
+      : 'Every sector you clear leaves a <b>Stellar Cache</b> with a reward. ') + (chal ? 'Remember: clear every star you have and the next sector opens. ' : lin ? 'And if you ever run out of stars, the nearest sector opens <b>for free</b>. ' : '') +
       'Press <b>' + (padUI() ? 'Start' : 'Esc') + '</b> any time for the menu. That’s all from me. Have fun out there!', final: true,
-    tick: dt => { tutS.t = (tutS.t || 0) + dt; }, done: () => tutS.t > 14 });
+    start: () => {
+      if (!prizeOk()) return;
+      tutData.prize[tutKey] = true; tutStore(); tutS.prize = true;
+      if (cachesOwed + cachesOpened === 0) cacheTut = true;   // your first cache: Pip's cache lesson says where it came from
+      grantCache(); sfx('buy'); toast('Pip gave you a Stellar Cache', '#ffd447');
+    },
+    tick: dt => { tutS.t = (tutS.t || 0) + dt; }, done: () => tutS.t > 14, hi: () => tutS.prize ? $('cacheBtn') : null });
   return S;
 }
 // the lesson after your first discovery: open the Discoveries tab, then what discoveries do
@@ -9476,12 +9676,13 @@ function discLesson(t) {
   ];
 }
 // the lesson after your first cleared sector: why you got a Stellar Cache, opening it, and where all its rewards are listed
-function cacheLesson() {
+let cacheTut = false;   // the first cache came from finishing the tutorial, not from a cleared sector
+function cacheLesson(tut) {
   const boxOpen = () => $('cacheBox').classList.contains('show'), statsOpen = () => $('cacheStats').classList.contains('show');
   const n0 = cachesOpened, opened = () => cachesOpened > n0;   // (tutS is cleared at every step, so the count is kept here)
   return [
-    { text: () => 'You cleared your first sector! That earned you a <b>Stellar Cache</b>: ' +
-        'one for every sector you clear. It holds a random reward. Click <b>Open Stellar Cache</b>.',
+    { text: () => (tut ? 'For finishing the tour, here’s your first <b>Stellar Cache</b>! You also get one for every sector you clear. '
+          : 'You cleared your first sector! That earned you a <b>Stellar Cache</b>: one for every sector you clear. ') + 'It holds a random reward. Click <b>Open Stellar Cache</b>.',
       done: () => boxOpen() || opened(), hi: () => $('cacheBtn') },
     { text: () => boxOpen() ? 'Press <b>Open</b> to spin! Most rewards are Common, but the rare colours give much bigger boosts.'
         : 'Your cache is still waiting. Click <b>Open Stellar Cache</b> to go back to it.',
@@ -9558,7 +9759,7 @@ function tutAsk() {
   const card = $('tut'); card.classList.remove('final'); card.classList.add('ask');
   $('tutN').textContent = ''; $('tutYes').textContent = 'Yes, show me!'; $('tutNo').textContent = 'No thanks';
   $('tutText').innerHTML = net.role === 'guest' ? 'Hi, I’m <b>Pip</b>! Welcome to your friend’s galaxy. Want me to show you around? It only takes a couple of minutes.'
-    : 'Hi, I’m <b>Pip</b>, your galaxy guide! Want me to show you around? It only takes a couple of minutes.';
+    : 'Hi, I’m <b>Pip</b>, your galaxy guide! Want me to show you around? It only takes a couple of minutes, and there’s a <b>Stellar Cache</b> for you at the end.';
   pipSaid = $('tutText').innerHTML; setTimeout(() => pipSay(pipSaid), 700);   // says hello once it has flown up
   card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
 }
@@ -9600,7 +9801,7 @@ function tutTick(dt) {
   // ...and the same for your first cleared sector and its Stellar Cache
   if (pendingCache && tutKey && !CHAL() && !tutAsking && !tutLessonOn && !hangarOpen() && !cine) {   // (after a discovery lesson that starts at the same time)
     if (tutData.cache[tutKey]) pendingCache = false;
-    else if (tutOn || tutData.fin[tutKey]) { tutData.cache[tutKey] = true; tutStore(); pendingCache = false; lessonStart(cacheLesson()); }
+    else if (tutOn || tutData.fin[tutKey]) { tutData.cache[tutKey] = true; tutStore(); pendingCache = false; const t = cacheTut; cacheTut = false; lessonStart(cacheLesson(t)); }
     else pendingCache = false;
   }
   if (tutOn && !cine) {   // (Pip is quiet and waits while the hangar arrives)
@@ -9645,6 +9846,7 @@ function placeMascot(dt) {
     const L = { x: T.l - gap, y: T.y }, R = { x: T.r + gap, y: T.y }, U = { x: T.x, y: T.t - gap }, D = { x: T.x, y: T.b + gap };
     const st = tutOn && tutSteps[tutI], order = T.x > VW / 2 ? [L, R, U, D] : [R, L, U, D];
     if (st && st.below) order.unshift(D);   // (a step can ask for Pip to stand below, to keep a window's contents clear)
+    if (st && st.left) order.unshift(L);    // (...or to the left, outside a window, of something on its left edge)
     const p = order.find(fit) || { x: Math.min(VW - m, Math.max(m, T.x - gap)), y: Math.min(VH - m, Math.max(m, T.y - gap)) };
     tx = p.x; ty = p.y;
   } else { tx = VW / 2 - 175 * ui; ty = VH - 100 * ui; }   // nothing to point at: bottom middle
