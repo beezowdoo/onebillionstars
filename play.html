@@ -432,7 +432,7 @@
   /* inside a scrolling list anything drawn outside the button gets cut off by the list's edge: draw the outline and glow inside it */
   #hgUps .tutHi, #list .tutHi { outline-offset: -2px; box-shadow: inset 0 0 0 5px rgba(255, 212, 71, .12), inset 0 0 18px rgba(255, 212, 71, .28) !important; }
   /* the stardust meter (damage-meter style), above the minimap */
-  #meter { display: none; left: 12px; bottom: 294px; width: 300px; min-width: 220px; min-height: 96px; max-height: calc(100vh / var(--ui, 1) - 16px);
+  #meter { display: none; left: 12px; bottom: 294px; width: 344px; min-width: 220px; min-height: 96px; max-height: calc(100vh / var(--ui, 1) - 16px);
     padding: 8px 10px 9px; box-sizing: border-box; zoom: var(--ui, 1); font-size: 12px; flex-direction: column; }
   #meter.on { display: flex; }
   #meter .mh { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; cursor: move; user-select: none; flex: none; }
@@ -445,7 +445,10 @@
   #mtGrip { position: absolute; right: 1px; bottom: 1px; width: 14px; height: 14px; cursor: nwse-resize;
     background: linear-gradient(135deg, transparent 0 55%, #3a4a66 55% 62%, transparent 62% 72%, #3a4a66 72% 79%, transparent 79%); }
   body.mtDrag, body.mtDrag * { user-select: none !important; }
-  #meter .mh b { flex: 1; color: #dbe4f0; font-size: 13px; }
+  #meter .mh { flex-wrap: wrap; row-gap: 4px; }   /* too narrow for the title and the buttons: the buttons move under the title instead of out of the window */
+  #meter .mh b { flex: 1 0 auto; color: #dbe4f0; font-size: 13px; }
+  #meter .mh .mhb { display: flex; gap: 6px; margin-left: auto; flex: none; }
+  #meter .mh .mhb button { white-space: nowrap; }
   #meter .mh button { font: inherit; font-size: 11px; cursor: pointer; color: #8fa3bd; background: none; border: 1px solid #263246; border-radius: 6px; padding: 2px 7px; }
   #meter .mh button:hover { border-color: #5aa8ff; }
   #meter .mh #mtKind { font-size: 13px; font-weight: 700; color: #dbe4f0; border-color: transparent; padding: 1px 5px; margin-left: -5px; white-space: nowrap; }   /* the title: click to switch stardust / stars */
@@ -1394,7 +1397,7 @@
 </div>
 
 <div id="secBuy"><button id="secBuyBtn"></button></div>
-<div id="meter" class="box"><div class="mh" title="Drag to move · double-click to put it back"><b><button id="mtKind" title="Switch between stardust earned and stars collected"><span id="mtTitle">Stardust meter</span> &#8644;</button></b><button id="mtMode" title="Switch between per second (last 30 s) and total">Per second</button><button id="mtReset">Reset</button><button id="mtClose" title="Hide (M)">&#215;</button></div><div id="mtRows"></div><div id="mtFoot"></div><div id="mtGrip" title="Drag to resize"></div></div>
+<div id="meter" class="box"><div class="mh" title="Drag to move · double-click to put it back"><b><button id="mtKind" title="Switch between stardust earned and stars collected"><span id="mtTitle">Stardust meter</span> &#8644;</button></b><span class="mhb"><button id="mtMode" title="Switch between per second (last 30 s) and total">Per second</button><button id="mtReset">Reset</button><button id="mtClose" title="Hide (M)">&#215;</button></span></div><div id="mtRows"></div><div id="mtFoot"></div><div id="mtGrip" title="Drag to resize"></div></div>
 <canvas id="mini" class="box" width="270" height="270"></canvas>
 <div id="chat"><div id="chatLog"></div><input id="chatIn" maxlength="200" placeholder="Press Enter to chat" aria-label="Chat message" autocomplete="off"></div>
 <div id="toasts"></div>
@@ -1860,7 +1863,7 @@ const fullDisc = () => mode === 'linear' || mode === 'infinite';   // discoverie
 // No leaderboard, cloud backup or imports, and co-op only with other demo players. Clearing both sectors ends the demo.
 const DEMO = true, DEMO_SEC = 2;
 // the game's version: the date of the build it changed in (set by tools/stamp-version.js, with a fingerprint of this file)
-const GAME_VERSION = '2026.11.25', GAME_BUILD = '12c9a5925b';
+const GAME_VERSION = '2026.11.26.2', GAME_BUILD = '58060500a5';
 const demoCap = () => DEMO && nUnlocked >= DEMO_SEC;   // no more sectors in the demo
 // ---- Infinite galaxies: what carries over from one galaxy to the next (kept in the world's save, with the host in co-op).
 // n: which galaxy this is; gp: Galaxy Points not spent yet; earned: all ever earned; sk: skills learned; time: play time of
@@ -8545,6 +8548,42 @@ function loadPeerLib() {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // binary data may arrive as an ArrayBuffer or as a byte view, depending on the library version
 const asBuffer = x => x instanceof ArrayBuffer ? x : x.buffer.slice(x.byteOffset, x.byteOffset + x.byteLength);
+// ---- the stars each player collected, as sent between co-op players. A star's id is its cell * 16 + its slot (0-15), so
+// the list is sent by cell: the gap to the previous cell (sorted) and a flag in one varint, then the cell's 16 slots as
+// bits, or nothing when the sender's cell is now empty (late in a galaxy, when fleets and Supernovas clear whole cells,
+// that is most of them). Then a whole cell's slots come out at the other end, and the stars it no longer has are skipped
+// as before (a star that is already gone there was collected there too, or by someone it already heard from).
+// About 1-3 bytes a cell instead of 4 bytes a star: the last minutes of a big co-op galaxy otherwise need hundreds of
+// megabits a second. Players on an older version still get the plain list (cs in hello / welcome: "I read cells").
+function packStars(list) {
+  const n = list.length; if (!n) return new ArrayBuffer(0);
+  const a = Uint32Array.from(list).sort(), out = new Uint8Array(n * 7);
+  let o = 0, prev = 0, k = 0;
+  while (k < n) {
+    const c = a[k] >>> 4; let bits = 0;
+    while (k < n && a[k] >>> 4 === c) bits |= 1 << (a[k++] & 15);
+    const empty = mask[c] === 0;
+    let v = (c - prev) * 2 + (empty ? 1 : 0); prev = c;
+    while (v >= 128) { out[o++] = (v & 127) | 128; v = Math.floor(v / 128); }
+    out[o++] = v;
+    if (!empty) { out[o++] = bits & 255; out[o++] = bits >>> 8; }
+  }
+  return out.slice(0, o).buffer;
+}
+function unpackStars(buf) {
+  const b = new Uint8Array(buf), ids = [];
+  let o = 0, c = 0;
+  while (o < b.length) {
+    let v = 0, m = 1, x;
+    do { x = b[o++]; v += (x & 127) * m; m *= 128; } while (x & 128 && o < b.length);
+    c += Math.floor(v / 2);
+    const bits = v & 1 ? 0xFFFF : b[o++] | (b[o++] << 8), base = c * 16;
+    for (let j = 0; j < 16; j++) if (bits >>> j & 1) ids.push(base + j);
+  }
+  return Uint32Array.from(ids);
+}
+const starsOut = (list, cells) => cells ? { s: packStars(list) } : { ids: Uint32Array.from(list).buffer };
+const starsIn = m => m.s ? unpackStars(asBuffer(m.s)) : new Uint32Array(asBuffer(m.ids));
 // ---- connecting by IP address: the desktop app runs a small server (see main.js) and the guest connects straight to it.
 // Messages are objects that may hold binary blocks; for this route they are packed into one binary message:
 // [length of the JSON][JSON, with each blob replaced by a placeholder][the blobs, in order]
@@ -8689,7 +8728,7 @@ function playerId() {   // stays the same between sessions, so the host can give
 // guest: the line to the host is open. Say hello and wait to be let in; nothing of your own game changes until then.
 function guestConnected(c) {
   net.conn = c;
-  c.send({ t: 'hello', id: playerId(), name: myName, v: GAME_VERSION });
+  c.send({ t: 'hello', id: playerId(), name: myName, v: GAME_VERSION, cs: 1 });
   titleMsg('Connected, waiting for the host…'); coopSay('Connected, waiting for the host…');
   setTimeout(() => { if (net.conn === c && !net.building && !net.ready && net.fail) net.fail('The host did not answer. They may be running an older version of the game.'); }, 12000);
 }
@@ -8845,7 +8884,7 @@ async function tryReconnect(R) {
     if (settled || net.recon !== R) { try { c.close(); } catch (e) {} return; }
     settled = true; R.fail = null;
     net.conn = c; net.lastHost = performance.now();
-    c.send({ t: 'hello', id: playerId(), name: myName, rejoin: true, world: net.world, v: GAME_VERSION });
+    c.send({ t: 'hello', id: playerId(), name: myName, rejoin: true, world: net.world, v: GAME_VERSION, cs: 1 });
     R.waiting = setTimeout(() => { if (net.recon === R && net.conn === c) { try { c.close(); } catch (e) {} } }, 10000);   // no answer: hang up and try again
   };
   setTimeout(fail, 12000);
@@ -8894,24 +8933,24 @@ function onNet(m, c) {
       const back = !!m.rejoin && m.world === curSave;   // a guest whose connection dropped, back in this same galaxy
       if (back) for (const q of net.guests.slice()) if (q !== g && q.pid === pid) { try { q.c.close(); } catch (e) {} netClosed(q.c); }   // its old line, if still here
       while (net.guests.some(q => q !== g && q.pid === pid)) pid += '+';
-      g.pid = pid; g.on = true; g.out.length = 0; g.name = cleanName(m.name);
+      g.pid = pid; g.on = true; g.out.length = 0; g.name = cleanName(m.name); g.cs = m.cs === 1;
       coopUI();
       if (back) {   // it still has the galaxy: straight back in, and the resync settles what either side collected meanwhile
         toast(g.name + ' reconnected', PCOL[g.slot]);
-        c.send({ t: 'welcome', mode, world: curSave, rejoin: true, rules: worldRules, demo: DEMO, v: GAME_VERSION });
+        c.send({ t: 'welcome', mode, world: curSave, rejoin: true, rules: worldRules, demo: DEMO, v: GAME_VERSION, cs: 1 });
         c.send({ t: 'ready', rejoin: true, slot: g.slot, team, unl: unlStr(), h: hangarReg, inf: INF() ? infSave() : null });
         c.send({ t: 'sum', a: new Uint32Array(regionAlive).buffer, won, urgent: true });
         return;
       }
       toast(g.name + ' joined (' + (guestCount() + 1) + ' players in the galaxy)', PCOL[g.slot]);
       g.v = verClean(m.v); if (g.v !== GAME_VERSION) toast(verNote(g.name + ' has', g.v), '#ff8a3d', 9000);
-      c.send({ t: 'welcome', mode, world: curSave, rules: worldRules, demo: DEMO, v: GAME_VERSION });
+      c.send({ t: 'welcome', mode, world: curSave, rules: worldRules, demo: DEMO, v: GAME_VERSION, cs: 1 });
       sendWorld(g);
     } else if (m.t === 'd' && g.on) {
       g.last = performance.now();
       if (m.earned > 0 && isFinite(m.earned)) team.bank += m.earned * bankRate();
       // stars this guest collected: remove them here and pass them on to the other guests
-      const ids = new Uint32Array(asBuffer(m.ids));
+      const ids = starsIn(m);
       for (let k = 0; k < ids.length; k++) {
         const id = ids[k];
         if (!isAlive(id)) continue;
@@ -8979,10 +9018,10 @@ function onNet(m, c) {
   if (m.t === 'welcome' && !net.building && !net.ready && cleanMode(m.mode) === 'challenge' && !openUnlocked()) {
     if (net.fail) net.fail('That galaxy is a Challenge. Collect every star in a Linear galaxy first to join one.'); return;
   }
-  if (m.t === 'welcome') { if (!net.building && !net.ready) { net.hostV = verClean(m.v); net.mode = m.mode; net.rules = Math.max(1, Math.floor(+m.rules || 1)); net.world = String(m.world || $('joinCode').value.trim()).slice(0, 80); guestBegin(c); } return; }
+  if (m.t === 'welcome') { if (!net.building && !net.ready) { net.hostV = verClean(m.v); net.cs = m.cs === 1; net.mode = m.mode; net.rules = Math.max(1, Math.floor(+m.rules || 1)); net.world = String(m.world || $('joinCode').value.trim()).slice(0, 80); guestBegin(c); } return; }
   if (m.t === 'd') {
     net.lastHost = performance.now();
-    const ids = new Uint32Array(asBuffer(m.ids));
+    const ids = starsIn(m);
     if (!net.ready) { for (let k = 0; k < ids.length; k++) mask[ids[k] >>> 4] &= ~(1 << (ids[k] & 15)); return; }
     for (let k = 0; k < ids.length; k++) if (isAlive(ids[k])) take(ids[k], REMOTE);
     const seen = {};
@@ -9107,14 +9146,14 @@ steadyInterval(() => {
       if (!g.on || !g.c.open) continue;
       const players = [{ slot: 0, cur, ships: ships.buffer, fx: hostFx.length ? hostFx : undefined }];
       for (const q of net.guests) if (q !== g && q.other) players.push({ slot: q.slot, cur: q.other.cur, ships: q.other.ships.buffer, fx: q.fxFwd && q.fxFwd.length ? q.fxFwd : undefined });
-      g.c.send({ t: 'd', ids: Uint32Array.from(g.out).buffer, players });
+      g.c.send({ t: 'd', ...starsOut(g.out, g.cs), players });
       g.out.length = 0;
       if (sum) g.c.send({ t: 'sum', a: sum, won });   // (after the stars above, so nothing of the host's is still on its way)
     }
     for (const q of net.guests) q.fxFwd = [];   // (each guest's effects went to every other guest once)
   } else if (net.ready && net.conn && net.lastHost && performance.now() - net.lastHost > 15000) { const c = net.conn; try { c.close(); } catch (e) {} netClosed(c);
   } else if (net.ready && net.conn && net.conn.open) {
-    net.conn.send({ t: 'd', ids: Uint32Array.from(net.out).buffer, ships: ships.buffer, cur, earned: teamEarn, fx: fxOut.length ? fxOut.splice(0) : undefined });
+    net.conn.send({ t: 'd', ...starsOut(net.out, net.cs), ships: ships.buffer, cur, earned: teamEarn, fx: fxOut.length ? fxOut.splice(0) : undefined });
     teamEarn = 0;
     net.out.length = 0;
   }
